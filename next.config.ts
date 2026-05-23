@@ -1,10 +1,17 @@
 import type { NextConfig } from "next";
+import withPWA from "@ducanh2912/next-pwa";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["child_process"],
   experimental: {
-    serverActions: { bodySizeLimit: "10mb" }, // for CSV uploads
+    serverActions: { bodySizeLimit: "10mb" },
   },
 };
 
-export default nextConfig;
+export default withPWA({
+  dest: "public",
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === "development",
+})(nextConfig);

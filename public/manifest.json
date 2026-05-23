@@ -1,0 +1,19 @@
+{
+  "name": "VUKA Hunter",
+  "short_name": "Hunter",
+  "description": "B2B lead intelligence & AI outreach",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    { "name": "Discover Leads", "url": "/discover", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "My Leads",       "url": "/leads",    "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
