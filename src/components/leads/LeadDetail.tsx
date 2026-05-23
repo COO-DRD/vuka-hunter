@@ -178,30 +178,43 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
     toast.success("Notes saved");
   }
 
-  async function sendOutreach() {
+  function sendOutreach() {
     const message = channel === "whatsapp" ? waOpener : emailOpener;
     const subject = channel === "email" ? emailSubject : undefined;
     if (!message) { toast.error("Generate an opener first"); return; }
 
-    setSending(true);
-    try {
-      const res = await fetch("/api/outreach", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadId: lead.id, channel, message, subject }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-
-      if (data.actionUrl) {
-        window.open(data.actionUrl, "_blank");
-      }
-      if (channel === "whatsapp") { setSentWa(true); toast.success("WhatsApp opened — tap Send"); }
-      else                        { setSentEmail(true); toast.success("Email ready — tap Send"); }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Send failed");
-    } finally {
-      setSending(false);
+    // Build URL client-side — must open synchronously or iOS Safari blocks it
+    let actionUrl: string | null = null;
+    if (channel === "whatsapp" && phone) {
+      const digits = phone.replace(/\D/g, "");
+      let e164 = digits;
+      if (digits.startsWith("0") && digits.length === 10) e164 = "254" + digits.slice(1);
+      else if (digits.startsWith("7") && digits.length === 9) e164 = "254" + digits;
+      actionUrl = `https://wa.me/${e164}?text=${encodeURIComponent(message)}`;
+    } else if (channel === "email" && email) {
+      const params = new URLSearchParams();
+      if (subject) params.set("subject", subject);
+      params.set("body", message);
+      actionUrl = `mailto:${email}?${params.toString()}`;
     }
+
+    if (!actionUrl) { toast.error(channel === "whatsapp" ? "No phone number" : "No email address"); return; }
+
+    // Open synchronously (must be in same call stack as click to avoid popup block)
+    if (channel === "whatsapp") {
+      window.location.href = actionUrl; // wa.me handles redirect; stays in same tab
+    } else {
+      window.location.href = actionUrl; // mailto: opens Mail app in-place
+    }
+
+    if (channel === "whatsapp") { setSentWa(true); toast.success("WhatsApp opened — tap Send"); }
+    else                        { setSentEmail(true); toast.success("Mail app opened — tap Send"); }
+
+    // Log the outreach in the background (don't await — user already left the page context)
+    fetch("/api/outreach", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId: lead.id, channel, message, subject }),
+    }).catch(() => { /* silent — logging failure doesn't affect UX */ });
   }
 
   async function copyActive() {
@@ -468,7 +481,6 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
               <div className="flex items-center gap-2 flex-wrap">
                 <Button
                   onClick={sendOutreach}
-                  loading={sending}
                   disabled={!canSend}
                   className={`${
                     channel === "whatsapp"
