@@ -48,38 +48,47 @@ export async function POST(req: NextRequest) {
   };
   const verticalPain = VERTICAL_PAIN[vertical] ?? "Many local businesses miss leads outside office hours.";
 
+  // Pick the single most compelling signal to lead with
+  const leadSignal = (() => {
+    if (hasBook === false) return `no online booking system detected`;
+    if (hasChat === false) return `no live chat on their website`;
+    if (pains !== "none detected") return `pain signals: ${pains}`;
+    if (rating !== "N/A") return `${rating}★ on Google (${reviews} reviews)`;
+    return `active ${vertical} in ${city}`;
+  })();
+
   const prompt = `You are a senior B2B sales copywriter for a Kenyan AI & digital growth agency (VUKA Digital).
-Write TWO cold outreach messages for the same prospect. Be specific, confident, and direct. No fluff.
+Write TWO cold outreach messages for the EXACT business below. Use their real name. Be hyper-specific — cite actual numbers or observations, not generalities. No fluff. No filler openers.
 
-PROSPECT DATA:
-- Business: ${name}
-- Type: ${vertical} in ${city}
-- Google: ${rating}★ across ${reviews} reviews
-- Website: ${website}
-- Tech stack: ${tech}
-- Booking system: ${hasBook === true ? "YES" : hasBook === false ? "NO — big gap" : "unknown"}
-- Live chat: ${hasChat === true ? "YES" : hasChat === false ? "NO" : "unknown"}
-- Pain signals detected: ${pains}
-- Social presence: ${socials}
-- Fit score: ${score}/100
-- Known vertical pain: ${verticalPain}
+BUSINESS: ${name}
+TYPE: ${vertical} in ${city}
+GOOGLE: ${rating}★ · ${reviews} reviews
+WEBSITE: ${website}
+TECH STACK: ${tech}
+BOOKING SYSTEM: ${hasBook === true ? "YES — they have one" : hasBook === false ? "NO — missing completely" : "unknown"}
+LIVE CHAT: ${hasChat === true ? "YES" : hasChat === false ? "NO" : "unknown"}
+PAIN SIGNALS: ${pains}
+SOCIAL: ${socials}
+FIT SCORE: ${score}/100
+LEAD SIGNAL (use this to open): ${leadSignal}
+VERTICAL CONTEXT: ${verticalPain}
 
-SENDER: Dr. Dullu, founder of VUKA Digital — we build AI automation, booking systems, and growth infrastructure for local businesses. We're based in Nairobi.
+SENDER: Dr. Dullu, founder of VUKA Digital — AI automation, booking systems, and growth infrastructure for local businesses. Based in Nairobi.
 
-OUTPUT FORMAT — follow EXACTLY, including the markers:
+OUTPUT FORMAT — follow EXACTLY:
 ---WHATSAPP---
-[2–3 sentences MAX. Conversational. Start with "Hi [name or shortened business name]," — pick something natural. Reference ONE specific thing you observed. Name the pain. One CTA question at the end. NO subject line. NO sign-off.]
+[2 sentences MAX. Start with "Hi ${name.split(" ")[0]}," or a natural short form of their name. In sentence 1: cite the lead signal with a specific number or fact. In sentence 2: one CTA question that implies you have the fix. NO sign-off. Under 40 words total.]
 ---EMAIL SUBJECT---
-[One sharp subject line, 6–10 words, specific to their business, no clickbait]
+[7 words max. Name the specific gap or opportunity. No "quick question" or "partnership" clichés.]
 ---EMAIL BODY---
-[4–5 sentences. Professional but warm. Open with a specific observation. Name the problem clearly. State the outcome you'd deliver. Soft CTA. Sign off as: Dr. Dullu | VUKA Digital]
+[5 sentences. S1: observation that proves you looked (cite rating, booking gap, or tech). S2: name the revenue cost of that gap. S3: what VUKA Digital delivers to fix it. S4: one proof point or quick win. S5: soft CTA — one question or offer to chat. Sign off: Dr. Dullu | VUKA Digital]
 
-RULES for both:
-- Never say "I hope this message finds you well"
-- Never say "I came across your business"
-- Be specific — mention their rating, the booking gap, or their tech stack
-- WhatsApp must be SHORT — people skim WA messages, they read email
-- Email subject must feel personal, not like a newsletter`;
+HARD RULES:
+- Use "${name}" by name — never "your business" or "you"
+- Never say "I hope this message finds you well", "I came across", or "I wanted to reach out"
+- WhatsApp must be under 40 words — people skim on mobile
+- Email subject must reference ${name} or their specific gap
+- If booking system is missing, that is the hook — mention it explicitly`;
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -95,7 +104,7 @@ RULES for both:
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.65, maxOutputTokens: 500 },
+              generationConfig: { temperature: 0.7, maxOutputTokens: 600 },
             }),
           }
         );

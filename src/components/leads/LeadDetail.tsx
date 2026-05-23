@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
   const [saving,    setSaving]    = useState(false);
 
   // ── Typed lead fields ──────────────────────────────────────────────────────
+  // (declared before effects so auto-generate can read them)
   const name        = lead.name        as string;
   const vertical    = lead.vertical    as string;
   const city        = lead.city        as string | null;
@@ -92,6 +93,16 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
   const hasBooking  = lead.has_booking_system     as boolean | null;
   const hasChat     = lead.has_live_chat          as boolean | null;
   const enrichStatus= lead.enrichment_status      as string;
+
+  // ── Auto-generate opener on mount if none exists ───────────────────────────
+  const autoGenRef = useRef(false);
+  useEffect(() => {
+    if (autoGenRef.current) return;      // run once
+    autoGenRef.current = true;
+    const hasOpener = !!(lead.opener_whatsapp || lead.opener_text);
+    if (!hasOpener) doOpener();          // silently generates in background
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   function animateScore(target: number) {
@@ -470,9 +481,9 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
             {/* No opener yet */}
             {!hasOpeners && !isStreaming && (
               <div className="text-center py-8 text-zinc-600">
-                <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">Generate openers to see WhatsApp and Email messages</p>
-                <p className="text-xs mt-1 opacity-60">Enriching first gives smarter, more personalised messages</p>
+                <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-40 animate-pulse" />
+                <p className="text-sm">{generating ? "Writing personalised messages…" : "Generating messages for this business…"}</p>
+                <p className="text-xs mt-1 opacity-60">Enriching first gives smarter, more specific copy</p>
               </div>
             )}
 
