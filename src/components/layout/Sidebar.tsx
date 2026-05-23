@@ -8,13 +8,13 @@ import {
 import { cn } from "@/lib/utils";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const NAV = [
-  { href: "/dashboard",  icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/discover",   icon: Search,          label: "Discover" },
-  { href: "/leads",      icon: Users,           label: "Leads" },
-  { href: "/pipeline",   icon: GitBranch,       label: "Pipeline" },
-  { href: "/import",     icon: Upload,          label: "Import CSV" },
-  { href: "/settings",   icon: Settings,        label: "Settings" },
+export const NAV = [
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/discover",  icon: Search,          label: "Discover"   },
+  { href: "/leads",     icon: Users,           label: "Leads"      },
+  { href: "/pipeline",  icon: GitBranch,       label: "Pipeline"   },
+  { href: "/import",    icon: Upload,          label: "Import"     },
+  { href: "/settings",  icon: Settings,        label: "Settings"   },
 ];
 
 export function Sidebar() {
@@ -28,8 +28,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex h-screen w-56 flex-col border-r border-zinc-800 bg-zinc-950">
-      {/* Logo */}
+    <aside className="hidden md:flex h-screen w-56 flex-col border-r border-zinc-800 bg-zinc-950 shrink-0">
       <div className="flex items-center gap-2 px-4 py-5 border-b border-zinc-800">
         <div className="flex h-7 w-7 items-center justify-center rounded-md bg-red-600">
           <Zap className="h-4 w-4 text-white" />
@@ -37,7 +36,6 @@ export function Sidebar() {
         <span className="font-bold text-zinc-100 tracking-tight">Hunter</span>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-2 py-4 space-y-0.5">
         {NAV.map(({ href, icon: Icon, label }) => {
           const active = path.startsWith(href);
@@ -60,7 +58,6 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Sign out */}
       <div className="border-t border-zinc-800 px-2 py-3">
         <button
           onClick={signOut}
