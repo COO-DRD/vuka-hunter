@@ -1,9 +1,7 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-
-const GEMINI_STREAM_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse";
+import { geminiStream } from "@/lib/gemini";
 
 export async function POST(req: NextRequest) {
   const user = await getUser();
@@ -50,17 +48,7 @@ SIGNALS: <comma-separated pain signals, max 4>`;
         controller.enqueue(enc.encode(`data: ${JSON.stringify(data)}\n\n`));
 
       try {
-        const geminiRes = await fetch(
-          `${GEMINI_STREAM_URL}&key=${process.env.GEMINI_API_KEY}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.2, maxOutputTokens: 300 },
-            }),
-          }
-        );
+        const geminiRes = await geminiStream(prompt, { temperature: 0.2, maxOutputTokens: 300 });
 
         if (!geminiRes.ok) {
           const err = await geminiRes.json();

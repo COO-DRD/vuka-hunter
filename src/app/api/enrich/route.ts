@@ -18,6 +18,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No website to enrich from" }, { status: 400 });
   }
 
+  if (!isSafeUrl(lead.website)) {
+    await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId);
+    return NextResponse.json({ error: "Website URL is not a public address" }, { status: 400 });
+  }
+
   try {
     const enriched = await enrichWebsite(lead.website);
     await db.from("hunter_leads").update({
@@ -36,6 +41,24 @@ export async function POST(req: NextRequest) {
     await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId);
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
+}
+
+function isSafeUrl(raw: string): boolean {
+  let parsed: URL;
+  try { parsed = new URL(raw); } catch { return false; }
+  if (!["http:", "https:"].includes(parsed.protocol)) return false;
+  const h = parsed.hostname.toLowerCase();
+  // Loopback / unspecified
+  if (h === "localhost" || h === "0.0.0.0" || h === "127.0.0.1" || h === "::1") return false;
+  // Private IPv4 ranges
+  if (/^10\./.test(h)) return false;
+  if (/^172\.(1[6-9]|2[0-9]|3[01])\./.test(h)) return false;
+  if (/^192\.168\./.test(h)) return false;
+  // Link-local / cloud metadata
+  if (h === "169.254.169.254" || h === "metadata.google.internal") return false;
+  // Internal TLDs
+  if (h.endsWith(".local") || h.endsWith(".internal") || h.endsWith(".localhost")) return false;
+  return true;
 }
 
 async function fetchPage(url: string, signal: AbortSignal): Promise<string> {
