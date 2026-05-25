@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const { data: leads } = await query;
   if (!leads?.length) return NextResponse.json({ ok: true, enriched: 0 });
 
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001";
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://vuka-hunter.vercel.app";
   let enriched = 0;
 
   for (const lead of leads) {

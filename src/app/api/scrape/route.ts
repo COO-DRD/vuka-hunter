@@ -54,8 +54,8 @@ export async function POST(req: NextRequest) {
 
   const db = createSupabaseServiceClient();
   await db.from("hunter_orgs").upsert(
-    { id: user.id, name: "My Workspace" },
-    { onConflict: "id", ignoreDuplicates: true }
+    { id: user.id, name: "My Workspace", plan: "beta", credits_total: 999999 },
+    { onConflict: "id" }
   );
 
   const { data: job, error } = await db
@@ -88,16 +88,14 @@ async function scrapeGooglePlaces(
     const body: Record<string, unknown> = { textQuery: fullQuery, pageSize: 20 };
     if (pageToken) body.pageToken = pageToken;
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://digital.dullugroup.co.ke";
     const res = await fetch(PLACES_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask": FIELD_MASK,
-        // Required if the API key has HTTP referrer restrictions
-        "Referer": siteUrl,
-        "Origin": siteUrl,
+        "Referer": "https://vuka-hunter.vercel.app",
+        "Origin": "https://vuka-hunter.vercel.app",
       },
       body: JSON.stringify(body),
     });
@@ -106,9 +104,8 @@ async function scrapeGooglePlaces(
       const err = await res.text();
       if (res.status === 403) {
         throw new Error(
-          `Google Places API key rejected (403). Go to console.cloud.google.com → ` +
-          `Credentials → your key → add "${siteUrl}/*" to allowed HTTP referrers, ` +
-          `or remove referrer restrictions for server-to-server use.`
+          `Google Places API key rejected (403). In Google Cloud Console → Credentials → ` +
+          `your key → add "https://vuka-hunter.vercel.app/*" to allowed HTTP referrers.`
         );
       }
       throw new Error(`Google Places API error ${res.status}: ${err}`);

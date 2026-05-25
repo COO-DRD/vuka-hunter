@@ -6,24 +6,34 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const VERTICALS = [
-  { value: "real_estate",  label: "Real Estate Agency" },
-  { value: "dental",       label: "Dental Clinic" },
-  { value: "hotel",        label: "Hotel / Hospitality" },
-  { value: "clinic",       label: "Medical Clinic" },
-  { value: "logistics",    label: "Logistics / Courier" },
-  { value: "restaurant",   label: "Restaurant / Food" },
-  { value: "school",       label: "School / Education" },
-  { value: "law_firm",     label: "Law Firm" },
-  { value: "gym",          label: "Gym / Fitness" },
-  { value: "salon",        label: "Salon / Beauty" },
-  { value: "pharmacy",     label: "Pharmacy" },
-  { value: "auto",         label: "Auto / Garage" },
+  // Tier A
+  { value: "dental",        label: "Dental Clinic" },
+  { value: "clinic",        label: "Medical Clinic" },
+  { value: "hospital",      label: "Private Hospital" },
+  { value: "hotel",         label: "Hotel / Hospitality" },
+  { value: "real_estate",   label: "Real Estate Agency" },
+  { value: "law_firm",      label: "Law Firm" },
+  { value: "accounting",    label: "Accounting / CPA Firm" },
+  { value: "private_school",label: "Private School" },
+  { value: "travel_agency", label: "Travel Agency" },
+  // Tier B
+  { value: "gym",           label: "Gym / Fitness Studio" },
+  { value: "restaurant",    label: "Restaurant" },
+  { value: "pharmacy",      label: "Pharmacy" },
+  { value: "salon",         label: "Salon / Spa" },
+  { value: "event_venue",   label: "Event Venue" },
+  { value: "optician",      label: "Eye Clinic / Optician" },
+  { value: "vet",           label: "Veterinary Clinic" },
+  { value: "logistics",     label: "Logistics / Courier" },
+  { value: "car_dealer",    label: "Car Dealership" },
 ];
 
 export const CITIES = [
   "Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret",
-  "Thika", "Machakos", "Nyeri", "Meru", "Kilifi",
-  // Extend freely
+  "Thika", "Nyeri", "Meru", "Machakos", "Kisii",
+  "Kakamega", "Kitale", "Kericho", "Nanyuki",
+  "Malindi", "Kilifi", "Lamu",
+  "Garissa", "Isiolo",
 ];
 
 export const STAGES = [

@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
   if (!leads?.length) return NextResponse.json({ ok: true, scored: 0 });
 
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001";
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://vuka-hunter.vercel.app";
   let scored = 0;
 
   for (const lead of leads) {
