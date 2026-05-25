@@ -51,8 +51,8 @@ SIGNALS: <comma-separated pain signals, max 4>`;
         const geminiRes = await geminiStream(prompt, { temperature: 0.2, maxOutputTokens: 300 });
 
         if (!geminiRes.ok) {
-          const err = await geminiRes.json();
-          send({ error: err?.error?.message ?? "Gemini error" });
+          console.error("[score] Gemini error", geminiRes.status, await geminiRes.text().catch(() => ""));
+          send({ error: "Scoring failed — please retry" });
           controller.close();
           return;
         }
@@ -106,7 +106,8 @@ SIGNALS: <comma-separated pain signals, max 4>`;
 
         send({ done: true, score, reasoning, pain_signals });
       } catch (err) {
-        send({ error: String(err) });
+        console.error("[score]", err);
+        send({ error: "Scoring failed — please retry" });
       } finally {
         controller.close();
       }

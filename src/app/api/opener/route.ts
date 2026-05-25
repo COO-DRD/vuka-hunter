@@ -98,8 +98,8 @@ HARD RULES:
         const geminiRes = await geminiStream(prompt, { temperature: 0.7, maxOutputTokens: 600 });
 
         if (!geminiRes.ok) {
-          const err = await geminiRes.json();
-          send({ error: err?.error?.message ?? "Gemini error" });
+          console.error("[opener] Gemini error", geminiRes.status, await geminiRes.text().catch(() => ""));
+          send({ error: "Generation failed — please retry" });
           controller.close();
           return;
         }
@@ -148,7 +148,8 @@ HARD RULES:
 
         send({ done: true, whatsapp, subject, email });
       } catch (err) {
-        send({ error: String(err) });
+        console.error("[opener]", err);
+        send({ error: "Generation failed — please retry" });
       } finally {
         controller.close();
       }
