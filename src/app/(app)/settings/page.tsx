@@ -13,8 +13,6 @@ export default async function SettingsPage() {
   const memberSince = user.created_at
     ? new Date(user.created_at).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })
     : "—";
-  const shortId = user.id.split("-")[0];
-
   return (
     <div className="p-6 max-w-2xl">
       <div className="mb-6">
