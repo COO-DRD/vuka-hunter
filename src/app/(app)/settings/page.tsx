@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, Infinity } from "lucide-react";
+import { Zap, Infinity, Mail, Calendar, ShieldCheck, Hash } from "lucide-react";
 
 export default async function SettingsPage() {
   const user = await requireUser();
@@ -9,13 +9,59 @@ export default async function SettingsPage() {
   const { data: org } = await db.from("hunter_orgs").select("*").eq("id", user.id).single();
   const creditsUsed = org?.credits_used ?? 0;
 
+  const initial   = user.email ? user.email[0].toUpperCase() : "?";
+  const memberSince = user.created_at
+    ? new Date(user.created_at).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })
+    : "—";
+  const shortId = user.id.split("-")[0];
+
   return (
     <div className="p-6 max-w-2xl">
       <div className="mb-6">
         <h1 className="text-xl font-bold text-zinc-100">Settings</h1>
-        <p className="text-sm text-zinc-400 mt-0.5">{user.email}</p>
+        <p className="text-sm text-zinc-400 mt-0.5">Account &amp; preferences</p>
       </div>
 
+      {/* Account info */}
+      <Card className="mb-4">
+        <CardHeader><CardTitle>Account</CardTitle></CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4 mb-5">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-600/20 border border-red-600/30 text-lg font-bold text-red-400">
+              {initial}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-100">{user.email}</p>
+              <p className="text-xs text-zinc-500 mt-0.5">Beta member</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 text-sm">
+              <Mail className="h-4 w-4 text-zinc-500 shrink-0" />
+              <span className="text-zinc-400 w-28 shrink-0">Email</span>
+              <span className="text-zinc-200">{user.email}</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <Calendar className="h-4 w-4 text-zinc-500 shrink-0" />
+              <span className="text-zinc-400 w-28 shrink-0">Member since</span>
+              <span className="text-zinc-200">{memberSince}</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <ShieldCheck className="h-4 w-4 text-zinc-500 shrink-0" />
+              <span className="text-zinc-400 w-28 shrink-0">Auth</span>
+              <span className="text-zinc-200">Email / Password</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <Hash className="h-4 w-4 text-zinc-500 shrink-0" />
+              <span className="text-zinc-400 w-28 shrink-0">User ID</span>
+              <span className="font-mono text-xs text-zinc-500">{user.id}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Credits */}
       <Card className="mb-4">
         <CardHeader><CardTitle>Credits</CardTitle></CardHeader>
         <CardContent>
@@ -36,6 +82,7 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* API */}
       <Card>
         <CardHeader><CardTitle>API Access</CardTitle></CardHeader>
         <CardContent>

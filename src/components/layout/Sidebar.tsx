@@ -17,9 +17,11 @@ export const NAV = [
   { href: "/settings",  icon: Settings,        label: "Settings"   },
 ];
 
-export function Sidebar() {
+export function Sidebar({ email }: { email: string | null }) {
   const path   = usePathname();
   const router = useRouter();
+
+  const initial = email ? email[0].toUpperCase() : "?";
 
   async function signOut() {
     const sb = createSupabaseBrowserClient();
@@ -58,7 +60,15 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-zinc-800 px-2 py-3">
+      <div className="border-t border-zinc-800 px-3 py-3 space-y-2">
+        {/* User info */}
+        <div className="flex items-center gap-2.5 px-1 py-1">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-600/20 border border-red-600/30 text-xs font-bold text-red-400">
+            {initial}
+          </div>
+          <span className="text-xs text-zinc-400 truncate flex-1" title={email ?? ""}>{email ?? "—"}</span>
+        </div>
+
         <button
           onClick={signOut}
           className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300 transition-colors"
