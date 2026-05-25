@@ -139,7 +139,7 @@ async function scrapeOSM(
   // Use Nominatim to get city bbox, then Overpass for amenities
   const nomRes = await fetch(
     `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`,
-    { headers: { "User-Agent": "VUKA-Hunter/1.0 (contact@vukadigital.com)" } }
+    { headers: { "User-Agent": "Dullu Digital-Hunter/1.0 (contact@dulludigital.com)" } }
   );
   const nomData = await nomRes.json();
   if (!nomData.length) throw new Error(`City not found in OSM: ${city}`);

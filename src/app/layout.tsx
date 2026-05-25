@@ -16,7 +16,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "VUKA Hunter",
+  title: "Dullu Digital Hunter",
   description: "B2B lead intelligence & AI outreach",
   manifest: "/manifest.json",
   appleWebApp: {
