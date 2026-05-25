@@ -53,6 +53,18 @@ export async function POST(req: NextRequest) {
   }
 
   const db = createSupabaseServiceClient();
+
+  // One active scrape job per org — prevents quota exhaustion between concurrent users
+  const { count: activeJobs } = await db
+    .from("hunter_scrape_jobs")
+    .select("*", { count: "exact", head: true })
+    .eq("org_id", user.id)
+    .in("status", ["queued", "running"]);
+
+  if (activeJobs && activeJobs > 0) {
+    return NextResponse.json({ error: "A scrape job is already running. Wait for it to finish." }, { status: 429 });
+  }
+
   await db.from("hunter_orgs").upsert(
     { id: user.id, name: "My Workspace", plan: "beta", credits_total: 999999 },
     { onConflict: "id" }
@@ -252,6 +264,21 @@ async function runScrapeJob(
       progress:    imported,
       finished_at: new Date().toISOString(),
     }).eq("id", jobId);
+
+    // Audit trail — write credit transaction and increment usage counter
+    if (imported > 0) {
+      const [{ data: org }] = await Promise.all([
+        db.from("hunter_orgs").select("credits_used").eq("id", orgId).single(),
+        db.from("hunter_credit_transactions").insert({
+          org_id: orgId,
+          delta:  -imported,
+          reason: `scrape:${vertical}:${city}`,
+        }),
+      ]);
+      await db.from("hunter_orgs")
+        .update({ credits_used: (org?.credits_used ?? 0) + imported })
+        .eq("id", orgId);
+    }
 
   } catch (err) {
     console.error("[Hunter] Scrape job error:", err);
