@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,6 @@ export default function SignUpPage() {
   const [error, setError]       = useState("");
   const [done, setDone]         = useState(false);
   const [loading, setLoading]   = useState(false);
-  const router = useRouter();
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
@@ -24,9 +22,7 @@ export default function SignUpPage() {
       const { data, error } = await sb.auth.signUp({ email, password });
       if (error) { setError(error.message); return; }
       if (data.session) {
-        // Auto-confirm ON — session created immediately
-        router.refresh();
-        router.push("/dashboard");
+        window.location.assign("/dashboard");
       } else {
         setDone(true);
       }
