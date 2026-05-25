@@ -60,9 +60,9 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
 
-  if (!user && pathname !== "/" && !pathname.startsWith("/api")) {
+  if (!session && pathname !== "/" && !pathname.startsWith("/api")) {
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 

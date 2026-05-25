@@ -7,31 +7,28 @@ import { STAGES } from "@/lib/utils";
 
 async function getStats(orgId: string) {
   const db = createSupabaseServiceClient();
-  const [{ count: total }, { count: hot }, { count: enriched }, { count: scored }, { data: recent }] =
+  const [{ count: total }, { count: hot }, { count: enriched }, { count: scored }, { data: recent }, { data: stageRows }] =
     await Promise.all([
       db.from("hunter_leads").select("*", { count: "exact", head: true }).eq("org_id", orgId),
       db.from("hunter_leads").select("*", { count: "exact", head: true }).eq("org_id", orgId).gte("google_rating", 4.5).gte("google_review_count", 30),
       db.from("hunter_leads").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("enrichment_status", "done"),
       db.from("hunter_leads").select("*", { count: "exact", head: true }).eq("org_id", orgId).not("score", "is", null),
       db.from("hunter_leads").select("id,name,score,stage,vertical,city,google_rating").eq("org_id", orgId).order("created_at", { ascending: false }).limit(6),
+      db.from("hunter_leads").select("stage").eq("org_id", orgId),
     ]);
 
   const stageCounts: Record<string, number> = {};
-  const stageTotals = await Promise.all(
-    STAGES.map((s) =>
-      db.from("hunter_leads").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("stage", s.value)
-    )
-  );
-  STAGES.forEach((s, i) => { stageCounts[s.value] = stageTotals[i].count ?? 0; });
+  stageRows?.forEach(({ stage }) => { stageCounts[stage] = (stageCounts[stage] ?? 0) + 1; });
   return { total, hot, enriched, scored, recent: recent ?? [], stageCounts };
 }
 
 export default async function DashboardPage() {
   const user = await requireUser();
   const db = createSupabaseServiceClient();
-  await db.from("hunter_orgs").upsert({ id: user.id, name: user.email ?? "My Workspace" }, { onConflict: "id", ignoreDuplicates: true });
-
-  const { total, hot, enriched, scored, recent, stageCounts } = await getStats(user.id);
+  const [{ total, hot, enriched, scored, recent, stageCounts }] = await Promise.all([
+    getStats(user.id),
+    db.from("hunter_orgs").upsert({ id: user.id, name: user.email ?? "My Workspace", plan: "beta", credits_total: 999999 }, { onConflict: "id" }),
+  ]);
   const stats = [
     { label: "Total Leads",     value: total ?? 0,    icon: Users,      color: "text-blue-400" },
     { label: "Hot Leads ★4.5+", value: hot ?? 0,      icon: Star,       color: "text-yellow-400" },
