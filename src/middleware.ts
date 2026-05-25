@@ -91,11 +91,29 @@ export async function middleware(req: NextRequest) {
 }
 
 function addSecurityHeaders(res: NextResponse): NextResponse {
-  res.headers.set("X-Robots-Tag",       "noindex, nofollow, noarchive, nosnippet");
-  res.headers.set("X-Frame-Options",    "DENY");
-  res.headers.set("X-Content-Type-Options", "nosniff");
-  res.headers.set("Referrer-Policy",    "no-referrer");
-  res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  res.headers.set("X-Robots-Tag",            "noindex, nofollow, noarchive, nosnippet");
+  res.headers.set("X-Frame-Options",         "DENY");
+  res.headers.set("X-Content-Type-Options",  "nosniff");
+  res.headers.set("Referrer-Policy",         "no-referrer");
+  res.headers.set("Permissions-Policy",      "camera=(), microphone=(), geolocation=()");
+  res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  res.headers.set("Cross-Origin-Opener-Policy",   "same-origin");
+  res.headers.set("Cross-Origin-Resource-Policy",  "same-origin");
+  res.headers.set("Cross-Origin-Embedder-Policy",  "require-corp");
+  res.headers.set(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",       // Next.js inline scripts require unsafe-inline
+      "style-src 'self' 'unsafe-inline'",        // Tailwind/inline styles
+      "img-src 'self' data: https:",             // allow remote images (lead logos etc.)
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://maps.googleapis.com",
+      "font-src 'self'",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join("; ")
+  );
   return res;
 }
 
