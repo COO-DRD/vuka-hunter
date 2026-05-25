@@ -88,18 +88,29 @@ async function scrapeGooglePlaces(
     const body: Record<string, unknown> = { textQuery: fullQuery, pageSize: 20 };
     if (pageToken) body.pageToken = pageToken;
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://digital.dullugroup.co.ke";
     const res = await fetch(PLACES_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask": FIELD_MASK,
+        // Required if the API key has HTTP referrer restrictions
+        "Referer": siteUrl,
+        "Origin": siteUrl,
       },
       body: JSON.stringify(body),
     });
 
     if (!res.ok) {
       const err = await res.text();
+      if (res.status === 403) {
+        throw new Error(
+          `Google Places API key rejected (403). Go to console.cloud.google.com → ` +
+          `Credentials → your key → add "${siteUrl}/*" to allowed HTTP referrers, ` +
+          `or remove referrer restrictions for server-to-server use.`
+        );
+      }
       throw new Error(`Google Places API error ${res.status}: ${err}`);
     }
 
