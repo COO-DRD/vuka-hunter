@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hunter Beta Feedback</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #09090b;
+      color: #e4e4e7;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      padding: 24px 16px 64px;
+    }
+
+    .wrap { max-width: 620px; margin: 0 auto; }
+
+    header { text-align: center; padding: 32px 0 40px; border-bottom: 1px solid #27272a; margin-bottom: 40px; }
+    header .logo {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 44px; height: 44px; background: #dc2626; border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    header .logo svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    h1 { font-size: 22px; font-weight: 700; color: #fafafa; }
+    header p { color: #71717a; font-size: 14px; margin-top: 6px; }
+
+    .section { margin-bottom: 40px; }
+    .section-title {
+      font-size: 11px; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; color: #71717a;
+      border-bottom: 1px solid #27272a;
+      padding-bottom: 8px; margin-bottom: 24px;
+    }
+
+    .field { margin-bottom: 24px; }
+    label { display: block; font-size: 14px; font-weight: 500; color: #d4d4d8; margin-bottom: 8px; }
+    label span.req { color: #ef4444; margin-left: 2px; }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      background: #18181b;
+      border: 1px solid #3f3f46;
+      border-radius: 8px;
+      color: #e4e4e7;
+      font-size: 14px;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color .15s;
+      font-family: inherit;
+    }
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus { border-color: #dc2626; }
+    textarea { resize: vertical; min-height: 80px; }
+    select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+    /* Radio & checkbox groups */
+    .opts { display: flex; flex-direction: column; gap: 8px; }
+    .opt {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: #18181b; border: 1px solid #3f3f46;
+      border-radius: 8px; padding: 10px 12px; cursor: pointer;
+      transition: border-color .15s;
+    }
+    .opt:has(input:checked) { border-color: #dc2626; background: #1c0a0a; }
+    .opt input { margin-top: 2px; accent-color: #dc2626; flex-shrink: 0; }
+    .opt-label { font-size: 14px; color: #d4d4d8; }
+
+    /* Checkbox grid for multi-select */
+    .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media (max-width: 480px) { .check-grid { grid-template-columns: 1fr; } }
+
+    /* Scale */
+    .scale { display: flex; gap: 8px; }
+    .scale-btn {
+      flex: 1; padding: 10px 4px; background: #18181b;
+      border: 1px solid #3f3f46; border-radius: 8px;
+      color: #71717a; font-size: 14px; font-weight: 600;
+      cursor: pointer; text-align: center; transition: all .15s;
+      font-family: inherit;
+    }
+    .scale-btn:hover { border-color: #52525b; color: #e4e4e7; }
+    .scale-btn.active { background: #dc2626; border-color: #dc2626; color: #fff; }
+    .scale-labels { display: flex; justify-content: space-between; margin-top: 6px; }
+    .scale-labels span { font-size: 11px; color: #52525b; }
+
+    button[type="submit"] {
+      width: 100%; padding: 14px;
+      background: #dc2626; border: none; border-radius: 8px;
+      color: #fff; font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: background .15s;
+      font-family: inherit; margin-top: 8px;
+    }
+    button[type="submit"]:hover { background: #ef4444; }
+    button[type="submit"]:disabled { background: #3f3f46; cursor: not-allowed; }
+
+    .error-msg { color: #f87171; font-size: 13px; margin-top: 6px; display: none; }
+    .field.has-error input, .field.has-error textarea, .field.has-error select { border-color: #ef4444; }
+    .field.has-error .error-msg { display: block; }
+
+    #success {
+      display: none; text-align: center;
+      padding: 64px 24px;
+    }
+    #success .icon {
+      width: 56px; height: 56px; background: #052e16;
+      border: 1px solid #166534; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+    }
+    #success .icon svg { width: 26px; height: 26px; stroke: #4ade80; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    #success h2 { font-size: 20px; font-weight: 700; color: #fafafa; margin-bottom: 8px; }
+    #success p { color: #71717a; font-size: 14px; }
+
+    #form-error {
+      display: none; background: #1c0a0a; border: 1px solid #7f1d1d;
+      border-radius: 8px; padding: 12px 16px;
+      color: #f87171; font-size: 14px; margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    </div>
+    <h1>Hunter Beta Feedback</h1>
+    <p>5 minutes. Honest answers only. This shapes what gets built next.</p>
+  </header>
+
+  <div id="form-error"></div>
+
+  <form id="feedback-form" novalidate>
+
+    <!-- ── Section 1 ── -->
+    <div class="section">
+      <div class="section-title">About You</div>
+
+      <div class="field" id="f-name">
+        <label>Your name <span class="req">*</span></label>
+        <input type="text" name="name" placeholder="Full name" />
+        <div class="error-msg">Required</div>
+      </div>
+
+      <div class="field" id="f-role">
+        <label>Your role <span class="req">*</span></label>
+        <input type="text" name="role" placeholder="e.g. Founder, Sales Manager, Freelancer" />
+        <div class="error-msg">Required</div>
+      </div>
+
+      <div class="field">
+        <label>Type of business you run or work in</label>
+        <input type="text" name="business_type" placeholder="e.g. Digital agency, real estate broker, solo consultant" />
+      </div>
+
+      <div class="field">
+        <label>How did you hear about Hunter?</label>
+        <div class="opts" id="referral-opts">
+          <label class="opt"><input type="radio" name="referral_source" value="WhatsApp" /><span class="opt-label">WhatsApp</span></label>
+          <label class="opt"><input type="radio" name="referral_source" value="Referral" /><span class="opt-label">Referral from someone</span></label>
+          <label class="opt"><input type="radio" name="referral_source" value="LinkedIn / Social" /><span class="opt-label">LinkedIn / Social media</span></label>
+          <label class="opt"><input type="radio" name="referral_source" value="Dullu Digital" /><span class="opt-label">Dullu Digital</span></label>
+          <label class="opt"><input type="radio" name="referral_source" value="Other" /><span class="opt-label">Other</span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Section 2 ── -->
+    <div class="section">
+      <div class="section-title">The Core Experience</div>
+
+      <div class="field">
+        <label>Have you successfully scraped leads using Hunter?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="scraped_leads" value="Yes — multiple scrapes" /><span class="opt-label">Yes — I've run multiple scrapes</span></label>
+          <label class="opt"><input type="radio" name="scraped_leads" value="Yes — once" /><span class="opt-label">Yes — but only once</span></label>
+          <label class="opt"><input type="radio" name="scraped_leads" value="Tried — got error" /><span class="opt-label">I tried but got an error</span></label>
+          <label class="opt"><input type="radio" name="scraped_leads" value="Not yet" /><span class="opt-label">No — haven't tried yet</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Which verticals have you scraped? <em style="color:#52525b;font-size:13px;">(select all that apply)</em></label>
+        <div class="check-grid">
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Dental Clinic" /><span class="opt-label">Dental Clinic</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Medical Clinic" /><span class="opt-label">Medical Clinic</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Private Hospital" /><span class="opt-label">Private Hospital</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Hotel" /><span class="opt-label">Hotel / Hospitality</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Real Estate" /><span class="opt-label">Real Estate Agency</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Law Firm" /><span class="opt-label">Law Firm</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Accounting" /><span class="opt-label">Accounting / CPA Firm</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Private School" /><span class="opt-label">Private School</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Travel Agency" /><span class="opt-label">Travel Agency</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Gym" /><span class="opt-label">Gym / Fitness Studio</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Restaurant" /><span class="opt-label">Restaurant</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Pharmacy" /><span class="opt-label">Pharmacy</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Salon / Spa" /><span class="opt-label">Salon / Spa</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Event Venue" /><span class="opt-label">Event Venue</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Eye Clinic" /><span class="opt-label">Eye Clinic / Optician</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Vet" /><span class="opt-label">Veterinary Clinic</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Logistics" /><span class="opt-label">Logistics / Courier</span></label>
+          <label class="opt"><input type="checkbox" name="verticals_used" value="Car Dealer" /><span class="opt-label">Car Dealership</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Which cities have you targeted? <em style="color:#52525b;font-size:13px;">(select all that apply)</em></label>
+        <div class="check-grid">
+          <label class="opt"><input type="checkbox" name="cities_used" value="Nairobi" /><span class="opt-label">Nairobi</span></label>
+          <label class="opt"><input type="checkbox" name="cities_used" value="Mombasa" /><span class="opt-label">Mombasa</span></label>
+          <label class="opt"><input type="checkbox" name="cities_used" value="Kisumu" /><span class="opt-label">Kisumu</span></label>
+          <label class="opt"><input type="checkbox" name="cities_used" value="Nakuru" /><span class="opt-label">Nakuru</span></label>
+          <label class="opt"><input type="checkbox" name="cities_used" value="Eldoret" /><span class="opt-label">Eldoret</span></label>
+          <label class="opt"><input type="checkbox" name="cities_used" value="Thika" /><span class="opt-label">Thika</span></label>
+          <label class="opt"><input type="checkbox" name="cities_used" value="Nyeri" /><span class="opt-label">Nyeri</span></label>
+          <label class="opt"><input type="checkbox" name="cities_used" value="Meru" /><span class="opt-label">Meru</span></label>
+          <label class="opt"><input type="checkbox" name="cities_used" value="Machakos" /><span class="opt-label">Machakos</span></label>
+          <label class="opt"><input type="checkbox" name="cities_used" value="Kisii" /><span class="opt-label">Kisii</span></label>
+          <label class="opt"><input type="checkbox" name="cities_used" value="Kakamega" /><span class="opt-label">Kakamega</span></label>
+          <label class="opt"><input type="checkbox" name="cities_used" value="Kericho" /><span class="opt-label">Kericho</span></label>
+          <label class="opt"><input type="checkbox" name="cities_used" value="Nanyuki" /><span class="opt-label">Nanyuki</span></label>
+          <label class="opt"><input type="checkbox" name="cities_used" value="Malindi" /><span class="opt-label">Malindi</span></label>
+          <label class="opt"><input type="checkbox" name="cities_used" value="Kilifi" /><span class="opt-label">Kilifi</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>How useful was the lead data you got?</label>
+        <div class="scale" id="scale-lead-usefulness"></div>
+        <div class="scale-labels"><span>Useless</span><span>Exactly what I needed</span></div>
+        <input type="hidden" name="lead_usefulness" />
+      </div>
+
+      <div class="field">
+        <label>Did you use AI enrichment (emails, tech stack, social links)?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="used_enrichment" value="Yes — worked well" /><span class="opt-label">Yes — it worked well</span></label>
+          <label class="opt"><input type="radio" name="used_enrichment" value="Yes — mixed results" /><span class="opt-label">Yes — results were mixed</span></label>
+          <label class="opt"><input type="radio" name="used_enrichment" value="No — didn't know about it" /><span class="opt-label">No — I didn't know about it</span></label>
+          <label class="opt"><input type="radio" name="used_enrichment" value="No — failed" /><span class="opt-label">No — I tried but it failed</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Did you use AI scoring (0–100 lead score)?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="used_scoring" value="Yes — made sense" /><span class="opt-label">Yes — scores made sense</span></label>
+          <label class="opt"><input type="radio" name="used_scoring" value="Yes — didn't trust" /><span class="opt-label">Yes — but I didn't trust the scores</span></label>
+          <label class="opt"><input type="radio" name="used_scoring" value="No — didn't get to it" /><span class="opt-label">No — didn't get to it</span></label>
+          <label class="opt"><input type="radio" name="used_scoring" value="No — don't see value" /><span class="opt-label">No — don't see the value</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Did you use the outreach message generator?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="used_outreach" value="Yes — sent as-is" /><span class="opt-label">Yes — I actually sent the messages</span></label>
+          <label class="opt"><input type="radio" name="used_outreach" value="Yes — rewrote before sending" /><span class="opt-label">Yes — but I rewrote them first</span></label>
+          <label class="opt"><input type="radio" name="used_outreach" value="Yes — not good enough" /><span class="opt-label">Yes — but they weren't good enough to use</span></label>
+          <label class="opt"><input type="radio" name="used_outreach" value="No" /><span class="opt-label">No — didn't try it</span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Section 3 ── -->
+    <div class="section">
+      <div class="section-title">Quality Check</div>
+
+      <div class="field">
+        <label>How would you rate the quality of leads Hunter finds?</label>
+        <div class="scale" id="scale-lead-quality"></div>
+        <div class="scale-labels"><span>Junk</span><span>Exactly right</span></div>
+        <input type="hidden" name="lead_quality" />
+      </div>
+
+      <div class="field">
+        <label>Biggest problem with the leads you got?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="biggest_problem" value="Outdated contact info" /><span class="opt-label">Outdated contact info</span></label>
+          <label class="opt"><input type="radio" name="biggest_problem" value="Wrong type of business" /><span class="opt-label">Wrong type of business</span></label>
+          <label class="opt"><input type="radio" name="biggest_problem" value="Too few results" /><span class="opt-label">Too few results</span></label>
+          <label class="opt"><input type="radio" name="biggest_problem" value="Duplicate leads" /><span class="opt-label">Duplicate leads</span></label>
+          <label class="opt"><input type="radio" name="biggest_problem" value="No website / email found" /><span class="opt-label">No website or email found</span></label>
+          <label class="opt"><input type="radio" name="biggest_problem" value="No problem" /><span class="opt-label">No major problem</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>How usable are the AI outreach messages out-of-the-box?</label>
+        <div class="scale" id="scale-outreach-quality"></div>
+        <div class="scale-labels"><span>Would never send that</span><span>Sent as-is</span></div>
+        <input type="hidden" name="outreach_quality" />
+      </div>
+    </div>
+
+    <!-- ── Section 4 ── -->
+    <div class="section">
+      <div class="section-title">What Matters to You</div>
+
+      <div class="field">
+        <label>What feature are you most missing right now?</label>
+        <textarea name="missing_feature" placeholder="Be specific — what would make your week easier?"></textarea>
+      </div>
+
+      <div class="field">
+        <label>If Hunter could only do ONE thing extremely well, what should it be?</label>
+        <input type="text" name="one_thing" placeholder="Your answer" />
+      </div>
+    </div>
+
+    <!-- ── Section 5 ── -->
+    <div class="section">
+      <div class="section-title">Willingness to Pay</div>
+
+      <div class="field">
+        <label>Would you pay for Hunter once it's out of beta?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="would_pay" value="Yes definitely" /><span class="opt-label">Yes, definitely</span></label>
+          <label class="opt"><input type="radio" name="would_pay" value="Yes if price is right" /><span class="opt-label">Yes, if the price is right</span></label>
+          <label class="opt"><input type="radio" name="would_pay" value="Maybe" /><span class="opt-label">Maybe — depends on features</span></label>
+          <label class="opt"><input type="radio" name="would_pay" value="No" /><span class="opt-label">No</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>What feels like a fair monthly price?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="fair_price" value="Under $20/month" /><span class="opt-label">Under $20/month</span></label>
+          <label class="opt"><input type="radio" name="fair_price" value="$20–$50/month" /><span class="opt-label">$20–$50/month</span></label>
+          <label class="opt"><input type="radio" name="fair_price" value="$50–$100/month" /><span class="opt-label">$50–$100/month</span></label>
+          <label class="opt"><input type="radio" name="fair_price" value="$100+/month" /><span class="opt-label">$100+/month</span></label>
+          <label class="opt"><input type="radio" name="fair_price" value="Pay per use only" /><span class="opt-label">Pay per use only</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>What would make you willing to pay more?</label>
+        <input type="text" name="pay_more_for" placeholder="e.g. auto-send emails, more cities, CRM integration" />
+      </div>
+    </div>
+
+    <!-- ── Section 6 ── -->
+    <div class="section">
+      <div class="section-title">Final Thoughts</div>
+
+      <div class="field">
+        <label>What's the one thing that would make Hunter a tool you use every week?</label>
+        <textarea name="weekly_use_factor" placeholder="Your answer"></textarea>
+      </div>
+
+      <div class="field">
+        <label>How likely are you to recommend Hunter to someone else right now?</label>
+        <div class="scale" id="scale-nps"></div>
+        <div class="scale-labels"><span>Not at all</span><span>Already did</span></div>
+        <input type="hidden" name="nps" />
+      </div>
+
+      <div class="field">
+        <label>Anything else — bugs, confusing UI, missing things?</label>
+        <textarea name="other_feedback" placeholder="Anything goes"></textarea>
+      </div>
+    </div>
+
+    <button type="submit" id="submit-btn">Submit Feedback</button>
+
+  </form>
+
+  <div id="success">
+    <div class="icon">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h2>Thanks — feedback received.</h2>
+    <p>Dullu reads every response. If you flagged something critical, expect a reply within 24 hours.</p>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL = "https://gjxadcttrtoqtzddxyzs.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqeGFkY3R0cnRvcXR6ZGR4eXpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNDM4MjgsImV4cCI6MjA4NzYxOTgyOH0._PfhboprTB_LOxq3wThkVS6CKcQgo7MXmZUaDIsUujg";
+
+  // Build 1–5 scale buttons
+  function buildScale(containerId, hiddenName, max) {
+    const container = document.getElementById(containerId);
+    const hidden = document.querySelector(`input[name="${hiddenName}"]`);
+    for (let i = 1; i <= max; i++) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "scale-btn";
+      btn.textContent = i;
+      btn.addEventListener("click", () => {
+        container.querySelectorAll(".scale-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        hidden.value = i;
+      });
+      container.appendChild(btn);
+    }
+  }
+
+  buildScale("scale-lead-usefulness",  "lead_usefulness",  5);
+  buildScale("scale-lead-quality",     "lead_quality",     5);
+  buildScale("scale-outreach-quality", "outreach_quality", 5);
+  buildScale("scale-nps",              "nps",              10);
+
+  document.getElementById("feedback-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const btn  = document.getElementById("submit-btn");
+    const errBanner = document.getElementById("form-error");
+
+    // Basic required validation
+    let valid = true;
+    ["name", "role"].forEach(name => {
+      const field = document.getElementById("f-" + name);
+      const input = field.querySelector("input");
+      if (!input.value.trim()) {
+        field.classList.add("has-error");
+        valid = false;
+      } else {
+        field.classList.remove("has-error");
+      }
+    });
+    if (!valid) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+
+    // Collect data
+    const fd = new FormData(form);
+    const data = {};
+
+    // Simple text fields
+    ["name","role","business_type","referral_source","scraped_leads",
+     "used_enrichment","used_scoring","used_outreach","biggest_problem",
+     "missing_feature","one_thing","would_pay","fair_price","pay_more_for",
+     "weekly_use_factor","other_feedback"].forEach(k => {
+      data[k] = fd.get(k) || null;
+    });
+
+    // Integer fields
+    ["lead_usefulness","lead_quality","outreach_quality","nps"].forEach(k => {
+      const v = fd.get(k);
+      data[k] = v ? parseInt(v) : null;
+    });
+
+    // Array fields
+    data.verticals_used = fd.getAll("verticals_used") || null;
+    data.cities_used    = fd.getAll("cities_used")    || null;
+
+    btn.disabled = true;
+    btn.textContent = "Submitting…";
+    errBanner.style.display = "none";
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/beta_hunter_feedback`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Prefer": "return=minimal",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err);
+      }
+
+      form.style.display = "none";
+      document.getElementById("success").style.display = "block";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+    } catch (err) {
+      errBanner.textContent = "Something went wrong — check your connection and try again.";
+      errBanner.style.display = "block";
+      btn.disabled = false;
+      btn.textContent = "Submit Feedback";
+    }
+  });
+</script>
+</body>
+</html>
