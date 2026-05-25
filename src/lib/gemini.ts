@@ -1,5 +1,6 @@
 const GEMINI_STREAM_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse";
+// Key is sent via header — never in the URL so it can't leak in logs or error messages.
 
 interface GeminiConfig {
   temperature: number;
@@ -24,9 +25,9 @@ export async function geminiStream(
     if (attempt > 0) {
       await new Promise((r) => setTimeout(r, 1_000 * 2 ** (attempt - 1)));
     }
-    lastRes = await fetch(`${GEMINI_STREAM_URL}&key=${apiKey}`, {
+    lastRes = await fetch(GEMINI_STREAM_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body,
     });
     if (lastRes.ok || (lastRes.status !== 429 && lastRes.status !== 503)) break;
