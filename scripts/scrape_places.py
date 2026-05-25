@@ -23,7 +23,8 @@ from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).parent / ".env")
+load_dotenv(Path(__file__).parent.parent / ".env.local")
+load_dotenv(Path(__file__).parent.parent / ".env")  # fallback
 
 API_KEY = os.environ.get("GOOGLE_PLACES_API_KEY")
 SEARCH_URL = "https://places.googleapis.com/v1/places:searchText"
