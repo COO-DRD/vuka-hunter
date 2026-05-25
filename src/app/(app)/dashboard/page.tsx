@@ -17,10 +17,12 @@ async function getStats(orgId: string) {
     ]);
 
   const stageCounts: Record<string, number> = {};
-  for (const s of STAGES) {
-    const { count } = await db.from("hunter_leads").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("stage", s.value);
-    stageCounts[s.value] = count ?? 0;
-  }
+  const stageTotals = await Promise.all(
+    STAGES.map((s) =>
+      db.from("hunter_leads").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("stage", s.value)
+    )
+  );
+  STAGES.forEach((s, i) => { stageCounts[s.value] = stageTotals[i].count ?? 0; });
   return { total, hot, enriched, scored, recent: recent ?? [], stageCounts };
 }
 

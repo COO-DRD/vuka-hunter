@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { VERTICALS, STAGES, scoreColor } from "@/lib/utils";
 import {
   Search, Star, Globe, Phone, ChevronRight,
-  RefreshCw, Zap, Filter
+  RefreshCw, Filter, Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -37,24 +37,32 @@ export default function LeadsPage() {
   const [leads, setLeads]         = useState<Lead[]>([]);
   const [loading, setLoading]     = useState(true);
   const [search, setSearch]       = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterV, setFilterV]     = useState("");
   const [filterStage, setFilterStage] = useState("");
   const [filterScore, setFilterScore] = useState("");
   const [enriching, setEnriching] = useState<string | null>(null);
-  const [scoring, setScoring]     = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounce search — avoid firing on every keystroke
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [search]);
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (search)      params.set("q", search);
-    if (filterV)     params.set("vertical", filterV);
-    if (filterStage) params.set("stage", filterStage);
-    if (filterScore) params.set("min_score", filterScore);
+    if (debouncedSearch) params.set("q", debouncedSearch);
+    if (filterV)         params.set("vertical", filterV);
+    if (filterStage)     params.set("stage", filterStage);
+    if (filterScore)     params.set("min_score", filterScore);
     const res = await fetch(`/api/leads?${params}`);
     const data = await res.json();
     setLeads(data.leads ?? []);
     setLoading(false);
-  }, [search, filterV, filterStage, filterScore]);
+  }, [debouncedSearch, filterV, filterStage, filterScore]);
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
@@ -63,21 +71,15 @@ export default function LeadsPage() {
     try {
       const res = await fetch("/api/enrich", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: id }) });
       if (!res.ok) throw new Error("Enrichment failed");
-      toast.success("Enriched");
+      toast.success("Enriched — open lead to score with AI");
       fetchLeads();
     } catch { toast.error("Enrichment failed"); }
     finally { setEnriching(null); }
   }
 
-  async function scoreLead(id: string) {
-    setScoring(id);
-    try {
-      const res = await fetch("/api/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: id }) });
-      if (!res.ok) throw new Error("Scoring failed");
-      toast.success("Scored");
-      fetchLeads();
-    } catch { toast.error("Scoring failed"); }
-    finally { setScoring(null); }
+  // Score uses SSE — only works in the lead detail page. Direct from list, just navigate.
+  function scoreLead(id: string) {
+    window.location.href = `/leads/${id}`;
   }
 
   return (
@@ -193,14 +195,13 @@ export default function LeadsPage() {
                         </button>
                       )}
                       {lead.score === null && lead.enrichment_status === "done" && (
-                        <button
-                          onClick={() => scoreLead(lead.id)}
-                          disabled={scoring === lead.id}
-                          className="rounded px-2 py-1 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors disabled:opacity-50"
-                          title="Score with AI"
+                        <Link
+                          href={`/leads/${lead.id}`}
+                          className="rounded px-2 py-1 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+                          title="Open to score with AI"
                         >
-                          {scoring === lead.id ? "…" : <Zap className="h-3.5 w-3.5" />}
-                        </button>
+                          <Zap className="h-3.5 w-3.5" />
+                        </Link>
                       )}
                     </div>
                   </td>

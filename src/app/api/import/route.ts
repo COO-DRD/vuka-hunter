@@ -19,6 +19,11 @@ export async function POST(req: NextRequest) {
   if (lines.length < 2) return NextResponse.json({ error: "CSV has no data rows" }, { status: 400 });
 
   const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
+  if (!headers.includes("name")) {
+    return NextResponse.json({
+      error: `CSV missing required "name" column. Found columns: ${headers.join(", ")}. Expected: name, phone, email, website, address, google_rating, google_review_count, google_maps_url`,
+    }, { status: 400 });
+  }
 
   const db = createSupabaseServiceClient();
   await db.from("hunter_orgs").upsert({ id: user.id, name: "My Workspace" }, { onConflict: "id", ignoreDuplicates: true });
