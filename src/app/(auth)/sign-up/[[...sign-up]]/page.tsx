@@ -19,13 +19,20 @@ export default function SignUpPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const sb = createSupabaseBrowserClient();
-    const { error } = await sb.auth.signUp({ email, password });
-    if (error) { setError(error.message); setLoading(false); }
-    else {
-      // Auto-confirm is off by default — tell user to check email
-      // If auto-confirm is on in Supabase, redirect directly
-      setDone(true);
+    try {
+      const sb = createSupabaseBrowserClient();
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if (error) { setError(error.message); return; }
+      if (data.session) {
+        // Auto-confirm ON — session created immediately
+        router.refresh();
+        router.push("/dashboard");
+      } else {
+        setDone(true);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Check your connection.");
+    } finally {
       setLoading(false);
     }
   }

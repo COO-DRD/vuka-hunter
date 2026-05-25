@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,15 +13,25 @@ export default function SignInPage() {
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackError = searchParams.get("error");
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const sb = createSupabaseBrowserClient();
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) { setError(error.message); setLoading(false); }
-    else router.push("/dashboard");
+    try {
+      const sb = createSupabaseBrowserClient();
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) { setError(error.message); return; }
+      // router.refresh() is critical — forces server components to re-read the new session cookie
+      router.refresh();
+      router.push("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Check your connection.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -44,6 +54,9 @@ export default function SignInPage() {
             <label className="block text-xs text-zinc-400 mb-1.5">Password</label>
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
           </div>
+          {callbackError === "link_expired" && !error && (
+            <p className="text-xs text-yellow-400">Confirmation link expired — sign in directly or request a new link.</p>
+          )}
           {error && <p className="text-xs text-red-400">{error}</p>}
           <Button type="submit" loading={loading} className="w-full mt-1">Sign in</Button>
         </form>

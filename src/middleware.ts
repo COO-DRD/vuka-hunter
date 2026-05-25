@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/api/webhooks"];
+const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/auth/callback", "/api/webhooks"];
 
 // Known headless / scraper user-agent fragments
 const BOT_UA = [
