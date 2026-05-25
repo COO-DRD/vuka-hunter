@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     return `active ${vertical} in ${city}`;
   })();
 
-  const prompt = `You are a senior B2B sales copywriter for a Kenyan AI & digital growth agency (VUKA Digital).
+  const prompt = `You are a senior B2B sales copywriter for a Kenyan AI & digital growth agency (Dullu Digital).
 Write TWO cold outreach messages for the EXACT business below. Use their real name. Be hyper-specific — cite actual numbers or observations, not generalities. No fluff. No filler openers.
 
 BUSINESS: ${name}
@@ -73,7 +73,7 @@ FIT SCORE: ${score}/100
 LEAD SIGNAL (use this to open): ${leadSignal}
 VERTICAL CONTEXT: ${verticalPain}
 
-SENDER: Dr. Dullu, founder of VUKA Digital — AI automation, booking systems, and growth infrastructure for local businesses. Based in Nairobi.
+SENDER: Dr. Dullu, founder of Dullu Digital — AI automation, booking systems, and growth infrastructure for local businesses. Based in Nairobi.
 
 OUTPUT FORMAT — follow EXACTLY:
 ---WHATSAPP---
@@ -81,7 +81,7 @@ OUTPUT FORMAT — follow EXACTLY:
 ---EMAIL SUBJECT---
 [7 words max. Name the specific gap or opportunity. No "quick question" or "partnership" clichés.]
 ---EMAIL BODY---
-[5 sentences. S1: observation that proves you looked (cite rating, booking gap, or tech). S2: name the revenue cost of that gap. S3: what VUKA Digital delivers to fix it. S4: one proof point or quick win. S5: soft CTA — one question or offer to chat. Sign off: Dr. Dullu | VUKA Digital]
+[5 sentences. S1: observation that proves you looked (cite rating, booking gap, or tech). S2: name the revenue cost of that gap. S3: what Dullu Digital delivers to fix it. S4: one proof point or quick win. S5: soft CTA — one question or offer to chat. Sign off: Dr. Dullu | Dullu Digital]
 
 HARD RULES:
 - Use "${name}" by name — never "your business" or "you"
