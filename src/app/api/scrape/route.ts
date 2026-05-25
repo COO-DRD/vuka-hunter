@@ -253,7 +253,6 @@ async function runScrapeJob(
     await db.from("hunter_scrape_jobs").update({
       status:      "done",
       progress:    imported,
-      total:       imported,
       finished_at: new Date().toISOString(),
     }).eq("id", jobId);
 
