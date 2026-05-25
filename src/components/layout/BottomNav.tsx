@@ -18,7 +18,7 @@ export function BottomNav() {
   return (
     <nav
       className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-md"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      style={{ paddingBottom: "max(env(safe-area-inset-bottom), 4px)" }}
     >
       <div className="flex h-14 items-stretch">
         {TABS.map(({ href, icon: Icon, label }) => {
