@@ -106,8 +106,8 @@ async function scrapeGooglePlaces(
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask": FIELD_MASK,
-        "Referer": "https://vuka-hunter.vercel.app",
-        "Origin": "https://vuka-hunter.vercel.app",
+        "Referer": "https://hunter.dullugroup.co.ke",
+        "Origin": "https://hunter.dullugroup.co.ke",
       },
       body: JSON.stringify(body),
     });
@@ -117,7 +117,7 @@ async function scrapeGooglePlaces(
       if (res.status === 403) {
         throw new Error(
           `Google Places API key rejected (403). In Google Cloud Console → Credentials → ` +
-          `your key → add "https://vuka-hunter.vercel.app/*" to allowed HTTP referrers.`
+          `your key → add "https://hunter.dullugroup.co.ke/*" to allowed HTTP referrers.`
         );
       }
       throw new Error(`Google Places API error ${res.status}: ${err}`);
