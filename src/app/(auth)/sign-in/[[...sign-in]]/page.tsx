@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Zap, Eye, EyeOff, ArrowLeft, CheckCircle } from "lucide-react";
+import { Zap, Eye, EyeOff, ArrowLeft, CheckCircle, UserCheck } from "lucide-react";
 import Link from "next/link";
 
 function friendlyError(msg: string): string {
@@ -25,12 +25,14 @@ export default function SignInPage() {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw]     = useState(false);
-  const [error, setError]       = useState("");
-  const [loading, setLoading]   = useState(false);
+  const [error, setError]           = useState("");
+  const [loading, setLoading]       = useState(false);
+  const [registered, setRegistered] = useState(false);
 
   useEffect(() => {
     const urlError = params.get("error");
     if (urlError === "link_expired") setError("That confirmation link has expired. Request a new one below.");
+    if (params.get("registered") === "1") setRegistered(true);
   }, [params]);
 
   async function handleSignIn(e: React.FormEvent) {
@@ -143,6 +145,13 @@ export default function SignInPage() {
           <h1 className="text-2xl font-bold text-zinc-100">Hunter</h1>
           <p className="text-sm text-zinc-400 mt-1">AI lead scraper &amp; outreach</p>
         </div>
+
+        {registered && (
+          <div className="flex items-center gap-2 rounded-lg border border-green-600/30 bg-green-600/10 px-3 py-2.5 mb-4 text-sm text-green-400">
+            <UserCheck className="h-4 w-4 shrink-0" />
+            Account created! Sign in below.
+          </div>
+        )}
 
         <form onSubmit={handleSignIn} className="space-y-3">
           <div>

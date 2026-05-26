@@ -1,30 +1,18 @@
 "use client";
 import { useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Zap, Eye, EyeOff, Mail, RefreshCw } from "lucide-react";
+import { Zap, Eye, EyeOff, User, Mail, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
-function friendlyError(msg: string): string {
-  if (msg.includes("already registered") || msg.includes("User already exists"))
-    return "An account with this email already exists. Sign in instead.";
-  if (msg.includes("Password should be"))
-    return "Password must be at least 8 characters.";
-  if (msg.includes("Invalid email"))
-    return "Enter a valid email address.";
-  if (msg.includes("rate limit") || msg.includes("too many"))
-    return "Too many attempts. Wait a moment and try again.";
-  return msg || "Something went wrong. Check your connection.";
-}
-
 export default function SignUpPage() {
+  const [name, setName]           = useState("");
   const [email, setEmail]         = useState("");
   const [password, setPassword]   = useState("");
   const [showPw, setShowPw]       = useState(false);
   const [error, setError]         = useState("");
-  const [done, setDone]           = useState(false);
   const [loading, setLoading]     = useState(false);
+  const [done, setDone]           = useState(false);
   const [resending, setResending] = useState(false);
   const [resent, setResent]       = useState(false);
 
@@ -33,20 +21,16 @@ export default function SignUpPage() {
     setLoading(true);
     setError("");
     try {
-      const sb = createSupabaseBrowserClient();
-      const { data, error } = await sb.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
       });
-      if (error) { setError(friendlyError(error.message)); return; }
-      if (data.session) {
-        window.location.assign("/dashboard");
-      } else {
-        setDone(true);
-      }
-    } catch (err) {
-      setError(friendlyError(err instanceof Error ? err.message : ""));
+      const json = await res.json();
+      if (!res.ok) { setError(json.error ?? "Something went wrong."); return; }
+      setDone(true);
+    } catch {
+      setError("Something went wrong. Check your connection.");
     } finally {
       setLoading(false);
     }
@@ -55,11 +39,10 @@ export default function SignUpPage() {
   async function handleResend() {
     setResending(true);
     try {
-      const sb = createSupabaseBrowserClient();
-      await sb.auth.resend({
-        type: "signup",
-        email,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
       });
       setResent(true);
     } finally {
@@ -83,7 +66,6 @@ export default function SignUpPage() {
             Click it to activate your account, then{" "}
             <Link href="/sign-in" className="text-red-400 hover:text-red-300">sign in</Link>.
           </p>
-
           {resent ? (
             <p className="text-xs text-green-400">Email resent — check your inbox (and spam).</p>
           ) : (
@@ -114,6 +96,22 @@ export default function SignUpPage() {
 
         <form onSubmit={handleSignUp} className="space-y-3">
           <div>
+            <label className="block text-xs text-zinc-400 mb-1.5">Full name</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+              <Input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                required
+                autoFocus
+                autoComplete="name"
+                className="pl-9"
+              />
+            </div>
+          </div>
+          <div>
             <label className="block text-xs text-zinc-400 mb-1.5">Email</label>
             <Input
               type="email"
@@ -121,7 +119,6 @@ export default function SignUpPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              autoFocus
               autoComplete="email"
             />
           </div>
