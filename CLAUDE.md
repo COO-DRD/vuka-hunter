@@ -81,9 +81,9 @@ Both `score` and `opener` call the Gemini SSE endpoint directly via `fetch` — 
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
-GOOGLE_PLACES_API_KEY          # HTTP referrer must allow vuka-hunter.vercel.app
+GOOGLE_PLACES_API_KEY          # HTTP referrer must allow hunter.dullugroup.co.ke
 GEMINI_API_KEY
-NEXT_PUBLIC_SITE_URL           # https://vuka-hunter.vercel.app in production
+NEXT_PUBLIC_SITE_URL           # https://hunter.dullugroup.co.ke in production
 STRIPE_SECRET_KEY              # not yet implemented
 STRIPE_WEBHOOK_SECRET          # not yet implemented
 ```
