@@ -1,21 +1,28 @@
 const GEMINI_STREAM_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse";
-// Key is sent via header — never in the URL so it can't leak in logs or error messages.
 
 interface GeminiConfig {
   temperature: number;
   maxOutputTokens: number;
+  // 0 = disable thinking (faster, cheaper, better for structured output)
+  // omit = model default (up to 8000 thinking tokens)
+  thinkingBudget?: number;
 }
 
-// Fetch Gemini SSE with exponential backoff on 429/503
 export async function geminiStream(
   prompt: string,
   config: GeminiConfig,
 ): Promise<Response> {
   const apiKey = process.env.GEMINI_API_KEY!;
+  const { thinkingBudget, ...genConfig } = config;
   const body = JSON.stringify({
     contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: config,
+    generationConfig: {
+      ...genConfig,
+      ...(thinkingBudget !== undefined && {
+        thinkingConfig: { thinkingBudget },
+      }),
+    },
   });
 
   const MAX_ATTEMPTS = 3;
@@ -34,4 +41,17 @@ export async function geminiStream(
   }
 
   return lastRes!;
+}
+
+// Extract only non-thought text tokens from a parsed Gemini SSE chunk.
+// Gemini 2.5 Flash streams thinking tokens first (part.thought === true);
+// filtering them ensures regexes only run on actual model output.
+export function extractGeminiToken(json: unknown): string {
+  const parts =
+    (json as { candidates?: [{ content?: { parts?: { text?: string; thought?: boolean }[] } }] })
+      ?.candidates?.[0]?.content?.parts ?? [];
+  return parts
+    .filter((p) => !p.thought && p.text)
+    .map((p) => p.text!)
+    .join("");
 }

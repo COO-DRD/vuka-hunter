@@ -11,17 +11,29 @@ export async function POST(req: NextRequest) {
   const { limit = 50, minRating = 0 } = await req.json().catch(() => ({}));
 
   const db = createSupabaseServiceClient();
-  let query = db
-    .from("hunter_leads")
-    .select("id,website,email")
-    .eq("org_id", user.id)
-    .eq("enrichment_status", "pending")
-    .not("website", "is", null)
-    .limit(limit);
 
-  if (minRating > 0) query = query.gte("google_rating", minRating);
+  // Fetch org profile once before the loop
+  const [leadsRes, orgRes] = await Promise.all([
+    (() => {
+      let q = db
+        .from("hunter_leads")
+        .select("id,website,email")
+        .eq("org_id", user.id)
+        .eq("enrichment_status", "pending")
+        .not("website", "is", null)
+        .limit(limit);
+      if (minRating > 0) q = q.gte("google_rating", minRating);
+      return q;
+    })(),
+    db.from("hunter_orgs")
+      .select("use_case,priority_signals,target_description,org_description")
+      .eq("id", user.id)
+      .maybeSingle(),
+  ]);
 
-  const { data: leads } = await query;
+  const leads = leadsRes.data;
+  const org = orgRes.data ?? undefined;
+
   if (!leads?.length) return NextResponse.json({ ok: true, enriched: 0 });
 
   let enriched = 0;
@@ -32,7 +44,7 @@ export async function POST(req: NextRequest) {
       continue;
     }
     try {
-      const result = await enrichWebsite(lead.website);
+      const result = await enrichWebsite(lead.website, org);
       await db.from("hunter_leads").update({
         enrichment_status: "done",
         enriched_at: new Date().toISOString(),
@@ -42,6 +54,7 @@ export async function POST(req: NextRequest) {
         has_booking_system: result.hasBookingSystem,
         has_live_chat: result.hasLiveChat,
         social_links: result.socialLinks,
+        ...(result.customSignals.length > 0 && { pain_signals: result.customSignals }),
       }).eq("id", lead.id);
       enriched++;
     } catch (err) {
