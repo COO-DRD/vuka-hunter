@@ -2,6 +2,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { geminiStream } from "@/lib/gemini";
+import { logEvent, logError } from "@/lib/logEvent";
 
 export async function POST(req: NextRequest) {
   const user = await getUser();
@@ -104,9 +105,11 @@ SIGNALS: <comma-separated pain signals, max 4>`;
           scored_at: new Date().toISOString(),
         }).eq("id", leadId);
 
+        logEvent(user.id, "score");
         send({ done: true, score, reasoning, pain_signals });
       } catch (err) {
         console.error("[score]", err);
+        logError("/api/score", String(err), user.id, { leadId });
         send({ error: "Scoring failed — please retry" });
       } finally {
         controller.close();

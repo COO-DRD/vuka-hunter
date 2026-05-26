@@ -2,6 +2,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { isSafeUrl, enrichWebsite } from "@/lib/enrichLead";
+import { logEvent } from "@/lib/logEvent";
 
 export async function POST(req: NextRequest) {
   const user = await getUser();
@@ -50,5 +51,6 @@ export async function POST(req: NextRequest) {
     await new Promise((r) => setTimeout(r, 300));
   }
 
+  if (enriched > 0) logEvent(user.id, "enrich");
   return NextResponse.json({ ok: true, enriched, total: leads.length });
 }
