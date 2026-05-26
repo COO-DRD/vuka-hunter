@@ -65,9 +65,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "A scrape job is already running. Wait for it to finish." }, { status: 429 });
   }
 
+  // Safety net for accounts created before the sign-up flow set the org row.
+  // ignoreDuplicates: true — never overwrite name or credits for existing orgs.
   await db.from("hunter_orgs").upsert(
     { id: user.id, name: "My Workspace", plan: "beta", credits_total: 999999 },
-    { onConflict: "id" }
+    { onConflict: "id", ignoreDuplicates: true }
   );
 
   const { data: job, error } = await db
@@ -138,24 +140,25 @@ async function scrapeGooglePlaces(
     let data: Record<string, unknown>;
     try { data = await res.json(); }
     catch { throw new Error("Google Places API returned unexpected non-JSON response"); }
-    const places = data.places ?? [];
+    const places = (data.places ?? []) as Record<string, unknown>[];
     if (!places.length) break;
 
     for (const p of places) {
       if (results.length >= maxCount) break;
+      const dn = p.displayName as Record<string, string> | undefined;
       results.push({
-        name:                p.displayName?.text ?? "",
-        phone:               p.nationalPhoneNumber ?? p.internationalPhoneNumber ?? null,
+        name:                dn?.text ?? "",
+        phone:               (p.nationalPhoneNumber ?? p.internationalPhoneNumber ?? null) as string | null,
         email:               null,
-        website:             p.websiteUri ?? null,
-        address:             p.formattedAddress ?? null,
-        google_rating:       p.rating ?? null,
-        google_review_count: p.userRatingCount ?? null,
-        google_maps_url:     p.googleMapsUri ?? null,
+        website:             (p.websiteUri ?? null) as string | null,
+        address:             (p.formattedAddress ?? null) as string | null,
+        google_rating:       (p.rating ?? null) as number | null,
+        google_review_count: (p.userRatingCount ?? null) as number | null,
+        google_maps_url:     (p.googleMapsUri ?? null) as string | null,
       });
     }
 
-    pageToken = data.nextPageToken;
+    pageToken = data.nextPageToken as string | undefined;
     if (!pageToken) break;
 
     // Respect Places API rate limit
