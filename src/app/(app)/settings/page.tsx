@@ -3,6 +3,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Zap, Infinity, Mail, Calendar, ShieldCheck, Hash } from "lucide-react";
 import ChangePasswordForm from "./ChangePasswordForm";
+import ClearLeadsButton from "./ClearLeadsButton";
 
 export default async function SettingsPage() {
   const user = await requireUser();
@@ -90,12 +91,32 @@ export default async function SettingsPage() {
       </Card>
 
       {/* API */}
-      <Card>
+      <Card className="mb-4">
         <CardHeader><CardTitle>API Access</CardTitle></CardHeader>
         <CardContent>
           <p className="text-sm text-zinc-500 mb-3">REST API for integrating Hunter with your own tools.</p>
           <div className="rounded-md border border-zinc-700 bg-zinc-950 px-4 py-3 font-mono text-xs text-zinc-500">
             Coming soon — available in the full release
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Danger zone */}
+      <Card className="border-red-900/50">
+        <CardHeader>
+          <CardTitle className="text-red-400">Danger Zone</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-zinc-300">Reset all leads</p>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Delete every lead, scrape job, and reset your credit counter. Useful for starting a fresh campaign.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <ClearLeadsButton />
+            </div>
           </div>
         </CardContent>
       </Card>
