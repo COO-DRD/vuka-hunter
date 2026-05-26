@@ -86,12 +86,25 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ jobId: job.id });
 }
 
+function getPlacesApiKey(): string {
+  // Pool of keys: GOOGLE_PLACES_API_KEY, GOOGLE_PLACES_API_KEY_2, …_3, …_4
+  const keys = [
+    process.env.GOOGLE_PLACES_API_KEY,
+    process.env.GOOGLE_PLACES_API_KEY_2,
+    process.env.GOOGLE_PLACES_API_KEY_3,
+    process.env.GOOGLE_PLACES_API_KEY_4,
+  ].filter(Boolean) as string[];
+  if (!keys.length) throw new Error("No GOOGLE_PLACES_API_KEY configured");
+  return keys[Math.floor(Math.random() * keys.length)];
+}
+
 async function scrapeGooglePlaces(
   query: string,
   city: string,
   maxCount: number,
 ): Promise<PlacesResult[]> {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY!;
+  // Pick one key for the entire job — consistent per-scrape, load-balanced across jobs
+  const apiKey = getPlacesApiKey();
   const fullQuery = `${query} in ${city}, Kenya`;
   const results: PlacesResult[] = [];
   let pageToken: string | undefined;
@@ -106,24 +119,25 @@ async function scrapeGooglePlaces(
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask": FIELD_MASK,
-        "Referer": "https://hunter.dullugroup.co.ke",
-        "Origin": "https://hunter.dullugroup.co.ke",
       },
       body: JSON.stringify(body),
     });
 
     if (!res.ok) {
-      const err = await res.text();
+      const contentType = res.headers.get("content-type") ?? "";
+      const err = contentType.includes("json") ? await res.text() : `HTTP ${res.status}`;
       if (res.status === 403) {
         throw new Error(
           `Google Places API key rejected (403). In Google Cloud Console → Credentials → ` +
-          `your key → add "https://hunter.dullugroup.co.ke/*" to allowed HTTP referrers.`
+          `your key → remove HTTP referrer restriction (server-side calls don't need it).`
         );
       }
       throw new Error(`Google Places API error ${res.status}: ${err}`);
     }
 
-    const data = await res.json();
+    let data: Record<string, unknown>;
+    try { data = await res.json(); }
+    catch { throw new Error("Google Places API returned unexpected non-JSON response"); }
     const places = data.places ?? [];
     if (!places.length) break;
 
