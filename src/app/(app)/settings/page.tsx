@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Zap, Infinity, Mail, Calendar, ShieldCheck, Hash } from "lucide-react";
+import ChangePasswordForm from "./ChangePasswordForm";
 
 export default async function SettingsPage() {
   const user = await requireUser();
@@ -77,6 +78,14 @@ export default async function SettingsPage() {
               <Zap className="h-3 w-3" /> Beta
             </span>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Change password */}
+      <Card className="mb-4">
+        <CardHeader><CardTitle>Change Password</CardTitle></CardHeader>
+        <CardContent>
+          <ChangePasswordForm />
         </CardContent>
       </Card>
 
