@@ -2,9 +2,21 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { getUser } from "@/lib/auth";
+import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getUser();
+
+  if (user) {
+    const db = createSupabaseServiceClient();
+    const { data: org } = await db
+      .from("hunter_orgs")
+      .select("onboarding_complete")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (!org?.onboarding_complete) redirect("/onboarding");
+  }
 
   return (
     // Desktop: fixed viewport height with sidebar scroll. Mobile: body scrolls
