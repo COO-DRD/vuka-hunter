@@ -1,7 +1,7 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { geminiStream } from "@/lib/gemini";
+import { geminiStream, extractGeminiToken } from "@/lib/gemini";
 import { logEvent, logError } from "@/lib/logEvent";
 
 const VERTICAL_PAIN: Record<string, string> = {
@@ -103,7 +103,7 @@ HARD RULES:
         controller.enqueue(enc.encode(`data: ${JSON.stringify(data)}\n\n`));
 
       try {
-        const geminiRes = await geminiStream(prompt, { temperature: 0.7, maxOutputTokens: 600 });
+        const geminiRes = await geminiStream(prompt, { temperature: 0.7, maxOutputTokens: 2000, thinkingBudget: 1024 });
 
         if (!geminiRes.ok) {
           console.error("[opener] Gemini error", geminiRes.status, await geminiRes.text().catch(() => ""));
@@ -129,8 +129,7 @@ HARD RULES:
             const payload = line.slice(6).trim();
             if (!payload || payload === "[DONE]") continue;
             try {
-              const json  = JSON.parse(payload);
-              const token = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+              const token = extractGeminiToken(JSON.parse(payload));
               if (token) { fullText += token; send({ t: token }); }
             } catch { /* malformed chunk */ }
           }

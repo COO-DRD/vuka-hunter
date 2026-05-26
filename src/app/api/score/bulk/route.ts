@@ -1,7 +1,7 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { geminiStream } from "@/lib/gemini";
+import { geminiStream, extractGeminiToken } from "@/lib/gemini";
 import { logEvent } from "@/lib/logEvent";
 
 export async function POST(req: NextRequest) {
@@ -40,7 +40,8 @@ export async function POST(req: NextRequest) {
   const channel   = (org?.outreach_channel as string) || "WhatsApp";
 
   function buildPrompt(lead: Record<string, unknown>): string {
-    const tech = (lead.tech_stack as string[] | null)?.join(", ") || "unknown";
+    const tech    = (lead.tech_stack as string[] | null)?.join(", ") || "unknown";
+    const preSigs = (lead.pain_signals as string[] | null)?.join(", ") || "none";
     return `You are a B2B lead qualification analyst.
 
 SEARCHER: ${offerCtx}
@@ -52,6 +53,7 @@ LEAD: ${lead.name} · ${lead.vertical} in ${lead.city}
 Google: ${lead.google_rating ?? "unknown"}★ (${lead.google_review_count ?? 0} reviews)
 Website: ${lead.website ?? "none"} | Booking: ${lead.has_booking_system ?? "unknown"} | Tech: ${tech}
 Phone: ${lead.phone ? "yes" : "no"} | Email: ${lead.email ? "yes" : "no"}
+Pre-enrichment signals: ${preSigs}
 
 Write 2–3 sentences on fit for this searcher specifically. Then:
 SCORE: <0-100>
@@ -64,7 +66,7 @@ SIGNALS: <comma-separated match signals, max 4>`;
     try {
       const geminiRes = await geminiStream(
         buildPrompt(lead as Record<string, unknown>),
-        { temperature: 0.2, maxOutputTokens: 300 },
+        { temperature: 0.2, maxOutputTokens: 800, thinkingBudget: 0 },
       );
       if (!geminiRes.ok) {
         console.error("[score/bulk] Gemini error", geminiRes.status);
@@ -87,8 +89,8 @@ SIGNALS: <comma-separated match signals, max 4>`;
           const payload = line.slice(6).trim();
           if (!payload || payload === "[DONE]") continue;
           try {
-            const json = JSON.parse(payload);
-            fullText += json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+            const token = extractGeminiToken(JSON.parse(payload));
+            if (token) fullText += token;
           } catch { /* malformed chunk */ }
         }
       }

@@ -12,7 +12,14 @@ export async function POST(req: NextRequest) {
   if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
 
   const db = createSupabaseServiceClient();
-  const { data: lead } = await db.from("hunter_leads").select("*").eq("id", leadId).eq("org_id", user.id).single();
+  const [{ data: lead }, { data: org }] = await Promise.all([
+    db.from("hunter_leads").select("*").eq("id", leadId).eq("org_id", user.id).single(),
+    db.from("hunter_orgs")
+      .select("use_case,priority_signals,target_description,org_description")
+      .eq("id", user.id)
+      .maybeSingle(),
+  ]);
+
   if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
 
   if (!lead.website) {
@@ -26,7 +33,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const enriched = await enrichWebsite(lead.website);
+    const enriched = await enrichWebsite(lead.website, org ?? undefined);
     await db.from("hunter_leads").update({
       enrichment_status: "done",
       enriched_at: new Date().toISOString(),
@@ -36,6 +43,8 @@ export async function POST(req: NextRequest) {
       has_booking_system: enriched.hasBookingSystem,
       has_live_chat: enriched.hasLiveChat,
       social_links: enriched.socialLinks,
+      // Pre-scoring signals from HTML — scoring AI will read and refine these
+      ...(enriched.customSignals.length > 0 && { pain_signals: enriched.customSignals }),
     }).eq("id", leadId);
 
     logEvent(user.id, "enrich");

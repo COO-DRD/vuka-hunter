@@ -1,7 +1,7 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { geminiStream } from "@/lib/gemini";
+import { geminiStream, extractGeminiToken } from "@/lib/gemini";
 import { logEvent, logError } from "@/lib/logEvent";
 
 function buildScoringPrompt(lead: Record<string, unknown>, org: Record<string, unknown> | null) {
@@ -18,6 +18,7 @@ function buildScoringPrompt(lead: Record<string, unknown>, org: Record<string, u
   const channelCtx = `Primary outreach channel: ${(org?.outreach_channel as string) || "WhatsApp"}.`;
 
   const tech    = (lead.tech_stack as string[] | null)?.join(", ") || "unknown";
+  const preSigs = (lead.pain_signals as string[] | null)?.join(", ") || "none";
 
   return `You are a B2B lead qualification analyst.
 
@@ -37,8 +38,9 @@ LEAD TO EVALUATE
 - Tech stack: ${tech}
 - Phone: ${lead.phone ? "yes" : "no"}
 - Email found: ${lead.email ? "yes" : "no"}
+- Pre-enrichment signals: ${preSigs}
 
-Write 2–3 sentences explaining whether this lead is a strong match for the searcher specifically — anchor your reasoning to their offering and ideal lead description, not generic quality signals.
+Write 2–3 sentences explaining whether this lead is a strong match for the searcher — anchor your reasoning to their specific offering and ideal lead, not generic quality signals.
 Then on new lines output EXACTLY:
 SCORE: <0-100>
 SIGNALS: <comma-separated match signals relevant to this searcher's priorities, max 4>`;
@@ -70,7 +72,11 @@ export async function POST(req: NextRequest) {
         controller.enqueue(enc.encode(`data: ${JSON.stringify(data)}\n\n`));
 
       try {
-        const geminiRes = await geminiStream(prompt, { temperature: 0.2, maxOutputTokens: 350 });
+        const geminiRes = await geminiStream(prompt, {
+          temperature: 0.2,
+          maxOutputTokens: 800,
+          thinkingBudget: 0, // structured output — thinking not needed
+        });
 
         if (!geminiRes.ok) {
           console.error("[score] Gemini error", geminiRes.status, await geminiRes.text().catch(() => ""));
@@ -96,8 +102,7 @@ export async function POST(req: NextRequest) {
             const payload = line.slice(6).trim();
             if (!payload || payload === "[DONE]") continue;
             try {
-              const json = JSON.parse(payload);
-              const token = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+              const token = extractGeminiToken(JSON.parse(payload));
               if (token) {
                 fullText += token;
                 if (fullText.indexOf("SCORE:") === -1) send({ t: token });
