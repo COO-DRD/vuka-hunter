@@ -2,6 +2,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { geminiStream } from "@/lib/gemini";
+import { logEvent, logError } from "@/lib/logEvent";
 
 export async function POST(req: NextRequest) {
   const user = await getUser();
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
     law_firm:    "Law firms rarely follow up on initial enquiries quickly, losing clients to whoever responds first.",
     gym:         "Gyms lose members silently — no automated re-engagement for people who stop showing up.",
     restaurant:  "Restaurants with no online booking system lose reservations to competitors who make it one tap.",
+    minimart:    "Most dukas and mini-marts lose repeat customers because there's no way to browse stock or order remotely — customers go to whoever has a WhatsApp catalog first.",
   };
   const verticalPain = VERTICAL_PAIN[vertical] ?? "Many local businesses miss leads outside office hours.";
 
@@ -146,9 +148,11 @@ HARD RULES:
           opener_generated_at: new Date().toISOString(),
         }).eq("id", leadId);
 
+        logEvent(user.id, "opener");
         send({ done: true, whatsapp, subject, email });
       } catch (err) {
         console.error("[opener]", err);
+        logError("/api/opener", String(err), user.id, { leadId });
         send({ error: "Generation failed — please retry" });
       } finally {
         controller.close();

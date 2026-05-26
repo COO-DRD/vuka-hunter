@@ -2,6 +2,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { isSafeUrl, enrichWebsite } from "@/lib/enrichLead";
+import { logEvent, logError } from "@/lib/logEvent";
 
 export async function POST(req: NextRequest) {
   const user = await getUser();
@@ -37,10 +38,12 @@ export async function POST(req: NextRequest) {
       social_links: enriched.socialLinks,
     }).eq("id", leadId);
 
+    logEvent(user.id, "enrich");
     return NextResponse.json({ ok: true, enriched });
   } catch (err) {
     console.error("[enrich]", err);
     await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId);
+    logError("/api/enrich", String(err), user.id, { leadId });
     return NextResponse.json({ error: "Enrichment failed — please retry" }, { status: 500 });
   }
 }

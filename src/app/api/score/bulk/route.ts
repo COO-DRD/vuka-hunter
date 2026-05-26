@@ -2,6 +2,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { geminiStream } from "@/lib/gemini";
+import { logEvent } from "@/lib/logEvent";
 
 export async function POST(req: NextRequest) {
   const user = await getUser();
@@ -94,5 +95,6 @@ SIGNALS: <comma-separated pain signals, max 4>`;
     await new Promise((r) => setTimeout(r, 200));
   }
 
+  if (scored > 0) logEvent(user.id, "score");
   return NextResponse.json({ ok: true, scored, total: leads.length });
 }
