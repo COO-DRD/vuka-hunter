@@ -36,10 +36,21 @@ function rateLimit(ip: string, max: number): boolean {
   return hits.length > max;
 }
 
+const CANONICAL_HOST = "hunter.dullugroup.co.ke";
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const ua = req.headers.get("user-agent")?.toLowerCase() ?? "";
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+
+  // ── Redirect all *.vercel.app traffic to the canonical domain ────────────
+  const host = req.headers.get("host") ?? "";
+  if (host.endsWith(".vercel.app") || host.endsWith(".vercel.app:443")) {
+    const url = new URL(req.url);
+    url.host = CANONICAL_HOST;
+    url.port = "";
+    return NextResponse.redirect(url, { status: 301 });
+  }
 
   // ── Block known bots & headless browsers ──────────────────────────────────
   if (BOT_UA.some((b) => ua.includes(b))) {
