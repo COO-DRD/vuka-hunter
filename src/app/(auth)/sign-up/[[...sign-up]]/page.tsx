@@ -2,9 +2,10 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Zap, Eye, EyeOff, User } from "lucide-react";
+import { Eye, EyeOff, User, Zap, Clock, Shield } from "lucide-react";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { HunterWordmark, HunterMark } from "@/components/HunterLogo";
 
 function GoogleIcon() {
   return (
@@ -17,21 +18,26 @@ function GoogleIcon() {
   );
 }
 
+const PERKS = [
+  { icon: Zap,    text: "Unlimited leads during beta — no credit card" },
+  { icon: Clock,  text: "First scrape ready in under 2 minutes" },
+  { icon: Shield, text: "Your data stays in your workspace only" },
+];
+
 export default function SignUpPage() {
-  const [name, setName]               = useState("");
-  const [email, setEmail]             = useState("");
-  const [password, setPassword]       = useState("");
-  const [showPw, setShowPw]           = useState(false);
-  const [termsAccepted, setTerms]     = useState(false);
-  const [error, setError]             = useState("");
-  const [loading, setLoading]         = useState(false);
+  const [name, setName]           = useState("");
+  const [email, setEmail]         = useState("");
+  const [password, setPassword]   = useState("");
+  const [showPw, setShowPw]       = useState(false);
+  const [termsAccepted, setTerms] = useState(false);
+  const [error, setError]         = useState("");
+  const [loading, setLoading]     = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     if (!termsAccepted) { setError("You must accept the Terms of Service to continue."); return; }
-    setLoading(true);
-    setError("");
+    setLoading(true); setError("");
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
@@ -41,160 +47,148 @@ export default function SignUpPage() {
       const json = await res.json();
       if (!res.ok) { setError(json.error ?? "Something went wrong."); return; }
       window.location.assign("/sign-in?registered=1");
-    } catch {
-      setError("Something went wrong. Check your connection.");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("Something went wrong. Check your connection."); }
+    finally { setLoading(false); }
   }
 
   async function handleGoogle() {
     if (!termsAccepted) { setError("You must accept the Terms of Service to continue."); return; }
-    setGoogleLoading(true);
-    setError("");
+    setGoogleLoading(true); setError("");
     try {
       const sb = createSupabaseBrowserClient();
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
       const { error } = await sb.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          redirectTo: `${siteUrl}/auth/callback`,
-          queryParams: { access_type: "offline", prompt: "consent" },
-        },
+        options: { redirectTo: `${siteUrl}/auth/callback`, queryParams: { access_type: "offline", prompt: "consent" } },
       });
       if (error) setError(error.message);
-    } catch {
-      setError("Google sign-in failed. Try again.");
-    } finally {
-      setGoogleLoading(false);
-    }
+    } catch { setError("Google sign-in failed. Try again."); }
+    finally { setGoogleLoading(false); }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-      <div className="w-full max-w-sm px-4">
-        <div className="text-center mb-8">
-          <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-red-600 mb-4">
-            <Zap className="h-5 w-5 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-zinc-100">Hunter</h1>
-          <p className="text-sm text-zinc-400 mt-1">Create your account</p>
+    <div className="min-h-screen flex">
+      {/* ── Brand panel ── */}
+      <div className="hidden lg:flex lg:w-[480px] xl:w-[520px] shrink-0 flex-col auth-grid-bg relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-orange-950/20 pointer-events-none" />
+        <div className="absolute -bottom-16 -right-16 opacity-[0.04] text-white">
+          <HunterMark className="h-80 w-80" />
         </div>
 
-        {/* Google OAuth */}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleGoogle}
-          loading={googleLoading}
-          className="w-full mb-4 gap-2 border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-200"
-        >
-          {!googleLoading && <GoogleIcon />}
-          Continue with Google
-        </Button>
+        <div className="relative flex flex-col h-full px-10 py-10">
+          <HunterWordmark size="md" />
 
-        <div className="relative mb-4">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-zinc-800" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-zinc-950 px-2 text-zinc-600">or sign up with email</span>
-          </div>
-        </div>
+          <div className="flex-1 flex flex-col justify-center">
+            <p className="text-3xl font-bold text-zinc-100 leading-tight mb-3">
+              Start hunting in<br />
+              <span className="text-brand-gradient">under 2 minutes.</span>
+            </p>
+            <p className="text-sm text-zinc-500 mb-10 leading-relaxed">
+              Beta is free and unlimited. No credit card required.
+            </p>
 
-        <form onSubmit={handleSignUp} className="space-y-3">
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Full name</label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
-              <Input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                required
-                autoFocus
-                autoComplete="name"
-                className="pl-9"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Email</label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-              autoComplete="email"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Password</label>
-            <div className="relative">
-              <Input
-                type={showPw ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min. 8 characters"
-                required
-                minLength={8}
-                autoComplete="new-password"
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
-                tabIndex={-1}
-                aria-label={showPw ? "Hide password" : "Show password"}
-              >
-                {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+            <div className="space-y-4">
+              {PERKS.map(({ icon: Icon, text }, i) => (
+                <div key={text}
+                  className={`flex items-center gap-3 animate-fade-up delay-${(i + 1) * 75}`}>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 border border-orange-500/20">
+                    <Icon className="h-4 w-4 text-orange-400" />
+                  </div>
+                  <span className="text-sm text-zinc-400">{text}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Terms acceptance */}
-          <label className="flex items-start gap-2.5 cursor-pointer group mt-1">
-            <div className="relative mt-0.5 shrink-0">
-              <input
-                type="checkbox"
-                checked={termsAccepted}
-                onChange={(e) => { setTerms(e.target.checked); setError(""); }}
-                className="sr-only peer"
-              />
-              <div className="h-4 w-4 rounded border border-zinc-600 bg-zinc-900 peer-checked:bg-red-600 peer-checked:border-red-600 transition-colors flex items-center justify-center">
-                {termsAccepted && (
-                  <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 12 12">
-                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
+          <p className="text-xs text-zinc-700">Dullu Digital · hunter.dullugroup.co.ke</p>
+        </div>
+      </div>
+
+      {/* ── Form panel ── */}
+      <div className="flex-1 flex items-center justify-center bg-zinc-950 px-6 py-12">
+        <div className="w-full max-w-sm animate-fade-up">
+          <div className="lg:hidden flex justify-center mb-8">
+            <HunterWordmark size="md" />
+          </div>
+
+          <h2 className="text-xl font-bold text-zinc-100 mb-1">Create your account</h2>
+          <p className="text-sm text-zinc-500 mb-6">Free during beta — no credit card needed.</p>
+
+          <Button type="button" variant="outline" onClick={handleGoogle} loading={googleLoading}
+            className="w-full mb-4 gap-2 border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 h-10"
+            disabled={!termsAccepted}>
+            {!googleLoading && <GoogleIcon />} Continue with Google
+          </Button>
+
+          <div className="relative mb-4">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-zinc-800" /></div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-zinc-950 px-2 text-zinc-600">or sign up with email</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSignUp} className="space-y-3">
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1.5">Full name</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                <Input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name" required autoFocus autoComplete="name" className="pl-9" />
               </div>
             </div>
-            <span className="text-xs text-zinc-500 leading-relaxed group-hover:text-zinc-400 transition-colors">
-              I have read and agree to the{" "}
-              <Link href="/terms" target="_blank" className="text-red-400 hover:text-red-300 underline underline-offset-2">
-                Terms of Service &amp; Usage Policy
-              </Link>
-            </span>
-          </label>
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1.5">Email</label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com" required autoComplete="email" />
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1.5">Password</label>
+              <div className="relative">
+                <Input type={showPw ? "text" : "password"} value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Min. 8 characters" required minLength={8}
+                  autoComplete="new-password" className="pr-10" />
+                <button type="button" onClick={() => setShowPw((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                  tabIndex={-1} aria-label={showPw ? "Hide" : "Show"}>
+                  {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
 
-          {error && <p className="text-xs text-red-400">{error}</p>}
-          <Button
-            type="submit"
-            loading={loading}
-            disabled={!termsAccepted}
-            className="w-full mt-1"
-          >
-            Create account
-          </Button>
-        </form>
+            {/* Terms */}
+            <label className="flex items-start gap-2.5 cursor-pointer group mt-1">
+              <div className="relative mt-0.5 shrink-0">
+                <input type="checkbox" checked={termsAccepted}
+                  onChange={(e) => { setTerms(e.target.checked); setError(""); }}
+                  className="sr-only peer" />
+                <div className="h-4 w-4 rounded border border-zinc-600 bg-zinc-900 peer-checked:bg-red-600 peer-checked:border-red-600 transition-colors flex items-center justify-center">
+                  {termsAccepted && (
+                    <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 12 12">
+                      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </div>
+              </div>
+              <span className="text-xs text-zinc-500 leading-relaxed group-hover:text-zinc-400 transition-colors">
+                I agree to the{" "}
+                <Link href="/terms" target="_blank" className="text-red-400 hover:text-red-300 underline underline-offset-2">
+                  Terms of Service &amp; Usage Policy
+                </Link>
+              </span>
+            </label>
 
-        <p className="text-center text-xs text-zinc-500 mt-5">
-          Already have an account?{" "}
-          <Link href="/sign-in" className="text-red-400 hover:text-red-300">Sign in</Link>
-        </p>
+            {error && <p className="text-xs text-red-400">{error}</p>}
+            <Button type="submit" loading={loading} disabled={!termsAccepted} className="w-full mt-1">
+              Create account
+            </Button>
+          </form>
+
+          <p className="text-center text-xs text-zinc-500 mt-5">
+            Already have an account?{" "}
+            <Link href="/sign-in" className="text-red-400 hover:text-red-300 font-medium">Sign in</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
