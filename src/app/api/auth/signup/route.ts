@@ -23,22 +23,18 @@ export async function POST(req: NextRequest) {
 
   const db = createSupabaseServiceClient();
 
-  // generateLink creates the user server-side (no client rate limit) and
-  // triggers Supabase to send the confirmation email through the configured mailer.
-  const { data, error } = await db.auth.admin.generateLink({
-    type: "signup",
+  // Admin API — bypasses client-side rate limits, auto-confirms email.
+  // No confirmation email sent; user can sign in immediately.
+  const { data, error } = await db.auth.admin.createUser({
     email,
     password,
-    options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-    },
+    email_confirm: true,
   });
 
   if (error) {
     return NextResponse.json({ error: friendlyError(error.message) }, { status: 409 });
   }
 
-  // Create the org row immediately — user is unconfirmed but the row is ready.
   await db.from("hunter_orgs").upsert(
     { id: data.user.id, name: name.trim(), plan: "beta", credits_total: 999999, credits_used: 0 },
     { onConflict: "id", ignoreDuplicates: true }
