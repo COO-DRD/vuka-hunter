@@ -68,10 +68,11 @@ export default function SignInPage() {
     setError("");
     try {
       const sb = createSupabaseBrowserClient();
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
       const { error } = await sb.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${siteUrl}/auth/callback`,
           queryParams: { access_type: "offline", prompt: "consent" },
         },
       });
