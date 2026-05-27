@@ -1,7 +1,8 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { geminiStream } from "@/lib/gemini";
+import { geminiStream, extractGeminiToken } from "@/lib/gemini";
+import { logEvent } from "@/lib/logEvent";
 
 export async function POST(req: NextRequest) {
   const user = await getUser();
@@ -10,46 +11,68 @@ export async function POST(req: NextRequest) {
   const { limit = 30 } = await req.json().catch(() => ({}));
 
   const db = createSupabaseServiceClient();
-  const { data: leads } = await db
-    .from("hunter_leads")
-    .select("*")
-    .eq("org_id", user.id)
-    .eq("enrichment_status", "done")
-    .is("score", null)
-    .limit(limit);
+
+  const [{ data: leads }, { data: org }] = await Promise.all([
+    db.from("hunter_leads")
+      .select("*")
+      .eq("org_id", user.id)
+      .eq("enrichment_status", "done")
+      .is("score", null)
+      .limit(limit),
+    db.from("hunter_orgs")
+      .select("business_name,name,org_description,target_description,priority_signals,outreach_channel")
+      .eq("id", user.id)
+      .single(),
+  ]);
 
   if (!leads?.length) return NextResponse.json({ ok: true, scored: 0 });
+
+  const bizName   = (org?.business_name || org?.name || "the searcher") as string;
+  const offerCtx  = org?.org_description
+    ? `${bizName} — ${org.org_description}`
+    : `${bizName} — a business looking for qualified leads`;
+  const targetCtx = org?.target_description
+    ? `They are specifically looking for: ${org.target_description}.`
+    : `They are looking for established local businesses to engage.`;
+  const signalCtx = (org?.priority_signals as string[] | null)?.length
+    ? `Top qualification signals: ${(org?.priority_signals as string[]).join(", ")}.`
+    : "";
+  const channel   = (org?.outreach_channel as string) || "WhatsApp";
+
+  function buildPrompt(lead: Record<string, unknown>): string {
+    const tech    = (lead.tech_stack as string[] | null)?.join(", ") || "unknown";
+    const preSigs = (lead.pain_signals as string[] | null)?.join(", ") || "none";
+    return `You are a B2B lead qualification analyst.
+
+SEARCHER: ${offerCtx}
+${targetCtx}
+${signalCtx}
+Outreach channel: ${channel}.
+
+LEAD: ${lead.name} · ${lead.vertical} in ${lead.city}
+Google: ${lead.google_rating ?? "unknown"}★ (${lead.google_review_count ?? 0} reviews)
+Website: ${lead.website ?? "none"} | Booking: ${lead.has_booking_system ?? "unknown"} | Tech: ${tech}
+Phone: ${lead.phone ? "yes" : "no"} | Email: ${lead.email ? "yes" : "no"}
+Pre-enrichment signals: ${preSigs}
+
+Write 2–3 sentences on fit for this searcher specifically. Then:
+SCORE: <0-100>
+SIGNALS: <comma-separated match signals, max 4>`;
+  }
 
   let scored = 0;
 
   for (const lead of leads) {
     try {
-      const prompt = `You are a B2B sales analyst scoring a local business lead for digital marketing / AI automation outreach.
-
-Lead:
-- Name: ${lead.name}
-- Vertical: ${lead.vertical}
-- City: ${lead.city}
-- Google Rating: ${lead.google_rating ?? "unknown"} (${lead.google_review_count ?? 0} reviews)
-- Website: ${lead.website ?? "none"}
-- Has booking system: ${lead.has_booking_system ?? "unknown"}
-- Has live chat: ${lead.has_live_chat ?? "unknown"}
-- Tech stack: ${(lead.tech_stack as string[])?.join(", ") ?? "unknown"}
-- Phone: ${lead.phone ? "yes" : "no"}
-- Email found: ${lead.email ? "yes" : "no"}
-
-Write 2–3 sentences of plain-prose analysis explaining WHY this lead is or isn't a strong prospect.
-Then on new lines output EXACTLY:
-SCORE: <0-100>
-SIGNALS: <comma-separated pain signals, max 4>`;
-
-      const geminiRes = await geminiStream(prompt, { temperature: 0.2, maxOutputTokens: 300 });
+      const geminiRes = await geminiStream(
+        buildPrompt(lead as Record<string, unknown>),
+        { temperature: 0.2, maxOutputTokens: 800, thinkingBudget: 0 },
+      );
       if (!geminiRes.ok) {
         console.error("[score/bulk] Gemini error", geminiRes.status);
         continue;
       }
 
-      // Drain the SSE stream without streaming to a client
       const reader = geminiRes.body!.getReader();
       const decoder = new TextDecoder();
       let buf = "";
@@ -66,8 +89,8 @@ SIGNALS: <comma-separated pain signals, max 4>`;
           const payload = line.slice(6).trim();
           if (!payload || payload === "[DONE]") continue;
           try {
-            const json = JSON.parse(payload);
-            fullText += json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+            const token = extractGeminiToken(JSON.parse(payload));
+            if (token) fullText += token;
           } catch { /* malformed chunk */ }
         }
       }
@@ -78,7 +101,7 @@ SIGNALS: <comma-separated pain signals, max 4>`;
       const pain_signals = signalsMatch
         ? signalsMatch[1].split(",").map((s) => s.trim()).filter(Boolean)
         : [];
-      const reasoning    = fullText.split("SCORE:")[0].trim();
+      const reasoning = fullText.split("SCORE:")[0].trim();
 
       await db.from("hunter_leads").update({
         score,
@@ -94,5 +117,6 @@ SIGNALS: <comma-separated pain signals, max 4>`;
     await new Promise((r) => setTimeout(r, 200));
   }
 
+  if (scored > 0) logEvent(user.id, "score");
   return NextResponse.json({ ok: true, scored, total: leads.length });
 }

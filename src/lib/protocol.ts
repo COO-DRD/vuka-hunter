@@ -223,6 +223,20 @@ export const PROTOCOL: Record<string, VerticalProtocol> = {
     placeQuery: "car dealership used cars auto dealer",
     osmTags: ['["shop"="car"]', '["shop"="car_dealer"]'],
   },
+  minimart: {
+    key: "minimart",
+    label: "Mini-Mart / Duka / Convenience Store",
+    tier: "B",
+    minRating: 3.5,
+    minReviews: 5,
+    notes: "Independent mini-marts, convenience stores, and dukas with a Google presence. Any 5+ reviews = real regulars = budget. Block major chains — they have in-house tech teams.",
+    nameBlocklist: [
+      "naivas", "quickmart", "carrefour", "tuskys", "chandarana", "uchumi",
+      "cleanshelf", "eastmatt", "mathai", "mulleys", "market", "government",
+    ],
+    placeQuery: "minimart convenience store mini supermarket",
+    osmTags: ['["shop"="convenience"]', '["shop"="supermarket"]', '["shop"="general"]'],
+  },
 };
 
 // Cities with enough premium business density to be worth scraping

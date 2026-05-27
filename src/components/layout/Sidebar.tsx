@@ -3,10 +3,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Search, Users, GitBranch,
-  Settings, Zap, ChevronRight, Upload, LogOut
+  Settings, Zap, ChevronRight, Upload, LogOut, Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+
+const ADMIN_EMAILS = new Set(["ian.dullu@akamom.org", "dr.dullu@gmail.com"]);
 
 export const NAV = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -58,6 +60,21 @@ export function Sidebar({ email }: { email: string | null }) {
             </Link>
           );
         })}
+        {email && ADMIN_EMAILS.has(email) && (
+          <Link
+            href="/admin"
+            className={cn(
+              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              path.startsWith("/admin")
+                ? "bg-zinc-800 text-zinc-100"
+                : "text-zinc-600 hover:bg-zinc-900 hover:text-zinc-400"
+            )}
+          >
+            <Shield className="h-4 w-4 shrink-0" />
+            Monitor
+            {path.startsWith("/admin") && <ChevronRight className="ml-auto h-3 w-3 opacity-50" />}
+          </Link>
+        )}
       </nav>
 
       <div className="border-t border-zinc-800 px-3 py-3 space-y-2">

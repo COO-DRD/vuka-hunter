@@ -26,6 +26,7 @@ export const VERTICALS = [
   { value: "vet",           label: "Veterinary Clinic" },
   { value: "logistics",     label: "Logistics / Courier" },
   { value: "car_dealer",    label: "Car Dealership" },
+  { value: "minimart",      label: "Mini-Mart / Duka" },
 ];
 
 export const CITIES = [
