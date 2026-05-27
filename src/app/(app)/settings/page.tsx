@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, Infinity, Mail, Calendar, ShieldCheck, Hash, Building2, Pencil } from "lucide-react";
+import { Zap, Infinity, Mail, Calendar, ShieldCheck, Hash, Building2, Pencil, CheckCircle2, XCircle, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import ChangePasswordForm from "./ChangePasswordForm";
 import ClearLeadsButton from "./ClearLeadsButton";
@@ -51,7 +51,9 @@ export default async function SettingsPage() {
             <div className="flex items-center gap-3 text-sm">
               <ShieldCheck className="h-4 w-4 text-zinc-500 shrink-0" />
               <span className="text-zinc-400 w-28 shrink-0">Auth</span>
-              <span className="text-zinc-200">Email / Password</span>
+              <span className="text-zinc-200 capitalize">
+                {org?.auth_provider === "google" ? "Google OAuth" : "Email / Password"}
+              </span>
             </div>
             <div className="flex items-center gap-3 text-sm">
               <Hash className="h-4 w-4 text-zinc-500 shrink-0" />
@@ -139,13 +141,78 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Change password */}
+      {/* Usage Policy */}
+      <Card className="mb-4">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Usage Policy</CardTitle>
+            <Link
+              href="/terms"
+              target="_blank"
+              className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+            >
+              Full terms <ExternalLink className="h-3 w-3" />
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs font-semibold text-green-400 mb-2 flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Permitted
+              </p>
+              <div className="space-y-1.5">
+                {[
+                  "B2B lead discovery and outreach for your own business",
+                  "Market research and competitive intelligence",
+                  "Importing and managing your own lead lists",
+                ].map((item) => (
+                  <div key={item} className="flex items-start gap-2 text-xs text-zinc-400">
+                    <CheckCircle2 className="h-3 w-3 text-green-600 shrink-0 mt-0.5" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="border-t border-zinc-800 pt-4">
+              <p className="text-xs font-semibold text-red-400 mb-2 flex items-center gap-1.5">
+                <XCircle className="h-3.5 w-3.5" /> Not Permitted
+              </p>
+              <div className="space-y-1.5">
+                {[
+                  "Reselling or redistributing scraped data to third parties",
+                  "Mass spamming or automated unsolicited messaging",
+                  "Targeting private individuals — B2B entities only",
+                  "Creating multiple accounts to circumvent limits",
+                ].map((item) => (
+                  <div key={item} className="flex items-start gap-2 text-xs text-zinc-400">
+                    <XCircle className="h-3 w-3 text-red-700 shrink-0 mt-0.5" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {org?.terms_accepted_at && (
+            <p className="mt-4 text-xs text-zinc-600">
+              Terms accepted on{" "}
+              {new Date(org.terms_accepted_at).toLocaleDateString("en-KE", {
+                year: "numeric", month: "long", day: "numeric",
+              })}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Change password — hidden for OAuth users */}
+      {org?.auth_provider !== "google" && (
       <Card className="mb-4">
         <CardHeader><CardTitle>Change Password</CardTitle></CardHeader>
         <CardContent>
           <ChangePasswordForm />
         </CardContent>
       </Card>
+      )}
 
       {/* API */}
       <Card className="mb-4">

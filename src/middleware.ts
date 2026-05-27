@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/auth/callback", "/auth/confirm", "/api/webhooks", "/beta-feedback.html"];
+const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/auth/callback", "/auth/confirm", "/api/webhooks", "/beta-feedback.html", "/terms"];
 
 // Known headless / scraper user-agent fragments
 const BOT_UA = [
@@ -107,7 +107,7 @@ function addSecurityHeaders(res: NextResponse): NextResponse {
       "script-src 'self' 'unsafe-inline'",       // Next.js inline scripts require unsafe-inline
       "style-src 'self' 'unsafe-inline'",        // Tailwind/inline styles
       "img-src 'self' data: https:",             // allow remote images (lead logos etc.)
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://maps.googleapis.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://maps.googleapis.com https://accounts.google.com",
       "font-src 'self'",
       "frame-ancestors 'none'",
       "base-uri 'self'",
