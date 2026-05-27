@@ -1,6 +1,5 @@
 import { requireUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { ActivityFeed } from "./ActivityFeed";
 import { Shield } from "lucide-react";
 
 const ADMIN_EMAILS = new Set(["ian.dullu@akamom.org", "dr.dullu@gmail.com"]);
@@ -16,11 +15,10 @@ export default async function AdminPage() {
           <Shield className="h-4 w-4 text-red-400" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-zinc-100">Activity Monitor</h1>
-          <p className="text-xs text-zinc-500 mt-0.5">Live user activity · error log · self-healing</p>
+          <h1 className="text-xl font-bold text-zinc-100">Admin</h1>
+          <p className="text-xs text-zinc-500 mt-0.5">Admin panel</p>
         </div>
       </div>
-      <ActivityFeed />
     </div>
   );
 }
