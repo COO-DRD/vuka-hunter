@@ -12,7 +12,6 @@ export async function POST(req: NextRequest) {
 
   const db = createSupabaseServiceClient();
 
-  // Fetch org profile once before the loop
   const [leadsRes, orgRes] = await Promise.all([
     (() => {
       let q = db
@@ -26,13 +25,13 @@ export async function POST(req: NextRequest) {
       return q;
     })(),
     db.from("hunter_orgs")
-      .select("use_case,priority_signals,target_description,org_description")
+      .select("use_case,priority_signals,target_description,org_description,enrichment_mode")
       .eq("id", user.id)
       .maybeSingle(),
   ]);
 
   const leads = leadsRes.data;
-  const org = orgRes.data ?? undefined;
+  const org   = orgRes.data ?? undefined;
 
   if (!leads?.length) return NextResponse.json({ ok: true, enriched: 0 });
 
@@ -47,13 +46,13 @@ export async function POST(req: NextRequest) {
       const result = await enrichWebsite(lead.website, org);
       await db.from("hunter_leads").update({
         enrichment_status: "done",
-        enriched_at: new Date().toISOString(),
-        emails_found: result.emails,
-        email: result.emails[0] ?? lead.email ?? null,
-        tech_stack: result.techStack,
+        enriched_at:       new Date().toISOString(),
+        emails_found:      result.emails,
+        email:             result.emails[0] ?? lead.email ?? null,
+        tech_stack:        result.techStack,
         has_booking_system: result.hasBookingSystem,
-        has_live_chat: result.hasLiveChat,
-        social_links: result.socialLinks,
+        has_live_chat:     result.hasLiveChat,
+        social_links:      result.socialLinks,
         ...(result.customSignals.length > 0 && { pain_signals: result.customSignals }),
       }).eq("id", lead.id);
       enriched++;
