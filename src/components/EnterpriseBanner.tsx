@@ -60,7 +60,7 @@ export function EnterpriseBanner() {
         </p>
 
         <a
-          href="https://vuka-six.vercel.app/#contact"
+          href="https://hunter.dullugroup.co.ke/workshop"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-1.5 w-full rounded-lg bg-red-600 hover:bg-red-500 transition-colors px-3 py-2 text-xs font-semibold text-white"
