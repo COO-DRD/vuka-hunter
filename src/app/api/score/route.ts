@@ -4,7 +4,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { geminiStream, extractGeminiToken } from "@/lib/gemini";
 import { logEvent, logError } from "@/lib/logEvent";
 
-function buildScoringPrompt(lead: Record<string, unknown>, org: Record<string, unknown> | null) {
+function buildFeedbackContext(feedback: Array<{ outcome: string; vertical: string }>) {
+  if (!feedback.length) return "";
+  const counts: Record<string, number> = {};
+  for (const f of feedback) counts[f.outcome] = (counts[f.outcome] ?? 0) + 1;
+  const total = feedback.length;
+  const converted = (counts.converted ?? 0) + (counts.meeting ?? 0) + (counts.replied ?? 0);
+  const pct = Math.round((converted / total) * 100);
+  const parts = Object.entries(counts).map(([o, n]) => `${o}: ${n}`).join(", ");
+  return `\nHISTORICAL PERFORMANCE (this vertical, your account, last 90 days)
+${total} leads contacted — ${pct}% positive outcomes (${parts}).
+Use this to calibrate confidence in your score.`;
+}
+
+function buildScoringPrompt(lead: Record<string, unknown>, org: Record<string, unknown> | null, feedback?: Array<{ outcome: string; vertical: string }>) {
   const bizName    = (org?.business_name || org?.name || "the searcher") as string;
   const offerCtx   = org?.org_description
     ? `${bizName} — ${org.org_description}`
@@ -15,7 +28,8 @@ function buildScoringPrompt(lead: Record<string, unknown>, org: Record<string, u
   const signalCtx  = (org?.priority_signals as string[] | null)?.length
     ? `Their top qualification signals (weighted highest in scoring): ${(org?.priority_signals as string[]).join(", ")}.`
     : "";
-  const channelCtx = `Primary outreach channel: ${(org?.outreach_channel as string) || "WhatsApp"}.`;
+  const channelCtx    = `Primary outreach channel: ${(org?.outreach_channel as string) || "WhatsApp"}.`;
+  const feedbackCtx   = feedback?.length ? buildFeedbackContext(feedback) : "";
 
   const tech    = (lead.tech_stack as string[] | null)?.join(", ") || "unknown";
   const preSigs = (lead.pain_signals as string[] | null)?.join(", ") || "none";
@@ -26,7 +40,7 @@ SEARCHER CONTEXT
 ${offerCtx}
 ${targetCtx}
 ${signalCtx}
-${channelCtx}
+${channelCtx}${feedbackCtx}
 
 LEAD TO EVALUATE
 - Name: ${lead.name}
@@ -59,11 +73,25 @@ export async function POST(req: NextRequest) {
     db.from("hunter_orgs").select("business_name,name,org_description,target_description,priority_signals,outreach_channel").eq("id", user.id).single(),
   ]);
 
+  // Pull feedback from same vertical in this org (last 90 days) to calibrate scoring
+  const d90 = new Date(Date.now() - 90 * 86400000).toISOString();
+  const { data: feedbackRows } = lead ? await db
+    .from("hunter_lead_feedback")
+    .select("outcome, hunter_leads!inner(vertical)")
+    .eq("org_id", user.id)
+    .gte("created_at", d90)
+    .eq("hunter_leads.vertical", lead.vertical as string)
+    .limit(50) : { data: null };
+  const feedback = (feedbackRows ?? []).map((r: Record<string, unknown>) => ({
+    outcome:  r.outcome as string,
+    vertical: (r.hunter_leads as Record<string, unknown>)?.vertical as string,
+  }));
+
   if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
   if (!process.env.GEMINI_API_KEY)
     return NextResponse.json({ error: "GEMINI_API_KEY not set" }, { status: 500 });
 
-  const prompt = buildScoringPrompt(lead as Record<string, unknown>, org as Record<string, unknown> | null);
+  const prompt = buildScoringPrompt(lead as Record<string, unknown>, org as Record<string, unknown> | null, feedback);
 
   const stream = new ReadableStream({
     async start(controller) {
