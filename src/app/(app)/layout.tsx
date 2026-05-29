@@ -10,12 +10,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const user = await getUser();
 
   if (user) {
+    // Gate 1: email must be verified before any app access
+    if (!user.email_confirmed_at) {
+      const emailParam = user.email ? `?email=${encodeURIComponent(user.email)}` : "";
+      redirect(`/auth/verify-email${emailParam}`);
+    }
+
     const db = createSupabaseServiceClient();
     const { data: org } = await db
       .from("hunter_orgs")
-      .select("onboarding_complete")
+      .select("onboarding_complete, account_type")
       .eq("id", user.id)
       .maybeSingle();
+
+    // Gate 2: onboarding must be complete
     if (!org?.onboarding_complete) redirect("/onboarding");
   }
 
