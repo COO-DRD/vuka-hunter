@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/auth/callback", "/auth/confirm", "/api/webhooks", "/api/workshop", "/beta-feedback.html", "/terms", "/workshop"];
+const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/auth/callback", "/auth/confirm", "/auth/verify-email", "/api/webhooks", "/api/auth/resend-verification", "/api/workshop", "/beta-feedback.html", "/terms", "/workshop"];
 
 // Known headless / scraper user-agent fragments
 const BOT_UA = [
