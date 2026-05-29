@@ -3,6 +3,7 @@ import { getUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { geminiStream, extractGeminiToken } from "@/lib/gemini";
 import { logEvent, logError } from "@/lib/logEvent";
+import { getMode } from "@/lib/enrichmentModes";
 
 function buildFeedbackContext(feedback: Array<{ outcome: string; vertical: string }>) {
   if (!feedback.length) return "";
@@ -18,6 +19,7 @@ Use this to calibrate confidence in your score.`;
 }
 
 function buildScoringPrompt(lead: Record<string, unknown>, org: Record<string, unknown> | null, feedback?: Array<{ outcome: string; vertical: string }>) {
+  const mode       = getMode(org?.enrichment_mode as string | undefined);
   const bizName    = (org?.business_name || org?.name || "the searcher") as string;
   const offerCtx   = org?.org_description
     ? `${bizName} — ${org.org_description}`
@@ -28,6 +30,7 @@ function buildScoringPrompt(lead: Record<string, unknown>, org: Record<string, u
   const signalCtx  = (org?.priority_signals as string[] | null)?.length
     ? `Their top qualification signals (weighted highest in scoring): ${(org?.priority_signals as string[]).join(", ")}.`
     : "";
+  const modeCtx    = `Scoring frame (${mode.label}): ${mode.scoringFrame}`;
   const channelCtx    = `Primary outreach channel: ${(org?.outreach_channel as string) || "WhatsApp"}.`;
   const feedbackCtx   = feedback?.length ? buildFeedbackContext(feedback) : "";
 
@@ -40,6 +43,7 @@ SEARCHER CONTEXT
 ${offerCtx}
 ${targetCtx}
 ${signalCtx}
+${modeCtx}
 ${channelCtx}${feedbackCtx}
 
 LEAD TO EVALUATE
@@ -70,7 +74,7 @@ export async function POST(req: NextRequest) {
   const db = createSupabaseServiceClient();
   const [{ data: lead }, { data: org }] = await Promise.all([
     db.from("hunter_leads").select("*").eq("id", leadId).eq("org_id", user.id).single(),
-    db.from("hunter_orgs").select("business_name,name,org_description,target_description,priority_signals,outreach_channel").eq("id", user.id).single(),
+    db.from("hunter_orgs").select("business_name,name,org_description,target_description,priority_signals,outreach_channel,enrichment_mode").eq("id", user.id).single(),
   ]);
 
   // Pull feedback from same vertical in this org (last 90 days) to calibrate scoring

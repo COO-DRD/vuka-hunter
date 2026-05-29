@@ -3,6 +3,12 @@ import { getUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { isSafeUrl, enrichWebsite } from "@/lib/enrichLead";
 import { logEvent, logError } from "@/lib/logEvent";
+import { getMode } from "@/lib/enrichmentModes";
+import {
+  extractContactsFromAboutPage,
+  extractContactsFromInstagramBio,
+  mergeContacts,
+} from "@/lib/contactExtraction";
 
 export async function POST(req: NextRequest) {
   const user = await getUser();
@@ -15,7 +21,7 @@ export async function POST(req: NextRequest) {
   const [{ data: lead }, { data: org }] = await Promise.all([
     db.from("hunter_leads").select("*").eq("id", leadId).eq("org_id", user.id).single(),
     db.from("hunter_orgs")
-      .select("use_case,priority_signals,target_description,org_description")
+      .select("use_case,priority_signals,target_description,org_description,enrichment_mode")
       .eq("id", user.id)
       .maybeSingle(),
   ]);
@@ -32,6 +38,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Website URL is not a public address" }, { status: 400 });
   }
 
+  const mode = getMode((org as Record<string, unknown> | null)?.enrichment_mode as string | undefined);
+
   try {
     const enriched = await enrichWebsite(lead.website, org ?? undefined);
     await db.from("hunter_leads").update({
@@ -46,6 +54,35 @@ export async function POST(req: NextRequest) {
       // Pre-scoring signals from HTML — scoring AI will read and refine these
       ...(enriched.customSignals.length > 0 && { pain_signals: enriched.customSignals }),
     }).eq("id", leadId);
+
+    // Extract named contacts from About page and Instagram bio (per-lead enrich only)
+    if (process.env.GEMINI_API_KEY) {
+      const [aboutContacts, igContacts] = await Promise.all([
+        enriched.aboutPageHtml
+          ? extractContactsFromAboutPage(enriched.aboutPageHtml, mode)
+          : Promise.resolve([]),
+        enriched.instagramBio
+          ? extractContactsFromInstagramBio(enriched.instagramBio, mode)
+          : Promise.resolve([]),
+      ]);
+      const contacts = mergeContacts(aboutContacts, igContacts);
+      if (contacts.length > 0) {
+        await db.from("hunter_lead_contacts").delete().eq("lead_id", leadId);
+        await db.from("hunter_lead_contacts").insert(
+          contacts.map((c) => ({
+            lead_id:     leadId,
+            org_id:      user.id,
+            name:        c.name,
+            title:       c.title || null,
+            source:      c.source,
+            confidence:  c.confidence,
+            email:       c.email || null,
+            phone:       c.phone || null,
+            raw_snippet: c.raw_snippet,
+          }))
+        );
+      }
+    }
 
     logEvent(user.id, "enrich");
     return NextResponse.json({ ok: true, enriched });

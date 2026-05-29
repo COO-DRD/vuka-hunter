@@ -3,6 +3,7 @@ import { getUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { geminiStream, extractGeminiToken } from "@/lib/gemini";
 import { logEvent, logError } from "@/lib/logEvent";
+import { getMode } from "@/lib/enrichmentModes";
 
 const VERTICAL_PAIN: Record<string, string> = {
   dental:      "Most dental clinics lose 20–30% of appointment slots to no-shows and don't follow up with patients automatically.",
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
   const [{ data: lead }, { data: org }] = await Promise.all([
     db.from("hunter_leads").select("*").eq("id", leadId).eq("org_id", user.id).single(),
     db.from("hunter_orgs")
-      .select("business_name,name,sender_name,org_description,target_description,outreach_channel")
+      .select("business_name,name,sender_name,org_description,target_description,outreach_channel,enrichment_mode")
       .eq("id", user.id)
       .single(),
   ]);
@@ -34,6 +35,8 @@ export async function POST(req: NextRequest) {
   if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
   if (!process.env.GEMINI_API_KEY)
     return NextResponse.json({ error: "GEMINI_API_KEY not set" }, { status: 500 });
+
+  const mode = getMode((org as Record<string, unknown> | null)?.enrichment_mode as string | undefined);
 
   // Profile — fall back gracefully for legacy accounts
   const senderName   = (org?.sender_name   || user.email?.split("@")[0] || "the team") as string;
@@ -63,7 +66,8 @@ export async function POST(req: NextRequest) {
     return `active ${vertical} in ${city}`;
   })();
 
-  const prompt = `You are a senior B2B sales copywriter.
+  const prompt = `You are a senior B2B sales copywriter. Outreach angle for this account type (${mode.label}): ${mode.outreachAngle}
+
 Write TWO cold outreach messages for the business below on behalf of the sender. Use the business's real name. Be hyper-specific — cite actual numbers or observations, not generalities. No fluff.
 
 BUSINESS: ${name}

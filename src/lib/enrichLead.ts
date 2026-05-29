@@ -231,35 +231,90 @@ function extractSocialLinks(html: string): Record<string, string> {
   return links;
 }
 
+// ─── Instagram bio fetch ─────────────────────────────────────────────────────
+
+async function fetchInstagramBio(igUrl: string, signal: AbortSignal): Promise<string> {
+  try {
+    const html = await fetchPage(igUrl, signal);
+    const m = html.match(/<meta\s+property="og:description"\s+content="([^"]+)"/i)
+           ?? html.match(/<meta\s+content="([^"]+)"\s+property="og:description"/i);
+    return m ? m[1].replace(/&quot;/g, '"').replace(/&amp;/g, "&").trim() : "";
+  } catch { return ""; }
+}
+
 // ─── Main export ─────────────────────────────────────────────────────────────
 
-export async function enrichWebsite(url: string, org?: OrgProfile) {
+// Paths tried in order for booking/contact secondary page
+const BOOKING_PATHS = ["/contact", "/book", "/booking", "/appointments", "/schedule"];
+
+// Paths tried for About/Team contact discovery
+const ABOUT_PATHS = [
+  "/about", "/about-us", "/our-team", "/team", "/staff",
+  "/management", "/doctors", "/our-doctors", "/lawyers", "/partners", "/people",
+];
+
+export interface EnrichResult {
+  emails:           string[];
+  techStack:        string[];
+  hasBookingSystem: boolean;
+  hasLiveChat:      boolean;
+  socialLinks:      Record<string, string>;
+  customSignals:    string[];
+  aboutPageHtml:    string;   // raw HTML of the best About/Team page found (empty if none)
+  instagramBio:     string;   // og:description from Instagram profile (empty if none)
+}
+
+export async function enrichWebsite(url: string, org?: OrgProfile): Promise<EnrichResult> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const timeout = setTimeout(() => controller.abort(), 20000);
   let html = "";
-  let extraHtml = "";
+  let bookingHtml = "";
+  let aboutPageHtml = "";
 
   try {
     html = await fetchPage(url, controller.signal);
-
     const base = new URL(url).origin;
-    for (const path of ["/contact", "/book", "/booking", "/appointments", "/about", "/schedule"]) {
+
+    // Try booking/contact secondary pages
+    for (const path of BOOKING_PATHS) {
       try {
         const extra = await fetchPage(base + path, controller.signal);
-        if (extra.length > 500 && extra !== html) { extraHtml = extra; break; }
+        if (extra.length > 500 && extra !== html) { bookingHtml = extra; break; }
+      } catch { /* page doesn't exist */ }
+    }
+
+    // Try About/Team pages for contact discovery
+    for (const path of ABOUT_PATHS) {
+      try {
+        const extra = await fetchPage(base + path, controller.signal);
+        if (extra.length > 500 && extra !== html) { aboutPageHtml = extra; break; }
       } catch { /* page doesn't exist */ }
     }
   } finally {
     clearTimeout(timeout);
   }
 
-  const combined = html + extraHtml;
+  const combined = html + bookingHtml + aboutPageHtml;
+  const socialLinks = extractSocialLinks(combined);
+
+  // Fetch Instagram bio if we have the link
+  let instagramBio = "";
+  if (socialLinks.instagram && isSafeUrl(socialLinks.instagram)) {
+    const igController = new AbortController();
+    const igTimeout = setTimeout(() => igController.abort(), 5000);
+    try {
+      instagramBio = await fetchInstagramBio(socialLinks.instagram, igController.signal);
+    } finally { clearTimeout(igTimeout); }
+  }
+
   return {
     emails:           extractEmails(combined),
     techStack:        detectTechStack(combined),
     hasBookingSystem: detectBookingSystem(combined),
     hasLiveChat:      detectLiveChat(combined),
-    socialLinks:      extractSocialLinks(combined),
+    socialLinks,
     customSignals:    org ? detectCustomSignals(combined, org) : [],
+    aboutPageHtml,
+    instagramBio,
   };
 }

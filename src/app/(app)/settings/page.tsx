@@ -5,6 +5,7 @@ import { Zap, Infinity, Mail, Calendar, ShieldCheck, Hash, Building2, Pencil, Ch
 import Link from "next/link";
 import ChangePasswordForm from "./ChangePasswordForm";
 import ClearLeadsButton from "./ClearLeadsButton";
+import EnrichmentModeSelector from "@/components/settings/EnrichmentModeSelector";
 
 export default async function SettingsPage() {
   const user = await requireUser();
@@ -22,6 +23,17 @@ export default async function SettingsPage() {
         <h1 className="text-xl font-bold text-zinc-100">Settings</h1>
         <p className="text-sm text-zinc-400 mt-0.5">Account &amp; preferences</p>
       </div>
+
+      {/* Enrichment mode */}
+      <Card className="mb-4">
+        <CardHeader><CardTitle>Enrichment Mode</CardTitle></CardHeader>
+        <CardContent>
+          <p className="text-xs text-zinc-500 mb-4">
+            Select your sales context. Hunter will score leads and write outreach copy optimised for this use case.
+          </p>
+          <EnrichmentModeSelector current={org?.enrichment_mode ?? "general"} />
+        </CardContent>
+      </Card>
 
       {/* Account info */}
       <Card className="mb-4">
