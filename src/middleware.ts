@@ -63,15 +63,15 @@ export async function middleware(req: NextRequest) {
     return new NextResponse("Too many requests", { status: 429 });
   }
 
-  // ── Rate-limit API routes ─────────────────────────────────────────────────
-  if (pathname.startsWith("/api/") && rateLimit(ip, MAX_API_RPM)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-  }
-
-  // ── Public paths pass through ─────────────────────────────────────────────
+  // ── Public paths pass through (before rate limiter — webhooks must not be throttled) ─
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
     const res = NextResponse.next();
     return addSecurityHeaders(res);
+  }
+
+  // ── Rate-limit API routes ─────────────────────────────────────────────────
+  if (pathname.startsWith("/api/") && rateLimit(ip, MAX_API_RPM)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
   // ── Auth check ────────────────────────────────────────────────────────────
@@ -115,11 +115,12 @@ function addSecurityHeaders(res: NextResponse): NextResponse {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",       // Next.js inline scripts require unsafe-inline
+      "script-src 'self' 'unsafe-inline' https://js.stripe.com",
       "style-src 'self' 'unsafe-inline'",        // Tailwind/inline styles
       "img-src 'self' data: https:",             // allow remote images (lead logos etc.)
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://maps.googleapis.com https://accounts.google.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://maps.googleapis.com https://accounts.google.com https://api.stripe.com https://hooks.stripe.com",
       "font-src 'self'",
+      "frame-src https://js.stripe.com https://hooks.stripe.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

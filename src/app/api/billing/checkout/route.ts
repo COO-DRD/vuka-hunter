@@ -3,7 +3,11 @@ import Stripe from "stripe";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-04-22.dahlia" });
+let _stripe: Stripe | null = null;
+function getStripe() {
+  if (!_stripe) _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-04-22.dahlia" });
+  return _stripe;
+}
 
 const PLAN_PRICES: Record<string, { priceId: string; amount: number; seats: number }> = {
   starter:    { priceId: process.env.STRIPE_PRICE_STARTER    ?? "", amount: 500000, seats: 5  }, // KES 5,000
@@ -44,7 +48,7 @@ export async function POST(req: NextRequest) {
   if (existing) {
     // Retrieve the live client_secret from Stripe for this intent
     if (existing.stripe_payment_intent_id) {
-      const pi = await stripe.paymentIntents.retrieve(existing.stripe_payment_intent_id);
+      const pi = await getStripe().paymentIntents.retrieve(existing.stripe_payment_intent_id);
       return NextResponse.json({
         client_secret:     pi.client_secret,
         payment_intent_id: existing.id,
@@ -69,7 +73,7 @@ export async function POST(req: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    const customer = await stripe.customers.create({
+    const customer = await getStripe().customers.create({
       email:    user.email ?? undefined,
       name:     org?.name ?? undefined,
       metadata: { org_id: user.id },
@@ -83,7 +87,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Create Stripe PaymentIntent with idempotency key ───────────────────────
-  const stripeIntent = await stripe.paymentIntents.create(
+  const stripeIntent = await getStripe().paymentIntents.create(
     {
       amount:   planConfig.amount,
       currency: "kes",

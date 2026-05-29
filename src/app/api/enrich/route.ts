@@ -29,12 +29,12 @@ export async function POST(req: NextRequest) {
   if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
 
   if (!lead.website) {
-    await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId);
+    await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId).eq("org_id", user.id);
     return NextResponse.json({ error: "No website to enrich from" }, { status: 400 });
   }
 
   if (!isSafeUrl(lead.website)) {
-    await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId);
+    await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId).eq("org_id", user.id);
     return NextResponse.json({ error: "Website URL is not a public address" }, { status: 400 });
   }
 
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       social_links: enriched.socialLinks,
       // Pre-scoring signals from HTML — scoring AI will read and refine these
       ...(enriched.customSignals.length > 0 && { pain_signals: enriched.customSignals }),
-    }).eq("id", leadId);
+    }).eq("id", leadId).eq("org_id", user.id);
 
     // Extract named contacts from About page and Instagram bio (per-lead enrich only)
     if (process.env.GEMINI_API_KEY) {
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       ]);
       const contacts = mergeContacts(aboutContacts, igContacts);
       if (contacts.length > 0) {
-        await db.from("hunter_lead_contacts").delete().eq("lead_id", leadId);
+        await db.from("hunter_lead_contacts").delete().eq("lead_id", leadId).eq("org_id", user.id);
         await db.from("hunter_lead_contacts").insert(
           contacts.map((c) => ({
             lead_id:     leadId,
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, enriched });
   } catch (err) {
     console.error("[enrich]", err);
-    await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId);
+    await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId).eq("org_id", user.id);
     logError("/api/enrich", String(err), user.id, { leadId });
     return NextResponse.json({ error: "Enrichment failed — please retry" }, { status: 500 });
   }

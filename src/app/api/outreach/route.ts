@@ -41,7 +41,8 @@ export async function POST(req: NextRequest) {
   if (lead.stage === "new") {
     await db.from("hunter_leads")
       .update({ stage: "contacted", last_contacted_at: new Date().toISOString() })
-      .eq("id", leadId);
+      .eq("id", leadId)
+      .eq("org_id", user.id);
   }
 
   // Build the deep-link URL
