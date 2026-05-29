@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   }
 
   await db.from("hunter_orgs").upsert(
-    { id: user.id, name: "My Workspace", plan: "beta", credits_total: 999999 },
+    { id: user.id, name: "My Workspace", credits_total: 999999 },
     { onConflict: "id", ignoreDuplicates: true }
   );
 

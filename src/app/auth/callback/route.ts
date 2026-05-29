@@ -42,12 +42,15 @@ export async function GET(req: NextRequest) {
 
   const { error: upsertErr } = await db.from("hunter_orgs").upsert(
     {
-      id:            user.id,
+      id:                  user.id,
       name,
-      plan:          "beta",
-      credits_total: 999999,
-      credits_used:  0,
-      auth_provider: provider,
+      credits_total:       999999,
+      credits_used:        0,
+      auth_provider:       provider,
+      subscription_status: "trialing",
+      subscribed_plan:     "trial",
+      trial_started_at:    new Date().toISOString(),
+      trial_ends_at:       new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     },
     { onConflict: "id", ignoreDuplicates: true }
   );

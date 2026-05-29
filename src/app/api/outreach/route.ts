@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     lead_id: leadId,
     channel,
     message,
-    sent_by: user.id,
+    sent_by_user_id: user.id,
   });
 
   // Advance stage to "contacted" if still new
