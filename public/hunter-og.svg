@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" style="background:#09090b">
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+  </defs>
+  <!-- Background grid dots -->
+  <pattern id="dots" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
+    <circle cx="1" cy="1" r="1" fill="#2a2a2e"/>
+  </pattern>
+  <rect width="1200" height="630" fill="url(#dots)"/>
+  <!-- Icon -->
+  <rect x="520" y="195" width="80" height="80" rx="20" fill="url(#grad)"/>
+  <circle cx="560" cy="235" r="26" stroke="white" stroke-width="4" fill="none"/>
+  <line x1="560" y1="205" x2="560" y2="218" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <line x1="560" y1="252" x2="560" y2="265" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <line x1="530" y1="235" x2="543" y2="235" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <line x1="577" y1="235" x2="590" y2="235" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="560" cy="235" r="6" fill="white"/>
+  <!-- Wordmark -->
+  <text x="600" y="310" font-family="system-ui,sans-serif" font-weight="800" font-size="64" fill="white" letter-spacing="-2" text-anchor="middle">HUNTER</text>
+  <text x="600" y="355" font-family="system-ui,sans-serif" font-weight="400" font-size="24" fill="#71717a" text-anchor="middle">AI Lead Intelligence · Kenya</text>
+</svg>
