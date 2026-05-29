@@ -16,9 +16,22 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Dullu Digital Hunter",
-  description: "B2B lead intelligence & AI outreach",
+  title: "Hunter — AI Lead Intelligence · Kenya",
+  description: "Scrape, enrich, score and write outreach for Kenyan businesses in seconds. Powered by Gemini AI.",
   manifest: "/manifest.json",
+  openGraph: {
+    title: "Hunter — AI Lead Intelligence · Kenya",
+    description: "Find your next 100 clients. Automatically.",
+    images: [{ url: "/hunter-og.svg", width: 1200, height: 630 }],
+    siteName: "Hunter",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Hunter — AI Lead Intelligence · Kenya",
+    description: "Find your next 100 clients. Automatically.",
+    images: ["/hunter-og.svg"],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -26,7 +39,10 @@ export const metadata: Metadata = {
     startupImage: "/icons/apple-touch-icon.png",
   },
   icons: {
-    icon: "/icons/favicon-32.png",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+    ],
     apple: "/icons/apple-touch-icon.png",
   },
 };
