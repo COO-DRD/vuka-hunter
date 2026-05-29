@@ -4,7 +4,11 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-04-22.dahlia" });
+let _stripe: Stripe | null = null;
+function getStripe() {
+  if (!_stripe) _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-04-22.dahlia" });
+  return _stripe;
+}
 
 // Map Stripe event types → our internal event_type enum
 const STRIPE_EVENT_MAP: Record<string, string> = {
@@ -33,7 +37,7 @@ export async function POST(req: NextRequest) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+    event = getStripe().webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch (err) {
     console.error("[stripe/webhook] signature verification failed:", err);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
@@ -53,7 +57,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Resolve org_id from the event object ───────────────────────────────────
-  const obj = event.data.object as Record<string, unknown>;
+  const obj = event.data.object as unknown as Record<string, unknown>;
   const stripeCustomerId = (
     (obj.customer as string | null) ??
     (obj.customer_id as string | null) ??
@@ -87,7 +91,7 @@ export async function POST(req: NextRequest) {
 
   // Refine dispute.closed: check outcome
   if (event.type === "charge.dispute.closed") {
-    const dispute = obj as Stripe.Dispute;
+    const dispute = obj as unknown as Stripe.Dispute;
     internalType = dispute.status === "won" ? "payment.dispute_won" : "payment.dispute_lost";
   }
 
@@ -153,20 +157,20 @@ async function handleSubscriptionEvent(
   event: Stripe.Event,
   internalType: string
 ) {
-  const obj = event.data.object as Record<string, unknown>;
+  const obj = event.data.object as unknown as Record<string, unknown>;
 
   // Invoice events: get subscription details from the invoice
   if (event.type.startsWith("invoice.")) {
     const subId = obj.subscription as string | null;
     if (!subId) return;
-    const stripeSub = await stripe.subscriptions.retrieve(subId);
+    const stripeSub = await getStripe().subscriptions.retrieve(subId);
     await syncSubscription(db, orgId, stripeSub);
     return;
   }
 
   // Subscription events: object IS the subscription
   if (event.type.startsWith("customer.subscription.")) {
-    const stripeSub = obj as Stripe.Subscription;
+    const stripeSub = obj as unknown as Stripe.Subscription;
     await syncSubscription(db, orgId, stripeSub);
     return;
   }
@@ -177,9 +181,14 @@ async function syncSubscription(
   orgId: string,
   sub: Stripe.Subscription
 ) {
-  const priceId   = sub.items.data[0]?.price?.id ?? null;
+  const item      = sub.items.data[0];
+  const priceId   = item?.price?.id ?? null;
   const plan      = priceIdToPlan(priceId);
   const seatLimit = planToSeats(plan);
+
+  // In API 2026-04-22.dahlia current_period_* moved to the item level
+  const periodStart = item?.current_period_start ?? null;
+  const periodEnd   = item?.current_period_end   ?? null;
 
   const statusMap: Record<string, string> = {
     trialing:  "trialing",
@@ -199,8 +208,8 @@ async function syncSubscription(
     plan,
     status:                  statusMap[sub.status] ?? "active",
     seat_limit:              seatLimit,
-    current_period_start:    new Date(sub.current_period_start * 1000).toISOString(),
-    current_period_end:      new Date(sub.current_period_end  * 1000).toISOString(),
+    current_period_start:    periodStart ? new Date(periodStart * 1000).toISOString() : null,
+    current_period_end:      periodEnd   ? new Date(periodEnd   * 1000).toISOString() : null,
     trial_end:               sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
     cancel_at_period_end:    sub.cancel_at_period_end,
     cancelled_at:            sub.canceled_at ? new Date(sub.canceled_at * 1000).toISOString() : null,
