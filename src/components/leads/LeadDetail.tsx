@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import StageSelector from "@/components/leads/StageSelector";
+import { LeadFeedbackPanel } from "@/components/leads/LeadFeedbackPanel";
 
 type Lead = Record<string, unknown>;
 type Channel = "whatsapp" | "email";
@@ -65,11 +66,13 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
   const [generating,  setGenerating]  = useState(false);
 
   // ── Outreach state ─────────────────────────────────────────────────────────
-  const [channel,   setChannel]   = useState<Channel>("whatsapp");
-  const [sending,   setSending]   = useState(false);
-  const [sentWa,    setSentWa]    = useState(false);
-  const [sentEmail, setSentEmail] = useState(false);
-  const [copied,    setCopied]    = useState(false);
+  const [channel,      setChannel]      = useState<Channel>("whatsapp");
+  const [sending,      setSending]      = useState(false);
+  const [sentWa,       setSentWa]       = useState(false);
+  const [sentEmail,    setSentEmail]    = useState(false);
+  const [copied,       setCopied]       = useState(false);
+  const [contactedAt,  setContactedAt]  = useState<string | null>((lead.contacted_at as string) ?? null);
+  const [lastOutcome,  setLastOutcome]  = useState<string | null>((lead.last_outcome as string) ?? null);
 
   // ── Other ──────────────────────────────────────────────────────────────────
   const [enriching, setEnriching] = useState(false);
@@ -220,6 +223,9 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
 
     if (channel === "whatsapp") { setSentWa(true); toast.success("WhatsApp opened — tap Send"); }
     else                        { setSentEmail(true); toast.success("Mail app opened — tap Send"); }
+
+    const now = new Date().toISOString();
+    setContactedAt(now);
 
     // Log the outreach in the background (don't await — user already left the page context)
     fetch("/api/outreach", {
@@ -537,6 +543,14 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Outcome feedback */}
+        <LeadFeedbackPanel
+          leadId={lead.id as string}
+          contactedAt={contactedAt}
+          existingOutcome={lastOutcome}
+          onSaved={(outcome) => setLastOutcome(outcome)}
+        />
 
       </div>
     </div>
