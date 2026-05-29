@@ -39,12 +39,9 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Mirror outcome onto the lead row for quick UI access without a join
+  // Update last_contacted_at on the lead for quick UI access
   await db.from("hunter_leads")
-    .update({
-      last_outcome: body.outcome,
-      contacted_at: body.contactedAt ?? new Date().toISOString(),
-    })
+    .update({ last_contacted_at: body.contactedAt ?? new Date().toISOString() })
     .eq("id", body.leadId)
     .eq("org_id", user.id);
 

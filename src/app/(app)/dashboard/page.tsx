@@ -27,7 +27,7 @@ export default async function DashboardPage() {
   const db = createSupabaseServiceClient();
   const [{ total, hot, enriched, scored, recent, stageCounts }] = await Promise.all([
     getStats(user.id),
-    db.from("hunter_orgs").upsert({ id: user.id, name: user.email ?? "My Workspace", plan: "beta", credits_total: 999999 }, { onConflict: "id", ignoreDuplicates: true }),
+    db.from("hunter_orgs").upsert({ id: user.id, name: user.email ?? "My Workspace", credits_total: 999999 }, { onConflict: "id", ignoreDuplicates: true }),
   ]);
   const stats = [
     { label: "Total Leads",     value: total ?? 0,    icon: Users,      color: "text-blue-400" },
