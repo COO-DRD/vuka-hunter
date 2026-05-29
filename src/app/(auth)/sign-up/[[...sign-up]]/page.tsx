@@ -2,10 +2,11 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, User, Zap, Clock, Shield } from "lucide-react";
+import { Eye, EyeOff, User, Zap, Clock, Shield, Building2, Users } from "lucide-react";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { HunterWordmark, HunterMark } from "@/components/HunterLogo";
+import { cn } from "@/lib/utils";
 
 function GoogleIcon() {
   return (
@@ -19,17 +20,35 @@ function GoogleIcon() {
 }
 
 const PERKS = [
-  { icon: Zap,    text: "Unlimited leads during beta — no credit card" },
-  { icon: Clock,  text: "First scrape ready in under 2 minutes" },
+  { icon: Zap,    text: "7-day free trial — full access, no credit card" },
+  { icon: Clock,  text: "First leads ready in under 2 minutes" },
   { icon: Shield, text: "Your data stays in your workspace only" },
 ];
 
+const COMPANY_SIZES = [
+  "1–5 employees",
+  "6–20 employees",
+  "21–50 employees",
+  "51–200 employees",
+  "200+ employees",
+];
+
 export default function SignUpPage() {
-  const [name, setName]           = useState("");
-  const [email, setEmail]         = useState("");
-  const [password, setPassword]   = useState("");
-  const [showPw, setShowPw]       = useState(false);
+  const [accountType, setAccountType] = useState<"individual" | "corporate">("individual");
+
+  // Individual fields
+  const [name, setName]       = useState("");
+  const [email, setEmail]     = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw]   = useState(false);
   const [termsAccepted, setTerms] = useState(false);
+
+  // Corporate fields
+  const [companyName, setCompanyName]   = useState("");
+  const [companySize, setCompanySize]   = useState("");
+  const [companyReg, setCompanyReg]     = useState("");
+  const [billingEmail, setBillingEmail] = useState("");
+
   const [error, setError]         = useState("");
   const [loading, setLoading]     = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -37,12 +56,22 @@ export default function SignUpPage() {
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     if (!termsAccepted) { setError("You must accept the Terms of Service to continue."); return; }
+    if (accountType === "corporate" && !companyName.trim()) {
+      setError("Company name is required for corporate accounts."); return;
+    }
     setLoading(true); setError("");
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, termsAccepted: true }),
+        body: JSON.stringify({
+          name, email, password, termsAccepted: true,
+          accountType,
+          ...(accountType === "corporate" && {
+            companyName, companySize, companyReg,
+            billingEmail: billingEmail || email,
+          }),
+        }),
       });
       const json = await res.json();
       if (!res.ok) { setError(json.error ?? "Something went wrong."); return; }
@@ -74,23 +103,19 @@ export default function SignUpPage() {
         <div className="absolute -bottom-16 -right-16 opacity-[0.04] text-white">
           <HunterMark className="h-80 w-80" />
         </div>
-
         <div className="relative flex flex-col h-full px-10 py-10">
           <HunterWordmark size="md" />
-
           <div className="flex-1 flex flex-col justify-center">
             <p className="text-3xl font-bold text-zinc-100 leading-tight mb-3">
               Start hunting in<br />
               <span className="text-brand-gradient">under 2 minutes.</span>
             </p>
             <p className="text-sm text-zinc-500 mb-10 leading-relaxed">
-              Beta is free and unlimited. No credit card required.
+              7-day free trial. No credit card required.
             </p>
-
             <div className="space-y-4">
               {PERKS.map(({ icon: Icon, text }, i) => (
-                <div key={text}
-                  className={`flex items-center gap-3 animate-fade-up delay-${(i + 1) * 75}`}>
+                <div key={text} className={`flex items-center gap-3 animate-fade-up delay-${(i + 1) * 75}`}>
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 border border-orange-500/20">
                     <Icon className="h-4 w-4 text-orange-400" />
                   </div>
@@ -98,21 +123,62 @@ export default function SignUpPage() {
                 </div>
               ))}
             </div>
+            {/* Trial badge */}
+            <div className="mt-10 rounded-xl border border-red-900/40 bg-red-950/20 px-5 py-4">
+              <p className="text-sm font-semibold text-red-400 mb-1">7-Day Free Trial</p>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                Full access to all features. After 7 days, plans start at KES 2,500/month.
+                Corporate accounts include 14-day trial.
+              </p>
+            </div>
           </div>
-
           <p className="text-xs text-zinc-700">Dullu Digital · hunter.dullugroup.co.ke</p>
         </div>
       </div>
 
       {/* ── Form panel ── */}
-      <div className="flex-1 flex items-center justify-center bg-zinc-950 px-6 py-12">
+      <div className="flex-1 flex items-center justify-center bg-zinc-950 px-6 py-12 overflow-y-auto">
         <div className="w-full max-w-sm animate-fade-up">
           <div className="lg:hidden flex justify-center mb-8">
             <HunterWordmark size="md" />
           </div>
 
           <h2 className="text-xl font-bold text-zinc-100 mb-1">Create your account</h2>
-          <p className="text-sm text-zinc-500 mb-6">Free during beta — no credit card needed.</p>
+          <p className="text-sm text-zinc-500 mb-5">7-day free trial · No credit card needed.</p>
+
+          {/* Account type selector */}
+          <div className="flex gap-2 mb-5">
+            <button
+              type="button"
+              onClick={() => setAccountType("individual")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 rounded-lg border py-2.5 text-sm font-medium transition-colors",
+                accountType === "individual"
+                  ? "border-red-600/60 bg-red-600/10 text-zinc-100"
+                  : "border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
+              )}
+            >
+              <User className="h-4 w-4" /> Individual
+            </button>
+            <button
+              type="button"
+              onClick={() => setAccountType("corporate")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 rounded-lg border py-2.5 text-sm font-medium transition-colors",
+                accountType === "corporate"
+                  ? "border-red-600/60 bg-red-600/10 text-zinc-100"
+                  : "border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
+              )}
+            >
+              <Building2 className="h-4 w-4" /> Corporate
+            </button>
+          </div>
+
+          {accountType === "corporate" && (
+            <div className="mb-4 rounded-lg border border-amber-900/40 bg-amber-950/10 px-4 py-3 text-xs text-amber-400">
+              Corporate accounts get a <strong>14-day trial</strong>, 5 seats, team workspace, and priority support.
+            </div>
+          )}
 
           <Button type="button" variant="outline" onClick={handleGoogle} loading={googleLoading}
             className="w-full mb-4 gap-2 border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 h-10"
@@ -137,9 +203,9 @@ export default function SignUpPage() {
               </div>
             </div>
             <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">Email</label>
+              <label className="block text-xs text-zinc-400 mb-1.5">Work email</label>
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com" required autoComplete="email" />
+                placeholder="you@company.com" required autoComplete="email" />
             </div>
             <div>
               <label className="block text-xs text-zinc-400 mb-1.5">Password</label>
@@ -155,6 +221,45 @@ export default function SignUpPage() {
                 </button>
               </div>
             </div>
+
+            {/* Corporate fields */}
+            {accountType === "corporate" && (
+              <div className="space-y-3 pt-1 border-t border-zinc-800">
+                <p className="text-xs text-zinc-500 pt-1 flex items-center gap-1.5">
+                  <Building2 className="h-3.5 w-3.5 text-zinc-600" /> Company details
+                </p>
+                <div>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Company name <span className="text-red-500">*</span></label>
+                  <Input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="Acme Kenya Ltd." required={accountType === "corporate"} />
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Company size</label>
+                  <select
+                    value={companySize}
+                    onChange={(e) => setCompanySize(e.target.value)}
+                    className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-red-600/50"
+                  >
+                    <option value="">Select size…</option>
+                    {COMPANY_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-400 mb-1.5">
+                    Company registration no. <span className="text-zinc-600">(optional)</span>
+                  </label>
+                  <Input type="text" value={companyReg} onChange={(e) => setCompanyReg(e.target.value)}
+                    placeholder="e.g. CPR/2019/XXXXX" />
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-400 mb-1.5">
+                    Billing email <span className="text-zinc-600">(if different)</span>
+                  </label>
+                  <Input type="email" value={billingEmail} onChange={(e) => setBillingEmail(e.target.value)}
+                    placeholder="accounts@company.com" autoComplete="off" />
+                </div>
+              </div>
+            )}
 
             {/* Terms */}
             <label className="flex items-start gap-2.5 cursor-pointer group mt-1">
@@ -180,11 +285,14 @@ export default function SignUpPage() {
 
             {error && <p className="text-xs text-red-400">{error}</p>}
             <Button type="submit" loading={loading} disabled={!termsAccepted} className="w-full mt-1">
-              Create account
+              {accountType === "corporate" ? "Create corporate account" : "Start free trial"}
             </Button>
           </form>
 
-          <p className="text-center text-xs text-zinc-500 mt-5">
+          <p className="text-center text-xs text-zinc-600 mt-3">
+            {accountType === "individual" ? "7-day free trial" : "14-day free trial for corporate"} · No credit card
+          </p>
+          <p className="text-center text-xs text-zinc-500 mt-3">
             Already have an account?{" "}
             <Link href="/sign-in" className="text-red-400 hover:text-red-300 font-medium">Sign in</Link>
           </p>
