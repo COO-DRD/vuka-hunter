@@ -1,5 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { applyProtocol } from "@/lib/protocol";
+import { applyProtocol, type ProtocolOverrides } from "@/lib/protocol";
 import { logEvent, logError } from "@/lib/logEvent";
 
 export const PLACES_URL = "https://places.googleapis.com/v1/places:searchText";
@@ -163,6 +163,72 @@ export async function scrapeOSM(
   })).filter((r: PlacesResult) => r.name);
 }
 
+export async function scrapeFoursquare(
+  query: string,
+  city: string,
+  maxCount: number,
+): Promise<PlacesResult[]> {
+  const apiKey = process.env.FOURSQUARE_API_KEY;
+  if (!apiKey) throw new Error("FOURSQUARE_API_KEY not configured. Add it to your environment variables.");
+
+  const results: PlacesResult[] = [];
+  let cursor: string | undefined;
+
+  while (results.length < maxCount) {
+    const params = new URLSearchParams({
+      query:   `${query} ${city} Kenya`,
+      limit:   String(Math.min(50, maxCount - results.length)),
+      fields:  "fsq_id,name,location,website,tel,rating,stats",
+      ...(cursor && { cursor }),
+    });
+
+    const res = await fetch(`https://api.foursquare.com/v3/places/search?${params}`, {
+      headers: { Authorization: apiKey, Accept: "application/json" },
+    });
+
+    if (!res.ok) {
+      const msg = await res.text().catch(() => "");
+      throw new Error(`Foursquare API error ${res.status}: ${msg}`);
+    }
+
+    const data = await res.json() as {
+      results: Array<{
+        name: string;
+        location?: { address?: string; locality?: string };
+        website?: string;
+        tel?: string;
+        rating?: number;
+        stats?: { total_ratings?: number };
+      }>;
+      context?: { next_cursor?: string };
+    };
+
+    const places = data.results ?? [];
+    if (!places.length) break;
+
+    for (const p of places) {
+      if (results.length >= maxCount) break;
+      const addr = [p.location?.address, p.location?.locality].filter(Boolean).join(", ") || null;
+      results.push({
+        name:                p.name ?? "",
+        phone:               p.tel ?? null,
+        email:               null,
+        website:             p.website ?? null,
+        address:             addr,
+        google_rating:       p.rating ? Math.round((p.rating / 2) * 10) / 10 : null,
+        google_review_count: p.stats?.total_ratings ?? null,
+        google_maps_url:     null,
+      });
+    }
+
+    cursor = data.context?.next_cursor;
+    if (!cursor) break;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+
+  return results.filter((r) => r.name);
+}
+
 export async function runScrapeJob(
   jobId: string,
   orgId: string,
@@ -171,6 +237,7 @@ export async function runScrapeJob(
   count: number,
   source: string,
   placeQuery: string,
+  overrides?: ProtocolOverrides,
 ) {
   const db = createSupabaseServiceClient();
   await db
@@ -180,9 +247,9 @@ export async function runScrapeJob(
 
   try {
     const raw =
-      source === "osm"
-        ? await scrapeOSM(placeQuery, city, count)
-        : await scrapeGooglePlaces(placeQuery, city, count);
+      source === "osm"         ? await scrapeOSM(placeQuery, city, count)         :
+      source === "foursquare"  ? await scrapeFoursquare(placeQuery, city, count)  :
+      await scrapeGooglePlaces(placeQuery, city, count);
 
     const withMeta = raw.filter((r) => r.name).map((r) => ({
       ...r,
@@ -193,7 +260,7 @@ export async function runScrapeJob(
       imported_by:   "scraper",
     }));
 
-    const { accepted, rejected } = applyProtocol(withMeta);
+    const { accepted, rejected } = applyProtocol(withMeta, overrides);
     if (rejected.length) {
       console.log(
         `[Hunter] Protocol filtered ${rejected.length}/${withMeta.length} leads from job ${jobId}:`,

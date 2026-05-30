@@ -1,5 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser, resolveOrgId } from "@/lib/auth";
+import { getUser, resolveOrgId, checkOrgAccess, ACCESS_DENIED } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { geminiStream, extractGeminiToken } from "@/lib/gemini";
 import { logEvent } from "@/lib/logEvent";
@@ -9,6 +9,14 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const orgId = await resolveOrgId(user.id);
+
+  const access = await checkOrgAccess(orgId);
+  if (!access.allowed) {
+    return NextResponse.json(
+      { error: ACCESS_DENIED[access.reason!], reason: access.reason, upgradeUrl: "/upgrade" },
+      { status: 402 }
+    );
+  }
 
   const { limit = 30 } = await req.json().catch(() => ({}));
 

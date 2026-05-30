@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96.0" fill="#09090b"/>
-  <rect x="86.0" y="86.0" width="340.0" height="340.0" rx="56.0" fill="#DC2626"/>
-  <g transform="translate(71.68,71.68) scale(15.3600)">
-    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="#ffffff" stroke="#ffffff" stroke-width="0.4" stroke-linejoin="round"/>
-  </g>
+  <rect width="512" height="512" rx="96" fill="#09090B"/>
+  <!-- Geometric "4" mark, amber, scaled to 512 canvas (multiplier ~18.3) -->
+  <polygon points="55,55 137,55 238,275 155,275" fill="#F59E0B"/>
+  <rect x="55" y="275" width="366" height="73" rx="9" fill="#F59E0B"/>
+  <rect x="347" y="55" width="73" height="366" rx="9" fill="#F59E0B"/>
 </svg>

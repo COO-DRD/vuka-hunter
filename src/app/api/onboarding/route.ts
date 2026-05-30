@@ -33,8 +33,7 @@ export async function POST(req: NextRequest) {
     priority_signals:    prioritySignals ?? [],
     outreach_channel:    outreachChannel ?? "whatsapp",
     onboarding_complete: true,
-    plan:                "beta",
-    credits_total:       999999,
+    // Never overwrite plan/trial fields set during signup
   }, { onConflict: "id" });
 
   return NextResponse.json({ ok: true });
