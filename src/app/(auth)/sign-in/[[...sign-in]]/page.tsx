@@ -32,7 +32,7 @@ function friendlyError(msg: string): string {
 const FEATURES = [
   { icon: Target,    text: "Discover leads across 36 Kenyan B2B verticals" },
   { icon: Sparkles,  text: "Enrich with website, contact, and tech intelligence" },
-  { icon: BarChart3, text: "Score every lead with Hunter Intelligence in seconds" },
+  { icon: BarChart3, text: "AI scores every lead and surfaces the exact pain signal to open with" },
 ];
 
 type Mode = "signin" | "forgot" | "forgot_sent";

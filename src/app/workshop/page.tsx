@@ -18,11 +18,11 @@ const AGENDA = [
   { time: "6:00", item: "Why most Kenyan sales teams waste 80% of their prospecting time" },
   { time: "6:15", item: "Live demo: scrape, enrich & score 50 leads in under 3 minutes" },
   { time: "6:40", item: "Writing outreach that converts — pain-led vs generic templates" },
-  { time: "7:10", item: "Q&A + how to get Hunter working for your vertical" },
+  { time: "7:10", item: "Q&A + how to get 4unter working for your vertical" },
 ];
 
 const OUTCOMES = [
-  "Leave with a live Hunter account and your first 20 leads scored",
+  "Leave with a live 4unter account and your first 20 leads scored",
   "A WhatsApp outreach template tuned to your vertical",
   "Understanding of which pain signals close deals in Kenya",
   "Direct access to the Dullu Digital team for custom deployments",
@@ -65,7 +65,7 @@ export default function WorkshopPage() {
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link href="/"><HunterWordmark size="sm" /></Link>
           <Link href="/sign-up">
-            <Button size="sm">Try Hunter free</Button>
+            <Button size="sm">Try 4unter free</Button>
           </Link>
         </div>
       </header>
@@ -136,7 +136,7 @@ export default function WorkshopPage() {
               <div>
                 <p className="text-sm font-semibold text-zinc-100">Dullu Digital</p>
                 <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">
-                  We built Hunter to solve our own prospecting problem. Now we use it daily to generate pipeline for AI automation projects across Nairobi.
+                  We built 4unter to solve our own prospecting problem. Now we use it daily to generate pipeline for AI automation projects across Nairobi.
                 </p>
               </div>
             </div>
@@ -157,7 +157,7 @@ export default function WorkshopPage() {
                   <Link href="/sign-up">
                     <Button className="w-full gap-2">
                       <Zap className="h-4 w-4" />
-                      Start using Hunter now — free
+                      Start using 4unter free
                     </Button>
                   </Link>
                 </div>

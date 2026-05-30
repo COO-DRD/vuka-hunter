@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Zap, Users, Building2, Shield, Check, ArrowRight, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Zap, Users, Building2, Shield, Check, ArrowRight, Loader2, MessageCircle, Mail, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const PLANS = [
@@ -64,9 +64,17 @@ const PLANS = [
 type PlanId = (typeof PLANS)[number]["id"];
 
 export default function UpgradePage() {
-  const [selected,  setSelected]  = useState<PlanId>("growth");
-  const [loading,   setLoading]   = useState(false);
-  const [error,     setError]     = useState("");
+  const [selected,          setSelected]          = useState<PlanId>("growth");
+  const [loading,           setLoading]           = useState(false);
+  const [error,             setError]             = useState("");
+  const [stripeConfigured,  setStripeConfigured]  = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/billing/configured")
+      .then((r) => r.json())
+      .then((d) => setStripeConfigured(d.configured ?? false))
+      .catch(() => setStripeConfigured(false));
+  }, []);
 
   async function handleCheckout() {
     setLoading(true);
@@ -80,11 +88,13 @@ export default function UpgradePage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.error ?? "Checkout failed. Please try again.");
+        if (res.status >= 500) {
+          setError("Our payment processor is being set up — see the contact options below to upgrade manually.");
+        } else {
+          setError(json.error ?? "Checkout failed. Please try again.");
+        }
         return;
       }
-      // Redirect to Stripe Payment Element or confirmation page
-      // For now, store client_secret and redirect to /billing/pay
       const params = new URLSearchParams({
         client_secret:     json.client_secret,
         payment_intent_id: json.payment_intent_id ?? "",
@@ -185,21 +195,58 @@ export default function UpgradePage() {
           </p>
         </div>
 
-        {/* CTA */}
-        {error && <p className="text-xs text-red-400 text-center mb-4">{error}</p>}
-        <div className="flex justify-center">
-          <button
-            onClick={handleCheckout}
-            disabled={loading}
-            className="flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-60 px-8 py-3.5 font-bold text-black text-sm transition-colors"
-          >
-            {loading ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>
-            ) : (
-              <><Zap className="h-4 w-4" /> Continue to payment — {plan.priceLabel}<ArrowRight className="h-4 w-4" /></>
-            )}
-          </button>
-        </div>
+        {/* CTA — online payment or contact fallback */}
+        {error && (
+          <div className="flex items-start gap-2 rounded-lg border border-red-800/50 bg-red-950/20 px-4 py-3 mb-4">
+            <AlertTriangle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-red-300">{error}</p>
+          </div>
+        )}
+
+        {stripeConfigured === false ? (
+          <div className="rounded-xl border border-amber-800/40 bg-amber-950/10 px-6 py-5">
+            <p className="text-sm font-semibold text-amber-300 mb-1">Online card payment is coming soon</p>
+            <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
+              We&apos;re finalising our payment integration. In the meantime, get activated today by reaching out directly — we&apos;ll set your account up within the hour.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <a
+                href="https://wa.me/254700000000?text=Hi%2C%20I%20want%20to%20upgrade%20to%204unter%20{selected}%20plan%20({plan.priceLabel}%2Fmo)"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-500 px-6 py-3 font-semibold text-white text-sm transition-colors"
+              >
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp us to activate
+              </a>
+              <a
+                href={`mailto:billing@dullugroup.co.ke?subject=4unter%20Upgrade%20%E2%80%94%20${encodeURIComponent(plan.label)}%20plan&body=Hi%2C%20I%20want%20to%20upgrade%20to%20the%20${encodeURIComponent(plan.label)}%20plan%20(${encodeURIComponent(plan.priceLabel)}%2Fmo).`}
+                className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 px-6 py-3 font-semibold text-zinc-300 text-sm transition-colors"
+              >
+                <Mail className="h-4 w-4" />
+                Email billing@dullugroup.co.ke
+              </a>
+            </div>
+            <p className="text-xs text-zinc-600 mt-4">
+              Selected plan: <span className="text-zinc-400 font-medium">{plan.label} — {plan.priceLabel}/month · {plan.seats} seats</span>
+            </p>
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            <button
+              onClick={handleCheckout}
+              disabled={loading || stripeConfigured === null}
+              className="flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-60 px-8 py-3.5 font-bold text-black text-sm transition-colors"
+            >
+              {loading ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>
+              ) : (
+                <><Zap className="h-4 w-4" /> Continue to payment — {plan.priceLabel}<ArrowRight className="h-4 w-4" /></>
+              )}
+            </button>
+          </div>
+        )}
+
         <p className="text-center text-xs text-zinc-600 mt-4">
           You can add or suspend members any time from Settings. Seats are charged monthly.
         </p>

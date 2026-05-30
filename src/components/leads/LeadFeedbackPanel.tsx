@@ -76,7 +76,7 @@ export function LeadFeedbackPanel({ leadId, contactedAt, existingOutcome, onSave
       if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
       setSaved(true);
       onSaved?.(selected);
-      toast.success("Outcome logged — Hunter learns from this");
+      toast.success("Outcome logged");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save");
     } finally {
@@ -102,7 +102,7 @@ export function LeadFeedbackPanel({ leadId, contactedAt, existingOutcome, onSave
           )}
         </div>
         <p className="text-xs text-zinc-500 mt-0.5">
-          Your feedback trains Hunter to score similar leads more accurately over time.
+          Your feedback improves scoring accuracy for similar leads over time.
         </p>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -185,7 +185,7 @@ export function LeadFeedbackPanel({ leadId, contactedAt, existingOutcome, onSave
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={2}
-            placeholder="Optional: what happened? (helps Hunter understand context)"
+            placeholder="Optional: what happened? (e.g. no online presence, wrong contact, different budget)"
             className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-red-500 resize-none"
           />
         )}
