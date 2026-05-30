@@ -71,7 +71,7 @@ export default function ImportPage() {
     <div className="p-6 max-w-2xl">
       <div className="mb-6">
         <h1 className="text-xl font-bold text-zinc-100">Import CSV</h1>
-        <p className="text-sm text-zinc-400 mt-0.5">Upload any Hunter-compatible CSV to import leads</p>
+        <p className="text-sm text-zinc-400 mt-0.5">Upload any 4unter-compatible CSV to bulk-import leads</p>
       </div>
 
       <Card className="mb-4">

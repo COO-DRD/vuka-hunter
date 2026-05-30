@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, User, Zap, Clock, Shield, Building2 } from "lucide-react";
+import { Eye, EyeOff, User, Users, Zap, Clock, Shield, Building2 } from "lucide-react";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { HunterWordmark, HunterMark } from "@/components/HunterLogo";
@@ -19,10 +19,16 @@ function GoogleIcon() {
   );
 }
 
-const PERKS = [
+const INDIVIDUAL_PERKS = [
   { icon: Zap,    text: "7-day free trial — full access, no credit card" },
-  { icon: Clock,  text: "First leads ready in under 2 minutes" },
+  { icon: Clock,  text: "First 100 leads ready in under 2 minutes" },
   { icon: Shield, text: "Kenya DPA 2019 compliant — your data stays yours" },
+];
+
+const CORPORATE_PERKS = [
+  { icon: Building2, text: "14-day corporate trial — longer runway, no card" },
+  { icon: Users,     text: "5 team seats included from day one" },
+  { icon: Shield,    text: "Shared workspace · domain auto-join · priority support" },
 ];
 
 const COMPANY_SIZES = [
@@ -266,19 +272,42 @@ export default function SignUpPage() {
           <HunterWordmark size="md" />
 
           <div className="flex-1 flex flex-col justify-center">
-            <p className="text-3xl font-bold text-zinc-100 leading-tight mb-3">
-              Your next client<br />
-              is already online.<br />
-              <span className="text-brand-gradient">We find them.</span>
-            </p>
-            <p className="text-sm text-zinc-500 mb-10 leading-relaxed">
-              {isCorporate ? "14-day corporate trial. Full access. No credit card." : "7-day free trial. No credit card required."}
-            </p>
+            {isCorporate ? (
+              <>
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-400 uppercase tracking-wide mb-4 w-fit">
+                  <Building2 className="h-3 w-3" /> Corporate
+                </div>
+                <p className="text-3xl font-bold text-zinc-100 leading-tight mb-3">
+                  Your whole team.<br />
+                  One pipeline.<br />
+                  <span className="text-brand-gradient">Full speed ahead.</span>
+                </p>
+                <p className="text-sm text-zinc-500 mb-8 leading-relaxed">
+                  14-day trial. 5 seats. Shared workspace. No card required.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-zinc-100 leading-tight mb-3">
+                  Your next client<br />
+                  is already online.<br />
+                  <span className="text-brand-gradient">You just need to find them.</span>
+                </p>
+                <p className="text-sm text-zinc-500 mb-8 leading-relaxed">
+                  7-day free trial. No credit card required.
+                </p>
+              </>
+            )}
 
             <div className="space-y-4">
-              {PERKS.map(({ icon: Icon, text }, i) => (
+              {(isCorporate ? CORPORATE_PERKS : INDIVIDUAL_PERKS).map(({ icon: Icon, text }, i) => (
                 <div key={text} className={`flex items-center gap-3 animate-fade-up delay-${(i + 1) * 75}`}>
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <div className={cn(
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
+                    isCorporate
+                      ? "bg-amber-500/15 border-amber-500/30"
+                      : "bg-amber-500/10 border-amber-500/20"
+                  )}>
                     <Icon className="h-4 w-4 text-amber-400" />
                   </div>
                   <span className="text-sm text-zinc-400">{text}</span>
@@ -286,14 +315,19 @@ export default function SignUpPage() {
               ))}
             </div>
 
-            <div className="mt-10 rounded-xl border border-amber-900/50 bg-amber-950/20 px-5 py-4">
+            <div className={cn(
+              "mt-10 rounded-xl border px-5 py-4",
+              isCorporate
+                ? "border-amber-700/60 bg-amber-950/30"
+                : "border-amber-900/50 bg-amber-950/20"
+            )}>
               <p className="text-sm font-semibold text-amber-400 mb-1">
-                {isCorporate ? "14-Day Corporate Trial" : "7-Day Free Trial"}
+                {isCorporate ? "Corporate Trial — 14 days" : "Free Trial — 7 days"}
               </p>
               <p className="text-xs text-zinc-500 leading-relaxed">
                 {isCorporate
-                  ? "Full access + 5 seats. After 14 days, corporate plans from KES 5,000/month."
-                  : "Full access. After 7 days, plans start at KES 2,500/month."}
+                  ? "Full access for up to 5 seats. After 14 days, plans from KES 5,000/month."
+                  : "Full access, 100 leads. After 7 days, plans start at KES 2,500/month."}
               </p>
             </div>
           </div>
@@ -309,31 +343,64 @@ export default function SignUpPage() {
             <HunterWordmark size="md" />
           </div>
 
-          <h2 className="text-xl font-bold text-zinc-100 mb-1">Create your account</h2>
-          <p className="text-sm text-zinc-500 mb-5">Free trial · No credit card needed.</p>
+          <h2 className="text-xl font-bold text-zinc-100 mb-1">
+            {isCorporate ? "Create a corporate account" : "Create your account"}
+          </h2>
+          <p className="text-sm text-zinc-500 mb-5">
+            {isCorporate ? "14-day corporate trial · 5 seats · No card needed" : "7-day free trial · No credit card needed"}
+          </p>
 
-          {/* Account type */}
-          <div className="flex gap-2 mb-5">
-            {(["individual", "corporate"] as const).map((type) => (
-              <button key={type} type="button" onClick={() => { setAccountType(type); setError(""); setAlreadyExists(false); }}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 rounded-lg border py-2.5 text-sm font-medium transition-colors",
-                  accountType === type
-                    ? "border-amber-600/60 bg-amber-600/10 text-zinc-100"
-                    : "border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
-                )}>
-                {type === "individual" ? <User className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
-                {type === "individual" ? "Individual" : "Corporate"}
-              </button>
-            ))}
+          {/* Account type — card selector */}
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <button
+              type="button"
+              onClick={() => { setAccountType("individual"); setError(""); setAlreadyExists(false); }}
+              className={cn(
+                "relative flex flex-col items-start gap-1 rounded-xl border p-3.5 text-left transition-all",
+                accountType === "individual"
+                  ? "border-amber-600/60 bg-amber-600/8 ring-1 ring-amber-600/30"
+                  : "border-zinc-800 bg-zinc-900/40 hover:border-zinc-700"
+              )}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <User className={cn("h-4 w-4", accountType === "individual" ? "text-amber-400" : "text-zinc-500")} />
+                <span className={cn("text-sm font-semibold", accountType === "individual" ? "text-zinc-100" : "text-zinc-400")}>
+                  Individual
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-600 leading-snug">Solo · 7-day trial · 100 leads</p>
+              {accountType === "individual" && (
+                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-amber-400" />
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setAccountType("corporate"); setError(""); setAlreadyExists(false); }}
+              className={cn(
+                "relative flex flex-col items-start gap-1 rounded-xl border p-3.5 text-left transition-all",
+                accountType === "corporate"
+                  ? "border-amber-500/70 bg-amber-500/8 ring-1 ring-amber-500/40"
+                  : "border-zinc-800 bg-zinc-900/40 hover:border-zinc-700"
+              )}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Building2 className={cn("h-4 w-4", accountType === "corporate" ? "text-amber-400" : "text-zinc-500")} />
+                <span className={cn("text-sm font-semibold", accountType === "corporate" ? "text-zinc-100" : "text-zinc-400")}>
+                  Corporate
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-600 leading-snug">Team · 14-day trial · 5 seats</p>
+              {accountType === "individual" && (
+                <span className="absolute -top-2 -right-1 rounded-full bg-amber-500 px-2 py-0.5 text-[9px] font-bold text-black uppercase tracking-wide">
+                  Team
+                </span>
+              )}
+              {accountType === "corporate" && (
+                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-amber-400" />
+              )}
+            </button>
           </div>
-
-          {isCorporate && (
-            <div className="mb-4 rounded-lg border border-amber-900/40 bg-amber-950/10 px-4 py-3 text-xs text-amber-400">
-              Corporate accounts get a <strong>14-day trial</strong>, 5 seats, team workspace, and priority support.
-              Address and county verification is required. Password policy is stricter (12+ chars with complexity).
-            </div>
-          )}
 
           <Button type="button" variant="outline" onClick={handleGoogle} loading={googleLoading}
             className="w-full mb-4 gap-2 border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 h-10"

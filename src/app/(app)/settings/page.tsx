@@ -12,6 +12,7 @@ import ClearLeadsButton from "./ClearLeadsButton";
 import EnrichmentModeSelector from "@/components/settings/EnrichmentModeSelector";
 import ComplianceForm from "./ComplianceForm";
 import TeamPanel from "./TeamPanel";
+import { MobileSignOut } from "./MobileSignOut";
 
 export default async function SettingsPage() {
   const user = await requireUser();
@@ -65,12 +66,14 @@ export default async function SettingsPage() {
         <p className="text-sm text-zinc-400 mt-0.5">Account, compliance &amp; preferences</p>
       </div>
 
+      <MobileSignOut />
+
       {/* ── Enrichment mode ── */}
       <Card className="mb-4">
         <CardHeader><CardTitle>Enrichment Mode</CardTitle></CardHeader>
         <CardContent>
           <p className="text-xs text-zinc-500 mb-4">
-            Select your sales context. Hunter scores leads and writes outreach copy optimised for this use case.
+            Pick your sales context. 4unter scores leads and writes outreach copy tuned for this use case.
           </p>
           <EnrichmentModeSelector current={org?.enrichment_mode ?? "general"} />
         </CardContent>
@@ -342,7 +345,7 @@ export default async function SettingsPage() {
       <Card className="mb-4">
         <CardHeader><CardTitle>API Access</CardTitle></CardHeader>
         <CardContent>
-          <p className="text-sm text-zinc-500 mb-3">REST API for integrating Hunter with your own tools.</p>
+          <p className="text-sm text-zinc-500 mb-3">REST API for integrating 4unter with your own tools.</p>
           <div className="rounded-md border border-zinc-700 bg-zinc-950 px-4 py-3 font-mono text-xs text-zinc-500">
             Available in full release
           </div>
