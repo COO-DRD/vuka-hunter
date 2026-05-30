@@ -26,6 +26,7 @@ if (!SECRET_KEY) {
 const stripe = new Stripe(SECRET_KEY, { apiVersion: "2026-04-22.dahlia" });
 
 const PLANS = [
+  { id: "solo",       name: "4unter Solo",        amount: 250000,  seats: 1  },
   { id: "starter",    name: "4unter Starter",    amount: 500000,  seats: 5  },
   { id: "growth",     name: "4unter Growth",      amount: 1200000, seats: 15 },
   { id: "enterprise", name: "4unter Enterprise",  amount: 2500000, seats: 30 },
@@ -151,6 +152,7 @@ async function main() {
     console.log(`STRIPE_WEBHOOK_SECRET=<get from Stripe dashboard → Webhooks → Signing secret>`);
   }
 
+  console.log(`STRIPE_PRICE_SOLO=${priceIds.solo}`);
   console.log(`STRIPE_PRICE_STARTER=${priceIds.starter}`);
   console.log(`STRIPE_PRICE_GROWTH=${priceIds.growth}`);
   console.log(`STRIPE_PRICE_ENTERPRISE=${priceIds.enterprise}`);

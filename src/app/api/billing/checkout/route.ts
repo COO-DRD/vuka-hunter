@@ -10,13 +10,14 @@ function getStripe() {
 }
 
 const PLAN_PRICES: Record<string, { priceId: string; amount: number; seats: number }> = {
-  starter:    { priceId: process.env.STRIPE_PRICE_STARTER    ?? "", amount: 500000, seats: 5  }, // KES 5,000
+  solo:       { priceId: process.env.STRIPE_PRICE_SOLO       ?? "", amount: 250000,  seats: 1  }, // KES 2,500
+  starter:    { priceId: process.env.STRIPE_PRICE_STARTER    ?? "", amount: 500000,  seats: 5  }, // KES 5,000
   growth:     { priceId: process.env.STRIPE_PRICE_GROWTH     ?? "", amount: 1200000, seats: 15 }, // KES 12,000
   enterprise: { priceId: process.env.STRIPE_PRICE_ENTERPRISE ?? "", amount: 2500000, seats: 30 }, // KES 25,000
 };
 
 export async function POST(req: NextRequest) {
-  if (!process.env.STRIPE_PRICE_STARTER || !process.env.STRIPE_PRICE_GROWTH || !process.env.STRIPE_PRICE_ENTERPRISE) {
+  if (!process.env.STRIPE_PRICE_SOLO || !process.env.STRIPE_PRICE_STARTER || !process.env.STRIPE_PRICE_GROWTH || !process.env.STRIPE_PRICE_ENTERPRISE) {
     console.error("[billing/checkout] STRIPE_PRICE_* env vars not configured");
     return NextResponse.json({ error: "Payment system is not configured. Contact support." }, { status: 500 });
   }

@@ -1,10 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Zap, Users, Building2, Shield, Check, ArrowRight, Loader2, MessageCircle, Mail, AlertTriangle } from "lucide-react";
+import { Zap, User, Users, Building2, Shield, Check, ArrowRight, Loader2, MessageCircle, Mail, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const PLANS = [
+type PlanTier = "individual" | "corporate";
+
+const INDIVIDUAL_PLANS = [
+  {
+    id:         "solo",
+    label:      "Solo",
+    seats:      1,
+    price:      2500,
+    priceLabel: "KES 2,500",
+    period:     "/ month",
+    color:      "border-zinc-700",
+    highlight:  false,
+    features: [
+      "1 seat",
+      "Unlimited lead discovery",
+      "Enrich · Score · AI openers",
+      "All data sources",
+      "7-day free trial",
+    ],
+  },
+] as const;
+
+const CORPORATE_PLANS = [
   {
     id:         "starter",
     label:      "Starter",
@@ -17,7 +39,7 @@ const PLANS = [
     features: [
       "5 team seats",
       "Shared lead workspace",
-      "Scrape + Enrich + Score + Opener",
+      "Enrich · Score · AI openers",
       "Team invite by email",
       "14-day free trial",
     ],
@@ -34,7 +56,7 @@ const PLANS = [
     features: [
       "15 team seats",
       "Shared lead workspace",
-      "Scrape + Enrich + Score + Opener",
+      "Enrich · Score · AI openers",
       "Domain-based auto-join",
       "Team invite by email",
       "Priority support",
@@ -52,7 +74,7 @@ const PLANS = [
     features: [
       "30 team seats",
       "Shared lead workspace",
-      "Scrape + Enrich + Score + Opener",
+      "Enrich · Score · AI openers",
       "Domain-based auto-join",
       "Team invite by email",
       "Dedicated onboarding",
@@ -61,10 +83,13 @@ const PLANS = [
   },
 ] as const;
 
-type PlanId = (typeof PLANS)[number]["id"];
+type PlanId =
+  | (typeof INDIVIDUAL_PLANS)[number]["id"]
+  | (typeof CORPORATE_PLANS)[number]["id"];
 
 export default function UpgradePage() {
-  const [selected,          setSelected]          = useState<PlanId>("growth");
+  const [tier,              setTier]              = useState<PlanTier>("individual");
+  const [selected,          setSelected]          = useState<PlanId>("solo");
   const [loading,           setLoading]           = useState(false);
   const [error,             setError]             = useState("");
   const [stripeConfigured,  setStripeConfigured]  = useState<boolean | null>(null);
@@ -75,6 +100,16 @@ export default function UpgradePage() {
       .then((d) => setStripeConfigured(d.configured ?? false))
       .catch(() => setStripeConfigured(false));
   }, []);
+
+  // Keep selection valid when switching tiers
+  function switchTier(t: PlanTier) {
+    setTier(t);
+    setSelected(t === "individual" ? "solo" : "growth");
+    setError("");
+  }
+
+  const plans = tier === "individual" ? INDIVIDUAL_PLANS : CORPORATE_PLANS;
+  const plan  = [...INDIVIDUAL_PLANS, ...CORPORATE_PLANS].find((p) => p.id === selected)!;
 
   async function handleCheckout() {
     setLoading(true);
@@ -108,39 +143,68 @@ export default function UpgradePage() {
     }
   }
 
-  const plan = PLANS.find((p) => p.id === selected)!;
-
   return (
     <div className="min-h-screen bg-zinc-950 px-4 py-16">
       <div className="max-w-4xl mx-auto">
 
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 border border-amber-500/20 px-3 py-1 text-xs font-medium text-amber-400 mb-4">
-            <Building2 className="h-3.5 w-3.5" /> Corporate Plans
-          </div>
-          <h1 className="text-3xl font-black text-zinc-100 mb-3">Upgrade to Corporate</h1>
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-black text-zinc-100 mb-3">Choose a plan</h1>
           <p className="text-zinc-400 text-sm max-w-md mx-auto">
-            Give your whole team access to 4unter. One shared workspace, one subscription, full visibility across every seat.
+            Full access after your trial ends. Cancel any time.
           </p>
         </div>
 
+        {/* Tier switcher */}
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex rounded-xl border border-zinc-800 bg-zinc-900/60 p-1 gap-1">
+            <button
+              onClick={() => switchTier("individual")}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium transition-all",
+                tier === "individual"
+                  ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                  : "text-zinc-500 hover:text-zinc-300"
+              )}
+            >
+              <User className="h-3.5 w-3.5" /> Individual
+            </button>
+            <button
+              onClick={() => switchTier("corporate")}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium transition-all",
+                tier === "corporate"
+                  ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                  : "text-zinc-500 hover:text-zinc-300"
+              )}
+            >
+              <Users className="h-3.5 w-3.5" /> Team / Corporate
+            </button>
+          </div>
+        </div>
+
         {/* Plan cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-10">
-          {PLANS.map((p) => (
+        <div className={cn(
+          "grid gap-4 mb-10",
+          tier === "individual" ? "grid-cols-1 max-w-sm mx-auto" : "sm:grid-cols-3"
+        )}>
+          {(plans as typeof INDIVIDUAL_PLANS | typeof CORPORATE_PLANS).map((p) => (
             <button
               key={p.id}
-              onClick={() => setSelected(p.id)}
+              onClick={() => setSelected(p.id as PlanId)}
               className={cn(
                 "relative text-left rounded-2xl border-2 p-6 transition-all",
                 selected === p.id
-                  ? p.highlight
+                  ? "highlight" in p && p.highlight
                     ? "border-amber-500 bg-amber-950/20 ring-1 ring-amber-500/30"
-                    : "border-zinc-500 bg-zinc-800/40 ring-1 ring-zinc-500/30"
-                  : cn("border-zinc-800 bg-zinc-900/40 hover:border-zinc-600", p.highlight && "hover:border-amber-700/60")
+                    : "border-amber-600/60 bg-amber-600/8 ring-1 ring-amber-600/30"
+                  : cn(
+                    "border-zinc-800 bg-zinc-900/40 hover:border-zinc-600",
+                    "highlight" in p && p.highlight && "hover:border-amber-700/60"
+                  )
               )}
             >
-              {p.highlight && (
+              {"highlight" in p && p.highlight && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-500 px-3 py-0.5 text-[10px] font-bold text-black tracking-wide uppercase">
                   Most popular
                 </span>
@@ -149,9 +213,12 @@ export default function UpgradePage() {
               <div className="flex items-center gap-2 mb-3">
                 <div className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-lg",
-                  p.highlight ? "bg-amber-500/20" : "bg-zinc-700/40"
+                  "highlight" in p && p.highlight ? "bg-amber-500/20" : "bg-zinc-700/40"
                 )}>
-                  <Users className={cn("h-4 w-4", p.highlight ? "text-amber-400" : "text-zinc-400")} />
+                  {p.seats === 1
+                    ? <User className={cn("h-4 w-4", "highlight" in p && p.highlight ? "text-amber-400" : "text-zinc-400")} />
+                    : <Users className={cn("h-4 w-4", "highlight" in p && p.highlight ? "text-amber-400" : "text-zinc-400")} />
+                  }
                 </div>
                 <span className="font-bold text-zinc-100">{p.label}</span>
               </div>
@@ -160,7 +227,9 @@ export default function UpgradePage() {
                 <span className="text-2xl font-black text-zinc-100">{p.priceLabel}</span>
                 <span className="text-xs text-zinc-500 ml-1">{p.period}</span>
               </div>
-              <p className="text-xs text-zinc-500 mb-5">{p.seats} seats included</p>
+              <p className="text-xs text-zinc-500 mb-5">
+                {p.seats === 1 ? "1 seat — you only" : `${p.seats} seats included`}
+              </p>
 
               <ul className="space-y-2">
                 {p.features.map((f) => (
@@ -173,10 +242,7 @@ export default function UpgradePage() {
 
               {selected === p.id && (
                 <div className="absolute top-4 right-4">
-                  <div className={cn(
-                    "h-5 w-5 rounded-full border-2 flex items-center justify-center",
-                    p.highlight ? "border-amber-500 bg-amber-500" : "border-zinc-400 bg-zinc-400"
-                  )}>
+                  <div className="h-5 w-5 rounded-full border-2 border-amber-500 bg-amber-500 flex items-center justify-center">
                     <Check className="h-3 w-3 text-black" />
                   </div>
                 </div>
@@ -190,12 +256,13 @@ export default function UpgradePage() {
           <Shield className="h-4 w-4 text-zinc-500 mt-0.5 shrink-0" />
           <p className="text-xs text-zinc-500 leading-relaxed">
             Payments are processed by Stripe. 4unter never stores your card details.
-            After payment, you become the <strong className="text-zinc-400">organisation admin</strong> and can immediately invite up to <strong className="text-zinc-400">{plan.seats - 1} team members</strong>.
-            Each invited member receives an email to set their password and join your shared workspace.
+            {tier === "corporate" && (
+              <> After payment you become the <strong className="text-zinc-400">organisation admin</strong> and can invite up to <strong className="text-zinc-400">{plan.seats - 1} team members</strong>.</>
+            )}
           </p>
         </div>
 
-        {/* CTA — online payment or contact fallback */}
+        {/* CTA */}
         {error && (
           <div className="flex items-start gap-2 rounded-lg border border-red-800/50 bg-red-950/20 px-4 py-3 mb-4">
             <AlertTriangle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
@@ -207,11 +274,11 @@ export default function UpgradePage() {
           <div className="rounded-xl border border-amber-800/40 bg-amber-950/10 px-6 py-5">
             <p className="text-sm font-semibold text-amber-300 mb-1">Online card payment is coming soon</p>
             <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
-              We&apos;re finalising our payment integration. In the meantime, get activated today by reaching out directly — we&apos;ll set your account up within the hour.
+              We&apos;re finalising our payment integration. Get activated today by reaching out directly — we&apos;ll set your account up within the hour.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <a
-                href="https://wa.me/254700000000?text=Hi%2C%20I%20want%20to%20upgrade%20to%204unter%20{selected}%20plan%20({plan.priceLabel}%2Fmo)"
+                href={`https://wa.me/254700000000?text=Hi%2C+I+want+to+upgrade+to+4unter+${encodeURIComponent(plan.label)}+plan+(${encodeURIComponent(plan.priceLabel)}%2Fmo)`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-500 px-6 py-3 font-semibold text-white text-sm transition-colors"
@@ -220,7 +287,7 @@ export default function UpgradePage() {
                 WhatsApp us to activate
               </a>
               <a
-                href={`mailto:billing@dullugroup.co.ke?subject=4unter%20Upgrade%20%E2%80%94%20${encodeURIComponent(plan.label)}%20plan&body=Hi%2C%20I%20want%20to%20upgrade%20to%20the%20${encodeURIComponent(plan.label)}%20plan%20(${encodeURIComponent(plan.priceLabel)}%2Fmo).`}
+                href={`mailto:billing@dullugroup.co.ke?subject=4unter+Upgrade+%E2%80%94+${encodeURIComponent(plan.label)}&body=Hi%2C+I+want+to+upgrade+to+the+${encodeURIComponent(plan.label)}+plan+(${encodeURIComponent(plan.priceLabel)}%2Fmo).`}
                 className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 px-6 py-3 font-semibold text-zinc-300 text-sm transition-colors"
               >
                 <Mail className="h-4 w-4" />
@@ -228,7 +295,7 @@ export default function UpgradePage() {
               </a>
             </div>
             <p className="text-xs text-zinc-600 mt-4">
-              Selected plan: <span className="text-zinc-400 font-medium">{plan.label} — {plan.priceLabel}/month · {plan.seats} seats</span>
+              Selected: <span className="text-zinc-400 font-medium">{plan.label} — {plan.priceLabel}/month · {plan.seats === 1 ? "1 seat" : `${plan.seats} seats`}</span>
             </p>
           </div>
         ) : (
@@ -248,7 +315,9 @@ export default function UpgradePage() {
         )}
 
         <p className="text-center text-xs text-zinc-600 mt-4">
-          You can add or suspend members any time from Settings. Seats are charged monthly.
+          {tier === "corporate"
+            ? "Seats are charged monthly. Add or suspend members any time from Settings."
+            : "Individual plan · 1 seat · billed monthly · cancel any time."}
         </p>
       </div>
     </div>

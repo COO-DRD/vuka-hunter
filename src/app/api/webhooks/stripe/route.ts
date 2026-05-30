@@ -253,6 +253,7 @@ async function syncSubscription(
 function priceIdToPlan(priceId: string | null): string | null {
   if (!priceId) return null;
   const map: Record<string, string> = {};
+  if (process.env.STRIPE_PRICE_SOLO)       map[process.env.STRIPE_PRICE_SOLO]       = "solo";
   if (process.env.STRIPE_PRICE_STARTER)    map[process.env.STRIPE_PRICE_STARTER]    = "starter";
   if (process.env.STRIPE_PRICE_GROWTH)     map[process.env.STRIPE_PRICE_GROWTH]     = "growth";
   if (process.env.STRIPE_PRICE_ENTERPRISE) map[process.env.STRIPE_PRICE_ENTERPRISE] = "enterprise";
@@ -262,5 +263,5 @@ function priceIdToPlan(priceId: string | null): string | null {
 }
 
 function planToSeats(plan: string): number {
-  return { trial: 1, starter: 5, growth: 15, enterprise: 30 }[plan] ?? 1;
+  return { trial: 1, solo: 1, starter: 5, growth: 15, enterprise: 30 }[plan] ?? 1;
 }
