@@ -32,13 +32,13 @@ export default async function LandingPage() {
         <div className="flex flex-col gap-12 lg:flex-row lg:items-center">
           {/* Left: copy */}
           <div className="flex-1 space-y-6 lg:max-w-xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-xs font-medium text-red-400">AI-powered · Kenya</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-medium text-emerald-400">AI-powered · Kenya</span>
             </div>
             <h1 className="text-4xl font-black leading-tight tracking-tight text-zinc-50 sm:text-5xl lg:text-6xl">
               Find your next<br />
-              <span className="bg-gradient-to-r from-red-500 to-orange-400 bg-clip-text text-transparent">
+              <span className="text-brand-gradient">
                 100 clients
               </span>
               .<br />
@@ -114,7 +114,7 @@ export default async function LandingPage() {
                 step: "04",
                 title: "Outreach",
                 body: "Generate a personalised WhatsApp or email opener in one click — written with the lead's real pain, not a template.",
-                color: "text-orange-400",
+                color: "text-emerald-400",
               },
             ].map(({ icon: Icon, step, title, body, color }) => (
               <div key={step} className="rounded-xl border border-zinc-800/60 bg-zinc-900/60 p-5 space-y-3">
