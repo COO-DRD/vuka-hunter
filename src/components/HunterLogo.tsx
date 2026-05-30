@@ -1,6 +1,9 @@
 import { cn } from "@/lib/utils";
 
-/** Crosshair target mark — the Hunter brand icon. */
+/**
+ * 4unter brand mark — bold geometric "4" numeral.
+ * Distinct from hunter.io's crosshair; references the brand name directly.
+ */
 export function HunterMark({ className }: { className?: string }) {
   return (
     <svg
@@ -9,12 +12,10 @@ export function HunterMark({ className }: { className?: string }) {
       aria-hidden="true"
       className={cn("shrink-0", className)}
     >
-      <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="12" y1="2.5" x2="12" y2="7"   stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="12" y1="17" x2="12" y2="21.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="2.5" y1="12" x2="7"   y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="17"  y1="12" x2="21.5" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="12" cy="12" r="2.25" fill="currentColor" />
+      {/* Left arm + crossbar */}
+      <path d="M 8 4 L 8 14 L 18 14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Right stem — full height */}
+      <line x1="16" y1="3" x2="16" y2="21" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -27,7 +28,7 @@ export function HunterWordmark({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   return (
     <div className="flex items-center gap-2">
       <div className={cn(
-        "flex items-center justify-center rounded-lg bg-gradient-to-br from-red-500 to-orange-500 text-white shrink-0",
+        "flex items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shrink-0",
         size === "lg" ? "h-10 w-10 rounded-xl" : size === "sm" ? "h-6 w-6 rounded-md" : "h-8 w-8 rounded-md"
       )}>
         <HunterMark className={iconSize} />

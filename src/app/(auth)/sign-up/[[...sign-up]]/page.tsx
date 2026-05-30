@@ -250,7 +250,7 @@ export default function SignUpPage() {
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 rounded-lg border py-2.5 text-sm font-medium transition-colors",
                   accountType === type
-                    ? "border-red-600/60 bg-red-600/10 text-zinc-100"
+                    ? "border-emerald-600/60 bg-emerald-600/10 text-zinc-100"
                     : "border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
                 )}>
                 {type === "individual" ? <User className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
@@ -326,7 +326,7 @@ export default function SignUpPage() {
               <div>
                 <label className="block text-xs text-zinc-400 mb-1.5">County</label>
                 <select value={county} onChange={(e) => setCounty(e.target.value)}
-                  className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-red-600/50">
+                  className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-600/50">
                   <option value="">Select county…</option>
                   {KENYA_COUNTIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -354,7 +354,7 @@ export default function SignUpPage() {
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1.5">Company size</label>
                   <select value={companySize} onChange={(e) => setCompanySize(e.target.value)}
-                    className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-red-600/50">
+                    className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-600/50">
                     <option value="">Select size…</option>
                     {COMPANY_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -379,7 +379,7 @@ export default function SignUpPage() {
                 checked={termsAccepted}
                 onChange={(v) => { setTerms(v); setError(""); }}>
                 I accept the{" "}
-                <Link href="/terms" target="_blank" className="text-red-400 hover:text-red-300 underline underline-offset-2">
+                <Link href="/terms" target="_blank" className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2">
                   Terms of Service &amp; Usage Policy
                 </Link>
               </ConsentCheckbox>
@@ -422,7 +422,7 @@ export default function SignUpPage() {
           </p>
           <p className="text-center text-xs text-zinc-500 mt-2">
             Already have an account?{" "}
-            <Link href="/sign-in" className="text-red-400 hover:text-red-300 font-medium">Sign in</Link>
+            <Link href="/sign-in" className="text-emerald-400 hover:text-emerald-300 font-medium">Sign in</Link>
           </p>
         </div>
       </div>
@@ -443,7 +443,7 @@ function ConsentCheckbox({
       <div className="relative mt-0.5 shrink-0">
         <input id={id} type="checkbox" checked={checked}
           onChange={(e) => onChange(e.target.checked)} className="sr-only peer" />
-        <div className="h-4 w-4 rounded border border-zinc-600 bg-zinc-900 peer-checked:bg-red-600 peer-checked:border-red-600 transition-colors flex items-center justify-center">
+        <div className="h-4 w-4 rounded border border-zinc-600 bg-zinc-900 peer-checked:bg-emerald-600 peer-checked:border-emerald-600 transition-colors flex items-center justify-center">
           {checked && (
             <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 12 12">
               <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

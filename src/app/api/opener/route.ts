@@ -27,6 +27,19 @@ const VERTICAL_PAIN: Record<string, string> = {
   accounting:    "Accounting firms in Kenya lose SME clients at year-end because competitors market more aggressively during filing season.",
   tech:          "B2B tech companies in Kenya convert at under 2% on cold outreach because messages are generic — specificity beats volume every time.",
   consultancy:   "Consultancies grow by referral and stall when the network saturates — a structured outreach system turns expertise into a replicable sales motion.",
+  it_company:    "Most IT firms in Kenya win clients through personal introductions and lose to competitors who followed up first — a structured pipeline changes that ratio fast.",
+  architecture:  "Architecture firms fill their pipeline by word-of-mouth, which caps growth. The ones winning consistently have a way to reach decision-makers before the project brief is issued.",
+  digital_agency:"Digital agencies are hired by whoever has the most visible proof of results at the moment a client decides to spend. Being first in their inbox at that moment is the whole game.",
+  auto_workshop: "Car owners are loyal to one mechanic — until they have a bad experience. Workshops that retain clients long-term have a proactive communication channel, not just a skills advantage.",
+  car_wash:      "The best car washes in Nairobi aren't the cheapest — they're the ones clients trust enough to pre-book. That trust is built through consistent, personalised follow-up.",
+  driving_school:"Driving school enrolment spikes at year-end and during school holidays. The ones that fill up first reached out to their waitlist before the rush — not during it.",
+  physio:        "Most physio clients drop out before full recovery because nobody follows up after the second session. The clinics with the best outcomes have structured re-engagement, not just good therapists.",
+  bakery:        "Artisan bakeries turn occasional buyers into weekly regulars through pre-order systems and personalised communication — without it, they're competing on walk-in traffic alone.",
+  print_shop:    "Print companies win corporate accounts before the tender, not during it. The relationship starts with a proactive sample delivery and a personalised follow-up — not a cold quote.",
+  security_firm: "Security contracts are won on trust and visibility before a client ever needs a proposal. Firms that are in the conversation early win the RFP.",
+  electronics_shop:"Electronics shops in Kenya lose repeat buyers to Jumia and OLX because they don't have a channel to reach customers when they're ready to upgrade — WhatsApp catalogues change that.",
+  tutoring:      "Parents choose tutoring centres based on word-of-mouth referrals and first impressions during intake season. The ones that fill up have structured parent communication year-round.",
+  catering:      "Catering companies book their best events from clients they've already served — but most lose those relationships between events because there's no follow-up channel.",
 };
 
 export async function POST(req: NextRequest) {
