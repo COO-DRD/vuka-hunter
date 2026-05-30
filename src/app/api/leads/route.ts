@@ -9,11 +9,11 @@ export async function GET(req: NextRequest) {
   const orgId = await resolveOrgId(user.id);
 
   const { searchParams } = req.nextUrl;
-  const q        = searchParams.get("q") ?? "";
+  const q        = (searchParams.get("q") ?? "").slice(0, 100);
   const vertical = searchParams.get("vertical") ?? "";
   const stage    = searchParams.get("stage") ?? "";
   const minScore = parseInt(searchParams.get("min_score") ?? "0");
-  const limit    = parseInt(searchParams.get("limit") ?? "200");
+  const limit    = Math.min(Math.max(1, parseInt(searchParams.get("limit") ?? "200") || 200), 1000);
 
   const db = createSupabaseServiceClient();
   let query = db

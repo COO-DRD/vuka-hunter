@@ -97,13 +97,20 @@ export async function DELETE(req: NextRequest, { params }: RouteCtx) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Expire any pending invites the admin sent this user
-  await db
-    .from("hunter_org_invites")
-    .update({ status: "expired" })
-    .eq("org_id", admin.id)
-    .eq("status", "pending")
-    .ilike("email", `%@%`);
+  // Expire any pending invites for this specific user (look up their email first)
+  try {
+    const { data: { user: targetUser } } = await db.auth.admin.getUserById(targetUserId);
+    if (targetUser?.email) {
+      await db
+        .from("hunter_org_invites")
+        .update({ status: "expired" })
+        .eq("org_id", admin.id)
+        .eq("status", "pending")
+        .eq("email", targetUser.email.toLowerCase());
+    }
+  } catch {
+    // Non-critical: proceed even if invite cleanup fails
+  }
 
   return NextResponse.json({ ok: true });
 }
