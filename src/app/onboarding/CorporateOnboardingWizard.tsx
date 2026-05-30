@@ -181,7 +181,7 @@ export default function CorporateOnboardingWizard({
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600">
             <Zap className="h-4 w-4 text-white" />
           </div>
-          <span className="font-bold text-zinc-100 text-lg tracking-tight">Hunter</span>
+          <span className="font-bold text-zinc-100 text-lg tracking-tight">4unter</span>
           <span className="flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400">
             <Building2 className="h-3 w-3" /> Corporate
           </span>
@@ -202,7 +202,7 @@ export default function CorporateOnboardingWizard({
         {/* ── Step 1: Role ── */}
         {step === 1 && (
           <div>
-            <h1 className="text-xl font-bold text-zinc-100 mb-1">Welcome to Hunter</h1>
+            <h1 className="text-xl font-bold text-zinc-100 mb-1">Welcome to 4unter</h1>
             <p className="text-sm text-zinc-400 mb-6">What best describes your organisation?</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {ROLES.map((r) => (
@@ -231,7 +231,7 @@ export default function CorporateOnboardingWizard({
         {step === 2 && (
           <div>
             <h1 className="text-xl font-bold text-zinc-100 mb-1">Your organisation</h1>
-            <p className="text-sm text-zinc-400 mb-6">This shapes how Hunter qualifies and scores leads.</p>
+            <p className="text-sm text-zinc-400 mb-6">This shapes how 4unter qualifies and scores leads.</p>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1.5">Organisation / company name *</label>
@@ -263,7 +263,7 @@ export default function CorporateOnboardingWizard({
         {step === 3 && (
           <div>
             <h1 className="text-xl font-bold text-zinc-100 mb-1">Describe your ideal lead</h1>
-            <p className="text-sm text-zinc-400 mb-6">Hunter&apos;s AI scores leads against this. Be specific.</p>
+            <p className="text-sm text-zinc-400 mb-6">4unter&apos;s AI scores leads against this. Be specific.</p>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1.5">What type of business are you looking for? *</label>
@@ -301,7 +301,7 @@ export default function CorporateOnboardingWizard({
         {step === 4 && (
           <div>
             <h1 className="text-xl font-bold text-zinc-100 mb-1">What matters most?</h1>
-            <p className="text-sm text-zinc-400 mb-6">Pick up to 4 signals. Hunter weights the AI score around these.</p>
+            <p className="text-sm text-zinc-400 mb-6">Pick up to 4 signals. 4unter weights the AI score around these.</p>
             <div className="space-y-2">
               {SIGNALS.map((s) => {
                 const selected = signals.includes(s.value);

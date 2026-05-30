@@ -11,8 +11,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const code        = searchParams.get("code");
   const next        = searchParams.get("next") ?? "/dashboard";
-  const inviteOrg   = searchParams.get("invite_org");
-  const inviteToken = searchParams.get("invite_token");
+  const inviteToken = sanitize(searchParams.get("invite_token"), 200);
+  const inviteOrg   = sanitize(searchParams.get("invite_org"),   200);
 
   const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
 
@@ -30,41 +30,30 @@ export async function GET(req: NextRequest) {
   const user = data.user;
   const db   = createSupabaseServiceClient();
 
-  // ── Corporate invite: add user to org, don't create a new org ────────────
+  // ── Corporate invite: accept via atomic seat-guarded function ─────────────
   if (inviteOrg && inviteToken) {
-    const { data: invite } = await db
-      .from("hunter_org_invites")
-      .select("id, org_id, role, status, expires_at")
-      .eq("token", inviteToken)
-      .eq("org_id", inviteOrg)
-      .eq("status", "pending")
-      .maybeSingle();
+    const displayName = sanitize(user.user_metadata?.full_name ?? user.email, 100);
+    const { data: result } = await db.rpc("fn_accept_invite_safe", {
+      p_token:        inviteToken,
+      p_user_id:      user.id,
+      p_display_name: displayName,
+    });
 
-    if (invite && new Date(invite.expires_at) > new Date()) {
-      // Accept invite: add to members
-      await db.from("hunter_org_members").upsert(
-        {
-          org_id:       invite.org_id,
-          user_id:      user.id,
-          role:         invite.role,
-          status:       "active",
-          display_name: sanitize(user.user_metadata?.full_name ?? user.email, 100),
-          last_active_at: new Date().toISOString(),
-        },
-        { onConflict: "org_id, user_id" }
-      );
-
-      // Mark invite accepted
-      await db
-        .from("hunter_org_invites")
-        .update({ status: "accepted" })
-        .eq("id", invite.id);
+    switch (result) {
+      case "ok":
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      case "full":
+        return NextResponse.redirect(new URL("/sign-in?error=org_seats_full", req.url));
+      case "expired":
+        return NextResponse.redirect(new URL("/sign-in?error=invite_expired", req.url));
+      default:
+        // invalid_token or unknown: fall through to standard flow (creates own org)
+        console.warn("[auth/callback] invite result:", result, "token:", inviteToken.slice(0, 8));
+        return NextResponse.redirect(new URL("/sign-in?error=invite_invalid", req.url));
     }
-
-    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  // ── Standard flow: ensure org row exists ──────────────────────────────────
+  // ── Standard flow: create or refresh the org row ─────────────────────────
   const provider = sanitize(user.app_metadata?.provider ?? "email", 50) || "email";
   const rawName  = user.user_metadata?.full_name ?? user.user_metadata?.name ?? "";
   const name     = sanitize(rawName, 100) || sanitize(user.email, 100) || "User";
@@ -84,13 +73,24 @@ export async function GET(req: NextRequest) {
     { onConflict: "id", ignoreDuplicates: true }
   );
 
-  // ── Stamp email_verified_at on first confirmation ─────────────────────────
   if (user.email_confirmed_at) {
     await db
       .from("hunter_orgs")
       .update({ email_verified_at: user.email_confirmed_at })
       .eq("id", user.id)
       .is("email_verified_at", null);
+  }
+
+  // ── Domain auto-join: check if new user's email domain matches a corporate org ─
+  const emailDomain = user.email?.split("@")[1]?.toLowerCase();
+  if (emailDomain) {
+    const { data: joinedOrgId } = await db.rpc("fn_domain_auto_join", {
+      p_user_id:     user.id,
+      p_email_domain: emailDomain,
+    });
+    if (joinedOrgId) {
+      console.log(`[auth/callback] auto-joined user ${user.id} to org ${joinedOrgId} via domain ${emailDomain}`);
+    }
   }
 
   return NextResponse.redirect(new URL(safeNext, req.url));

@@ -18,26 +18,26 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Hunter — AI Lead Intelligence · Kenya",
+  title: "4unter — AI Lead Intelligence · Kenya",
   description: "Scrape, enrich, score and write outreach for Kenyan businesses in seconds. Powered by Gemini AI.",
   manifest: "/manifest.json",
   openGraph: {
-    title: "Hunter — AI Lead Intelligence · Kenya",
+    title: "4unter — AI Lead Intelligence · Kenya",
     description: "Find your next 100 clients. Automatically.",
     images: [{ url: "/hunter-og.svg", width: 1200, height: 630 }],
-    siteName: "Hunter",
+    siteName: "4unter",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Hunter — AI Lead Intelligence · Kenya",
+    title: "4unter — AI Lead Intelligence · Kenya",
     description: "Find your next 100 clients. Automatically.",
     images: ["/hunter-og.svg"],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Hunter",
+    title: "4unter",
     startupImage: "/icons/apple-touch-icon.png",
   },
   icons: {

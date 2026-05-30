@@ -3,6 +3,19 @@ import { createServerClient } from "@supabase/ssr";
 
 const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/auth/callback", "/auth/confirm", "/auth/verify-email", "/api/webhooks", "/api/auth/resend-verification", "/api/workshop", "/beta-feedback.html", "/terms", "/workshop"];
 
+// Routes that only the org admin (account owner) may access.
+// Corporate members with role='member' are blocked.
+const ADMIN_ONLY_PATHS = [
+  "/settings",
+  "/upgrade",
+  "/api/billing",
+  "/api/auth/invite",
+  "/api/leads/clear",
+  "/api/settings",
+  "/api/onboarding",
+  "/api/team",
+];
+
 // Known headless / scraper user-agent fragments
 const BOT_UA = [
   "python-httpx", "python-requests", "axios", "go-http-client",
@@ -96,6 +109,33 @@ export async function middleware(req: NextRequest) {
 
   if (!session && pathname !== "/" && !pathname.startsWith("/api")) {
     return NextResponse.redirect(new URL("/sign-in", req.url));
+  }
+
+  // ── Corporate member role gate ────────────────────────────────────────────
+  // Members (role='member') are blocked from admin-only routes.
+  // This is a fast cookie-based check — the service-role check in each API
+  // route is the authoritative enforcement.
+  if (session && ADMIN_ONLY_PATHS.some((p) => pathname.startsWith(p))) {
+    const userId = session.user?.id;
+    if (userId) {
+      // Check hunter_org_members via the anon client (no service key needed here;
+      // RLS is intentionally bypassed in API routes, but for this middleware check
+      // we use a simple anon query — the data is not sensitive).
+      const { data: member } = await supabase
+        .from("hunter_org_members")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .neq("org_id", userId)
+        .maybeSingle();
+
+      if (member?.role === "member") {
+        if (pathname.startsWith("/api/")) {
+          return NextResponse.json({ error: "Access restricted to organisation admin." }, { status: 403 });
+        }
+        return NextResponse.redirect(new URL("/dashboard?blocked=1", req.url));
+      }
+    }
   }
 
   return addSecurityHeaders(res);

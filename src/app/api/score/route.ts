@@ -1,5 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/auth";
+import { getUser, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { geminiStream, extractGeminiToken } from "@/lib/gemini";
 import { logEvent, logError } from "@/lib/logEvent";
@@ -68,13 +68,15 @@ export async function POST(req: NextRequest) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const orgId = await resolveOrgId(user.id);
+
   const { leadId } = await req.json();
   if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
 
   const db = createSupabaseServiceClient();
   const [{ data: lead }, { data: org }] = await Promise.all([
-    db.from("hunter_leads").select("*").eq("id", leadId).eq("org_id", user.id).single(),
-    db.from("hunter_orgs").select("business_name,name,org_description,target_description,priority_signals,outreach_channel,enrichment_mode").eq("id", user.id).single(),
+    db.from("hunter_leads").select("*").eq("id", leadId).eq("org_id", orgId).single(),
+    db.from("hunter_orgs").select("business_name,name,org_description,target_description,priority_signals,outreach_channel,enrichment_mode").eq("id", orgId).single(),
   ]);
 
   // Pull feedback from same vertical in this org (last 90 days) to calibrate scoring
@@ -82,7 +84,7 @@ export async function POST(req: NextRequest) {
   const { data: feedbackRows } = lead ? await db
     .from("hunter_lead_feedback")
     .select("outcome, hunter_leads!inner(vertical)")
-    .eq("org_id", user.id)
+    .eq("org_id", orgId)
     .gte("created_at", d90)
     .eq("hunter_leads.vertical", lead.vertical as string)
     .limit(50) : { data: null };
@@ -158,11 +160,11 @@ export async function POST(req: NextRequest) {
           scored_at: new Date().toISOString(),
         }).eq("id", leadId);
 
-        logEvent(user.id, "score");
+        logEvent(orgId, "score");
         send({ done: true, score, reasoning, pain_signals });
       } catch (err) {
         console.error("[score]", err);
-        logError("/api/score", String(err), user.id, { leadId });
+        logError("/api/score", String(err), orgId, { leadId });
         send({ error: "Scoring failed — please retry" });
       } finally {
         controller.close();

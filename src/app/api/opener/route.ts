@@ -1,34 +1,49 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/auth";
+import { getUser, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { geminiStream, extractGeminiToken } from "@/lib/gemini";
 import { logEvent, logError } from "@/lib/logEvent";
 import { getMode } from "@/lib/enrichmentModes";
 
 const VERTICAL_PAIN: Record<string, string> = {
-  dental:      "Most dental clinics lose 20–30% of appointment slots to no-shows and don't follow up with patients automatically.",
-  clinic:      "Clinics typically miss after-hours enquiries and have no automated patient follow-up.",
-  hotel:       "Hotels lose direct bookings to OTAs and pay 15–25% commission they don't need to.",
-  real_estate: "Real estate agencies miss leads that come in outside office hours — usually the serious ones.",
-  law_firm:    "Law firms rarely follow up on initial enquiries quickly, losing clients to whoever responds first.",
-  gym:         "Gyms lose members silently — no automated re-engagement for people who stop showing up.",
-  restaurant:  "Restaurants with no online booking system lose reservations to competitors who make it one tap.",
-  minimart:    "Most dukas and mini-marts lose repeat customers because there's no way to browse stock or order remotely — customers go to whoever has a WhatsApp catalog first.",
+  dental:        "Most dental clinics lose 20–30% of appointment slots to no-shows and don't follow up with patients automatically.",
+  clinic:        "Clinics typically miss after-hours enquiries and have no automated patient follow-up — the first practice to respond wins.",
+  hotel:         "Hotels lose direct bookings to OTAs and pay 15–25% commission they don't need to.",
+  real_estate:   "Real estate agencies miss leads that come in outside office hours — usually the serious ones.",
+  law_firm:      "Law firms rarely follow up on initial enquiries quickly, losing clients to whoever responds first.",
+  gym:           "Gyms lose members silently — no automated re-engagement for people who stop showing up.",
+  restaurant:    "Restaurants with no online booking system lose reservations to competitors who make it one tap.",
+  minimart:      "Most dukas and mini-marts lose repeat customers because there's no way to browse stock or order remotely — customers go to whoever has a WhatsApp catalog first.",
+  insurance:     "Insurance agents spend 60–70% of their week on cold prospecting. The ones who close consistently aren't better at selling — they're better at knowing who to call before the call.",
+  sacco:         "SACCOs lose member interest between AGMs because there's no channel to communicate loan products or share performance updates between meetings.",
+  bank:          "Branch-led banks are haemorrhaging SME clients to digital lenders — the gap is speed and visibility, not product.",
+  school:        "Schools fill classroom capacity by word of mouth, which caps enrolment. The ones growing fastest have a structured way to reach parents before registration season.",
+  logistics:     "Logistics companies win contracts because they respond first with a clear quote — most lose business to a competitor who just picked up the phone faster.",
+  transport:     "Transport operators price by feel rather than data, leaving 15–25% margin on the table every route.",
+  pharmacy:      "Pharmacies within 2km of each other compete on price alone — the ones that win long-term own the customer relationship via WhatsApp or loyalty.",
+  salon:         "Salons run on referrals with no way to re-activate clients who haven't booked in 60+ days — that's recoverable revenue sitting idle.",
+  construction:  "Contractors win tenders by relationship, not by visibility — a structured digital presence turns that into a reliable inbound pipeline.",
+  agriculture:   "Smallholder agri-businesses miss bulk buyers because their supply and capacity are invisible outside their immediate network.",
+  accounting:    "Accounting firms in Kenya lose SME clients at year-end because competitors market more aggressively during filing season.",
+  tech:          "B2B tech companies in Kenya convert at under 2% on cold outreach because messages are generic — specificity beats volume every time.",
+  consultancy:   "Consultancies grow by referral and stall when the network saturates — a structured outreach system turns expertise into a replicable sales motion.",
 };
 
 export async function POST(req: NextRequest) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const orgId = await resolveOrgId(user.id);
+
   const { leadId } = await req.json();
   if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
 
   const db = createSupabaseServiceClient();
   const [{ data: lead }, { data: org }] = await Promise.all([
-    db.from("hunter_leads").select("*").eq("id", leadId).eq("org_id", user.id).single(),
+    db.from("hunter_leads").select("*").eq("id", leadId).eq("org_id", orgId).single(),
     db.from("hunter_orgs")
       .select("business_name,name,sender_name,org_description,target_description,outreach_channel,enrichment_mode")
-      .eq("id", user.id)
+      .eq("id", orgId)
       .single(),
   ]);
 
@@ -57,6 +72,10 @@ export async function POST(req: NextRequest) {
   const name     = lead.name ?? "there";
   const website  = lead.website ?? "none";
   const score    = lead.score ?? "unscored";
+  const dmName   = (lead.decision_maker_name  as string | null) ?? null;
+  const dmTitle  = (lead.decision_maker_title as string | null) ?? null;
+  const drScore  = (lead.digital_readiness_score as number | null) ?? null;
+  const rScore   = (lead.reachability_score as number | null) ?? null;
 
   const leadSignal = (() => {
     if (hasBook === false) return `no online booking system detected`;
@@ -83,11 +102,15 @@ FIT SCORE: ${score}/100
 LEAD SIGNAL (use this to open): ${leadSignal}
 CONTEXT (what the sender offers / what they're looking for): ${targetDesc}
 
+DECISION-MAKER: ${dmName ? `${dmName}${dmTitle ? `, ${dmTitle}` : ""}` : "unknown — address the business by name"}
+DIGITAL READINESS: ${drScore !== null ? `${drScore}/100` : "unknown"}
+REACHABILITY: ${rScore !== null ? `${rScore}/100` : "unknown"}
+
 SENDER: ${senderName}, ${bizName} — ${bizDesc}.
 
 OUTPUT FORMAT — follow EXACTLY:
 ---WHATSAPP---
-[2 sentences MAX. Start with "Hi ${name.split(" ")[0]}," or a short natural form of their name. In sentence 1: cite the lead signal with a specific number or fact. In sentence 2: one CTA question that implies ${senderName} has the fix. NO sign-off. Under 40 words total.]
+[2 sentences MAX. Start with "Hi ${dmName ? dmName.split(" ")[0] : name.split(" ")[0]}," — use the decision-maker first name if known, otherwise business name. In sentence 1: cite the lead signal with a specific number or fact. In sentence 2: one CTA question that implies ${senderName} has the fix. NO sign-off. Under 40 words total.]
 ---EMAIL SUBJECT---
 [7 words max. Name the specific gap or opportunity. No "quick question" or "partnership" clichés.]
 ---EMAIL BODY---
@@ -155,11 +178,11 @@ HARD RULES:
           opener_generated_at: new Date().toISOString(),
         }).eq("id", leadId);
 
-        logEvent(user.id, "opener");
+        logEvent(orgId, "opener");
         send({ done: true, whatsapp, subject, email });
       } catch (err) {
         console.error("[opener]", err);
-        logError("/api/opener", String(err), user.id, { leadId });
+        logError("/api/opener", String(err), orgId, { leadId });
         send({ error: "Generation failed — please retry" });
       } finally {
         controller.close();

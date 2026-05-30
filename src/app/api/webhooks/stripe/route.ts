@@ -141,6 +141,32 @@ export async function POST(req: NextRequest) {
     if (result && !String(result).startsWith("no_op")) {
       console.log(`[stripe/webhook] state transition: ${result} for pi ${dbPaymentIntentId}`);
     }
+
+    // On capture of a corporate plan: upgrade org to corporate and set seat limit
+    if (internalType === "payment.captured" && orgId) {
+      const { data: pi } = await db
+        .from("hunter_payment_intents")
+        .select("plan, metadata")
+        .eq("id", dbPaymentIntentId)
+        .maybeSingle();
+
+      if (pi?.plan && pi.plan !== "trial") {
+        const seatLimit = ({ starter: 5, growth: 15, enterprise: 30 } as Record<string, number>)[pi.plan] ?? 5;
+        await db.from("hunter_orgs").update({
+          account_type:        "corporate",
+          subscribed_plan:     pi.plan,
+          subscription_status: "active",
+          seat_limit:          seatLimit,
+        }).eq("id", orgId);
+
+        // Ensure admin is registered in org_members
+        await db.from("hunter_org_members").upsert(
+          { org_id: orgId, user_id: orgId, role: "admin", status: "active" },
+          { onConflict: "org_id, user_id" }
+        );
+        console.log(`[stripe/webhook] upgraded org ${orgId} to corporate ${pi.plan} (${seatLimit} seats)`);
+      }
+    }
   }
 
   // ── 3. Update subscription state ───────────────────────────────────────────

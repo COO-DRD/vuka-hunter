@@ -33,7 +33,7 @@ export function HunterWordmark({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
         <HunterMark className={iconSize} />
       </div>
       <span className={cn("font-bold tracking-tight text-zinc-100", textClass)}>
-        HUNTER
+        4UNTER
       </span>
     </div>
   );

@@ -62,10 +62,10 @@ export function InstallPrompt() {
         <div className="flex items-start gap-3 pr-6">
           {/* App icon */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/icon-192.png" alt="Hunter" className="h-12 w-12 rounded-xl flex-shrink-0" />
+          <img src="/icons/icon-192.png" alt="4unter" className="h-12 w-12 rounded-xl flex-shrink-0" />
 
           <div>
-            <p className="text-sm font-semibold text-white leading-tight">Install Hunter</p>
+            <p className="text-sm font-semibold text-white leading-tight">Install 4unter</p>
             <p className="text-xs text-zinc-400 mt-0.5 leading-snug">
               {mode === "ios"
                 ? "Add to your home screen for the full app experience."

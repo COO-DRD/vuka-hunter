@@ -1,11 +1,13 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/auth";
+import { getUser, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { applyProtocol } from "@/lib/protocol";
 
 export async function POST(req: NextRequest) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const orgId = await resolveOrgId(user.id);
 
   const formData = await req.formData();
   const file     = formData.get("file") as File | null;
@@ -27,14 +29,15 @@ export async function POST(req: NextRequest) {
   }
 
   const db = createSupabaseServiceClient();
-  await db.from("hunter_orgs").upsert({ id: user.id, name: "My Workspace" }, { onConflict: "id", ignoreDuplicates: true });
+  await db.from("hunter_orgs").upsert({ id: orgId, name: "My Workspace" }, { onConflict: "id", ignoreDuplicates: true });
 
   const leads = lines.slice(1).map((line) => {
     const values = parseCsvLine(line);
     const obj: Record<string, string> = {};
     headers.forEach((h, i) => { obj[h] = (values[i] ?? "").replace(/^"|"$/g, ""); });
     return {
-      org_id: user.id,
+      org_id:     orgId,
+      created_by: user.id,
       name: obj.name ?? "",
       vertical: obj.vertical || vertical || null,
       city: obj.city || city || null,

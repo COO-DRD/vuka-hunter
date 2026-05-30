@@ -1,7 +1,7 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/auth";
+import { getUser, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { isSafeUrl, enrichWebsite } from "@/lib/enrichLead";
+import { isSafeUrl, enrichWebsite, computeReachabilityScore } from "@/lib/enrichLead";
 import { logEvent, logError } from "@/lib/logEvent";
 import { getMode } from "@/lib/enrichmentModes";
 import {
@@ -14,27 +14,29 @@ export async function POST(req: NextRequest) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const orgId = await resolveOrgId(user.id);
+
   const { leadId } = await req.json();
   if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
 
   const db = createSupabaseServiceClient();
   const [{ data: lead }, { data: org }] = await Promise.all([
-    db.from("hunter_leads").select("*").eq("id", leadId).eq("org_id", user.id).single(),
+    db.from("hunter_leads").select("*").eq("id", leadId).eq("org_id", orgId).single(),
     db.from("hunter_orgs")
       .select("use_case,priority_signals,target_description,org_description,enrichment_mode")
-      .eq("id", user.id)
+      .eq("id", orgId)
       .maybeSingle(),
   ]);
 
   if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
 
   if (!lead.website) {
-    await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId).eq("org_id", user.id);
+    await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId).eq("org_id", orgId);
     return NextResponse.json({ error: "No website to enrich from" }, { status: 400 });
   }
 
   if (!isSafeUrl(lead.website)) {
-    await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId).eq("org_id", user.id);
+    await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId).eq("org_id", orgId);
     return NextResponse.json({ error: "Website URL is not a public address" }, { status: 400 });
   }
 
@@ -42,20 +44,28 @@ export async function POST(req: NextRequest) {
 
   try {
     const enriched = await enrichWebsite(lead.website, org ?? undefined);
-    await db.from("hunter_leads").update({
-      enrichment_status: "done",
-      enriched_at: new Date().toISOString(),
-      emails_found: enriched.emails,
-      email: enriched.emails[0] ?? lead.email ?? null,
-      tech_stack: enriched.techStack,
-      has_booking_system: enriched.hasBookingSystem,
-      has_live_chat: enriched.hasLiveChat,
-      social_links: enriched.socialLinks,
-      // Pre-scoring signals from HTML — scoring AI will read and refine these
-      ...(enriched.customSignals.length > 0 && { pain_signals: enriched.customSignals }),
-    }).eq("id", leadId).eq("org_id", user.id);
+    const reachabilityScore = computeReachabilityScore(
+      enriched.emails,
+      (lead.phone as string | null) ?? null,
+      enriched.whatsappNumber,
+      enriched.socialLinks,
+    );
 
-    // Extract named contacts from About page and Instagram bio (per-lead enrich only)
+    await db.from("hunter_leads").update({
+      enrichment_status:       "done",
+      enriched_at:             new Date().toISOString(),
+      emails_found:            enriched.emails,
+      email:                   enriched.emails[0] ?? lead.email ?? null,
+      tech_stack:              enriched.techStack,
+      has_booking_system:      enriched.hasBookingSystem,
+      has_live_chat:           enriched.hasLiveChat,
+      social_links:            enriched.socialLinks,
+      whatsapp_number:         enriched.whatsappNumber ?? null,
+      digital_readiness_score: enriched.digitalReadinessScore,
+      reachability_score:      reachabilityScore,
+      ...(enriched.customSignals.length > 0 && { pain_signals: enriched.customSignals }),
+    }).eq("id", leadId).eq("org_id", orgId);
+
     if (process.env.GEMINI_API_KEY) {
       const [aboutContacts, igContacts] = await Promise.all([
         enriched.aboutPageHtml
@@ -67,11 +77,11 @@ export async function POST(req: NextRequest) {
       ]);
       const contacts = mergeContacts(aboutContacts, igContacts);
       if (contacts.length > 0) {
-        await db.from("hunter_lead_contacts").delete().eq("lead_id", leadId).eq("org_id", user.id);
+        await db.from("hunter_lead_contacts").delete().eq("lead_id", leadId).eq("org_id", orgId);
         await db.from("hunter_lead_contacts").insert(
           contacts.map((c) => ({
             lead_id:     leadId,
-            org_id:      user.id,
+            org_id:      orgId,
             name:        c.name,
             title:       c.title || null,
             source:      c.source,
@@ -81,15 +91,22 @@ export async function POST(req: NextRequest) {
             raw_snippet: c.raw_snippet,
           }))
         );
+        const top = contacts.sort((a, b) => (b.confidence as unknown as number) - (a.confidence as unknown as number))[0];
+        if (top?.name) {
+          await db.from("hunter_leads").update({
+            decision_maker_name:  top.name,
+            decision_maker_title: top.title || null,
+          }).eq("id", leadId).eq("org_id", orgId);
+        }
       }
     }
 
-    logEvent(user.id, "enrich");
+    logEvent(orgId, "enrich");
     return NextResponse.json({ ok: true, enriched });
   } catch (err) {
     console.error("[enrich]", err);
-    await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId).eq("org_id", user.id);
-    logError("/api/enrich", String(err), user.id, { leadId });
+    await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", leadId).eq("org_id", orgId);
+    logError("/api/enrich", String(err), orgId, { leadId });
     return NextResponse.json({ error: "Enrichment failed — please retry" }, { status: 500 });
   }
 }

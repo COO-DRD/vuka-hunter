@@ -118,25 +118,20 @@ export default function SignUpPage() {
   const [address, setAddress] = useState("");
 
   // Consents
-  const [termsAccepted, setTerms]    = useState(false);
-  const [dpaAccepted,   setDpa]      = useState(false);
-  const [kraAccepted,   setKraAccepted] = useState(false);
+  const [termsAccepted, setTerms] = useState(false);
+  const [dpaAccepted,   setDpa]   = useState(false);
 
   // Corporate
-  const [companyName,   setCompanyName]   = useState("");
-  const [companySize,   setCompanySize]   = useState("");
-  const [companyReg,    setCompanyReg]    = useState("");
-  const [billingEmail,  setBillingEmail]  = useState("");
-  const [kraPin,        setKraPin]        = useState("");
+  const [companyName,  setCompanyName]  = useState("");
+  const [companySize,  setCompanySize]  = useState("");
+  const [billingEmail, setBillingEmail] = useState("");
 
   const [error,         setError]         = useState("");
   const [loading,       setLoading]       = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const isCorporate      = accountType === "corporate";
-  const allConsentsGiven = isCorporate
-    ? termsAccepted && dpaAccepted && kraAccepted
-    : termsAccepted && dpaAccepted;
+  const allConsentsGiven = termsAccepted && dpaAccepted;
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
@@ -161,10 +156,8 @@ export default function SignUpPage() {
           operatingCounty:  county || null,
           operatingAddress: address || null,
           ...(isCorporate && {
-            companyName, companySize, companyReg,
+            companyName, companySize,
             billingEmail: billingEmail || email,
-            kraPin:       kraPin || null,
-            kraComplianceAccepted: kraAccepted,
           }),
         }),
       });
@@ -365,21 +358,6 @@ export default function SignUpPage() {
                 </div>
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1.5">
-                    Company registration no. <span className="text-zinc-600">(optional)</span>
-                  </label>
-                  <Input type="text" value={companyReg} onChange={(e) => setCompanyReg(e.target.value)}
-                    placeholder="e.g. CPR/2019/XXXXX" />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">
-                    KRA PIN <span className="text-zinc-600">(optional — format: P000000000X)</span>
-                  </label>
-                  <Input type="text" value={kraPin}
-                    onChange={(e) => setKraPin(e.target.value.toUpperCase())}
-                    placeholder="P000000000X" maxLength={11} autoComplete="off" />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">
                     Billing email <span className="text-zinc-600">(if different)</span>
                   </label>
                   <Input type="email" value={billingEmail} onChange={(e) => setBillingEmail(e.target.value)}
@@ -408,23 +386,18 @@ export default function SignUpPage() {
                 id="dpa"
                 checked={dpaAccepted}
                 onChange={(v) => { setDpa(v); setError(""); }}>
-                I consent to the collection and processing of my data under the{" "}
+                I consent to Dullu Digital processing my personal and business data to operate the 4unter
+                platform, including lead enrichment via publicly available sources, under the{" "}
                 <span className="text-zinc-300 font-medium">Kenya Data Protection Act 2019</span>.
-                This includes lead enrichment using publicly available third-party sources.
-                I understand I may request erasure of my data at any time.
+                I may request access, correction, or erasure of my data at any time by contacting{" "}
+                <span className="text-zinc-300">privacy@dullugroup.co.ke</span>.{" "}
+                {isCorporate && (
+                  <>
+                    As data controller for any third-party contact data processed through this platform,
+                    my organisation assumes responsibility for lawful use under the Act.{" "}
+                  </>
+                )}
               </ConsentCheckbox>
-
-              {/* Corporate: KRA compliance */}
-              {isCorporate && (
-                <ConsentCheckbox
-                  id="kra"
-                  checked={kraAccepted}
-                  onChange={(v) => { setKraAccepted(v); setError(""); }}>
-                  I acknowledge that my organisation&apos;s use of Hunter complies with the{" "}
-                  <span className="text-zinc-300 font-medium">Kenya Revenue Authority Act (Cap. 469)</span>{" "}
-                  and all applicable Kenya tax regulations. I confirm that the KRA PIN provided (if any) is accurate.
-                </ConsentCheckbox>
-              )}
             </div>
 
             {error && <p className="text-xs text-red-400">{error}</p>}
