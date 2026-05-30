@@ -176,7 +176,7 @@ export default function DiscoverPage() {
                 <span className="text-sm text-zinc-400">
                   <span className="text-green-400 font-semibold">{job.leadsFound}</span> leads passed protocol
                 </span>
-                <Link href="/leads" className="text-sm text-red-400 hover:text-red-300 font-medium">
+                <Link href="/leads" className="text-sm text-emerald-400 hover:text-emerald-300 font-medium">
                   View leads →
                 </Link>
               </div>

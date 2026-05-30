@@ -141,7 +141,7 @@ export default function LeadsPage() {
               <tr><td colSpan={7} className="px-4 py-12 text-center">
                 <Filter className="h-6 w-6 text-zinc-600 mx-auto mb-2" />
                 <p className="text-zinc-500 text-sm">No leads found</p>
-                <Link href="/discover" className="text-xs text-red-400 hover:underline">Discover some →</Link>
+                <Link href="/discover" className="text-xs text-emerald-400 hover:underline">Discover some →</Link>
               </td></tr>
             ) : (
               leads.map((lead) => (

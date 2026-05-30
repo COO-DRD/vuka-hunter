@@ -28,7 +28,7 @@ export function isSafeUrl(raw: string): boolean {
 async function fetchPage(url: string, signal: AbortSignal): Promise<string> {
   const res = await fetch(url, {
     signal,
-    headers: { "User-Agent": "Mozilla/5.0 (compatible; Hunter-Enricher/1.0)" },
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; 4UNTER-Enricher/1.0)" },
     redirect: "follow",
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -242,6 +242,42 @@ async function fetchInstagramBio(igUrl: string, signal: AbortSignal): Promise<st
   } catch { return ""; }
 }
 
+// ─── Intelligence scoring ──────────────────────────────────────────────────────
+
+function extractWhatsAppNumber(html: string): string | null {
+  const m = html.match(/wa\.me\/(\d{10,15})/i);
+  if (!m) return null;
+  let num = m[1];
+  // Normalise Kenyan numbers: 07xx → 2547xx
+  if (num.startsWith("07") && num.length === 10) num = "254" + num.slice(1);
+  if (num.startsWith("7")  && num.length === 9)  num = "254" + num;
+  return "+" + num;
+}
+
+function computeDigitalReadinessScore(result: Omit<EnrichResult, "digitalReadinessScore" | "reachabilityScore" | "whatsappNumber">): number {
+  let score = 0;
+  if (result.techStack.length > 0)   score += 15;
+  if (result.techStack.some((t) => ["Google Analytics", "Facebook Pixel"].includes(t))) score += 15;
+  if (result.hasBookingSystem)        score += 20;
+  if (result.hasLiveChat)             score += 15;
+  if (result.socialLinks.linkedin)    score += 10;
+  if (result.socialLinks.instagram)   score += 8;
+  if (result.socialLinks.facebook)    score += 5;
+  if (result.socialLinks.whatsapp)    score += 7;
+  if (result.emails.length > 0)       score += 5;
+  return Math.min(100, score);
+}
+
+export function computeReachabilityScore(emails: string[], phone: string | null, whatsappNumber: string | null, socialLinks: Record<string, string>): number {
+  let score = 0;
+  if (emails.length > 0)   score += 30;
+  if (phone)                score += 25;
+  if (whatsappNumber)       score += 30;
+  if (socialLinks.linkedin) score += 10;
+  if (socialLinks.facebook) score += 5;
+  return Math.min(100, score);
+}
+
 // ─── Main export ─────────────────────────────────────────────────────────────
 
 // Paths tried in order for booking/contact secondary page
@@ -254,14 +290,17 @@ const ABOUT_PATHS = [
 ];
 
 export interface EnrichResult {
-  emails:           string[];
-  techStack:        string[];
-  hasBookingSystem: boolean;
-  hasLiveChat:      boolean;
-  socialLinks:      Record<string, string>;
-  customSignals:    string[];
-  aboutPageHtml:    string;   // raw HTML of the best About/Team page found (empty if none)
-  instagramBio:     string;   // og:description from Instagram profile (empty if none)
+  emails:               string[];
+  techStack:            string[];
+  hasBookingSystem:     boolean;
+  hasLiveChat:          boolean;
+  socialLinks:          Record<string, string>;
+  customSignals:        string[];
+  aboutPageHtml:        string;
+  instagramBio:         string;
+  whatsappNumber:       string | null;  // clean E.164 from wa.me link
+  digitalReadinessScore: number;        // 0–100
+  reachabilityScore:    number;         // 0–100
 }
 
 export async function enrichWebsite(url: string, org?: OrgProfile): Promise<EnrichResult> {
@@ -307,14 +346,17 @@ export async function enrichWebsite(url: string, org?: OrgProfile): Promise<Enri
     } finally { clearTimeout(igTimeout); }
   }
 
-  return {
-    emails:           extractEmails(combined),
-    techStack:        detectTechStack(combined),
-    hasBookingSystem: detectBookingSystem(combined),
-    hasLiveChat:      detectLiveChat(combined),
-    socialLinks,
-    customSignals:    org ? detectCustomSignals(combined, org) : [],
-    aboutPageHtml,
-    instagramBio,
-  };
+  const emails           = extractEmails(combined);
+  const techStack        = detectTechStack(combined);
+  const hasBookingSystem = detectBookingSystem(combined);
+  const hasLiveChat      = detectLiveChat(combined);
+  const customSignals    = org ? detectCustomSignals(combined, org) : [];
+  const whatsappNumber   = extractWhatsAppNumber(combined);
+
+  const partial = { emails, techStack, hasBookingSystem, hasLiveChat, socialLinks, customSignals, aboutPageHtml, instagramBio };
+  const digitalReadinessScore = computeDigitalReadinessScore(partial);
+  // reachability needs phone — caller enriches after DB read; pass null phone here
+  const reachabilityScore = computeReachabilityScore(emails, null, whatsappNumber, socialLinks);
+
+  return { ...partial, whatsappNumber, digitalReadinessScore, reachabilityScore };
 }

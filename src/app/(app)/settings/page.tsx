@@ -189,7 +189,7 @@ export default async function SettingsPage() {
           {!org?.use_case && (
             <div className="mt-4 rounded-lg border border-zinc-700 bg-zinc-900/40 px-4 py-3 text-xs text-zinc-500">
               Profile not set up yet.{" "}
-              <Link href="/onboarding" className="text-red-400 hover:text-red-300">Complete setup →</Link>
+              <Link href="/onboarding" className="text-emerald-400 hover:text-emerald-300">Complete setup →</Link>
             </div>
           )}
         </CardContent>
@@ -243,7 +243,7 @@ export default async function SettingsPage() {
             Your data is processed by Dullu Digital under the{" "}
             <span className="text-zinc-300">Kenya Data Protection Act 2019</span>.
             To exercise your rights (access, correction, erasure, portability), contact{" "}
-            <a href="mailto:privacy@dullugroup.co.ke" className="text-red-400 hover:text-red-300">
+            <a href="mailto:privacy@dullugroup.co.ke" className="text-emerald-400 hover:text-emerald-300">
               privacy@dullugroup.co.ke
             </a>.
           </p>

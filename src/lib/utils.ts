@@ -27,6 +27,24 @@ export const VERTICALS = [
   { value: "logistics",     label: "Logistics / Courier" },
   { value: "car_dealer",    label: "Car Dealership" },
   { value: "minimart",      label: "Mini-Mart / Duka" },
+  // Tier A additions
+  { value: "it_company",      label: "IT / Software Company" },
+  { value: "insurance",       label: "Insurance Broker" },
+  { value: "architecture",    label: "Architecture / Interior Design" },
+  { value: "digital_agency",  label: "Digital Marketing Agency" },
+  { value: "sacco",           label: "SACCO / Microfinance" },
+  // Tier B additions
+  { value: "auto_workshop",   label: "Car Repair Workshop" },
+  { value: "car_wash",        label: "Car Wash / Auto Detailing" },
+  { value: "driving_school",  label: "Driving School" },
+  { value: "physio",          label: "Physiotherapy Clinic" },
+  { value: "bakery",          label: "Artisan Bakery" },
+  { value: "print_shop",      label: "Printing Company" },
+  { value: "security_firm",   label: "Security Company" },
+  { value: "electronics_shop",label: "Electronics / Phone Shop" },
+  { value: "tutoring",        label: "Tutoring / Learning Centre" },
+  { value: "catering",        label: "Catering Company" },
+  { value: "construction",    label: "Construction Contractor" },
 ];
 
 export const CITIES = [
