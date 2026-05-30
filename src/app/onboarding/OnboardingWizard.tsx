@@ -133,7 +133,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600">
             <Zap className="h-4 w-4 text-white" />
           </div>
-          <span className="font-bold text-zinc-100 text-lg tracking-tight">Hunter</span>
+          <span className="font-bold text-zinc-100 text-lg tracking-tight">4unter</span>
         </div>
 
         {/* Progress dots */}
@@ -155,7 +155,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
         {step === 1 && (
           <div>
             <h1 className="text-xl font-bold text-zinc-100 mb-1">
-              {isEditing ? "Update your profile" : "Welcome to Hunter"}
+              {isEditing ? "Update your profile" : "Welcome to 4unter"}
             </h1>
             <p className="text-sm text-zinc-400 mb-6">What best describes you?</p>
 
@@ -191,7 +191,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
           <div>
             <h1 className="text-xl font-bold text-zinc-100 mb-1">Tell us about your business</h1>
             <p className="text-sm text-zinc-400 mb-6">
-              This shapes how Hunter qualifies and scores leads for you.
+              This shapes how 4unter qualifies and scores leads for you.
             </p>
 
             <div className="space-y-4">
@@ -240,7 +240,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
           <div>
             <h1 className="text-xl font-bold text-zinc-100 mb-1">Describe your ideal lead</h1>
             <p className="text-sm text-zinc-400 mb-6">
-              Hunter&apos;s AI scores leads against this — be specific about what matters to you.
+              4unter&apos;s AI scores leads against this — be specific about what matters to you.
             </p>
 
             <div className="space-y-4">
@@ -293,7 +293,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
           <div>
             <h1 className="text-xl font-bold text-zinc-100 mb-1">What matters most?</h1>
             <p className="text-sm text-zinc-400 mb-6">
-              Pick up to 4 signals. Hunter weights the AI score around these.
+              Pick up to 4 signals. 4unter weights the AI score around these.
             </p>
 
             <div className="space-y-2">

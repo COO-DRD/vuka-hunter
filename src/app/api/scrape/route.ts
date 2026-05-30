@@ -1,5 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/auth";
+import { getUser, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
 import { PROTOCOL, PROTOCOL_CITIES } from "@/lib/protocol";
@@ -10,6 +10,8 @@ export const maxDuration = 300;
 export async function POST(req: NextRequest) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const orgId = await resolveOrgId(user.id);
 
   const { vertical, city, count = 100, source = "google_places" } = await req.json();
   if (!vertical || !city) return NextResponse.json({ error: "vertical and city required" }, { status: 400 });
@@ -29,7 +31,7 @@ export async function POST(req: NextRequest) {
   const { count: activeJobs } = await db
     .from("hunter_scrape_jobs")
     .select("*", { count: "exact", head: true })
-    .eq("org_id", user.id)
+    .eq("org_id", orgId)
     .in("status", ["queued", "running"]);
 
   if (activeJobs && activeJobs > 0) {
@@ -37,20 +39,20 @@ export async function POST(req: NextRequest) {
   }
 
   await db.from("hunter_orgs").upsert(
-    { id: user.id, name: "My Workspace", credits_total: 999999 },
+    { id: orgId, name: "My Workspace", credits_total: 999999 },
     { onConflict: "id", ignoreDuplicates: true }
   );
 
   const { data: job, error } = await db
     .from("hunter_scrape_jobs")
-    .insert({ org_id: user.id, vertical, city, count, source, status: "queued" })
+    .insert({ org_id: orgId, vertical, city, count, source, status: "queued" })
     .select("id")
     .single();
 
   if (error || !job) return NextResponse.json({ error: "Failed to create job" }, { status: 500 });
 
   after(async () => {
-    await runScrapeJob(job.id, user.id, vertical, city, count, source, vp.placeQuery);
+    await runScrapeJob(job.id, orgId, vertical, city, count, source, vp.placeQuery);
   });
 
   return NextResponse.json({ jobId: job.id });

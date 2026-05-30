@@ -1,11 +1,9 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/auth";
+import { getUser, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 function formatPhone(raw: string): string {
-  // Strip everything except digits
   const digits = raw.replace(/\D/g, "");
-  // Kenya: 07xx → 2547xx, already 254xxx stays
   if (digits.startsWith("0") && digits.length === 10) return "254" + digits.slice(1);
   if (digits.startsWith("254"))                        return digits;
   if (digits.startsWith("7") && digits.length === 9)  return "254" + digits;
@@ -16,6 +14,8 @@ export async function POST(req: NextRequest) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const orgId = await resolveOrgId(user.id);
+
   const { leadId, channel, message, subject } = await req.json();
   if (!leadId || !channel) return NextResponse.json({ error: "leadId and channel required" }, { status: 400 });
 
@@ -24,28 +24,26 @@ export async function POST(req: NextRequest) {
     .from("hunter_leads")
     .select("id, phone, email, stage")
     .eq("id", leadId)
-    .eq("org_id", user.id)
+    .eq("org_id", orgId)
     .single();
   if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
 
-  // Log the outreach
+  // Track which member sent this
   await db.from("hunter_outreach_log").insert({
-    org_id:  user.id,
-    lead_id: leadId,
+    org_id:          orgId,
+    lead_id:         leadId,
     channel,
     message,
     sent_by_user_id: user.id,
   });
 
-  // Advance stage to "contacted" if still new
   if (lead.stage === "new") {
     await db.from("hunter_leads")
       .update({ stage: "contacted", last_contacted_at: new Date().toISOString() })
       .eq("id", leadId)
-      .eq("org_id", user.id);
+      .eq("org_id", orgId);
   }
 
-  // Build the deep-link URL
   let actionUrl: string | null = null;
 
   if (channel === "whatsapp" && lead.phone) {

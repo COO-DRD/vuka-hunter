@@ -133,7 +133,7 @@ export default function SignInPage() {
     return (
       <div className="animate-fade-up">
         <h2 className="text-xl font-bold text-zinc-100 mb-1">Welcome back</h2>
-        <p className="text-sm text-zinc-500 mb-6">Sign in to your Hunter account.</p>
+        <p className="text-sm text-zinc-500 mb-6">Sign in to your 4unter account.</p>
 
         {registered && (
           <div className="flex items-center gap-2 rounded-lg border border-green-600/30 bg-green-600/10 px-3 py-2.5 mb-4 text-sm text-green-400">

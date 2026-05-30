@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Zap, CheckCircle2, XCircle, ShieldCheck, FileText } from "lucide-react";
 
 export const metadata = {
-  title: "Terms of Service & Usage Policy — Hunter",
-  description: "Usage rights, permitted and prohibited uses, and data handling policy for Hunter.",
+  title: "Terms of Service & Usage Policy — 4unter",
+  description: "Usage rights, permitted and prohibited uses, and data handling policy for 4unter.",
 };
 
 const ALLOWED = [
@@ -17,10 +17,10 @@ const ALLOWED = [
 
 const PROHIBITED = [
   "Reselling, redistributing, or sublicensing scraped data to any third party",
-  "Automated mass-messaging or spamming of any kind using Hunter-generated copy",
-  "Targeting private individuals — Hunter is strictly for B2B business entities",
+  "Automated mass-messaging or spamming of any kind using 4unter-generated copy",
+  "Targeting private individuals — 4unter is strictly for B2B business entities",
   "Using the platform to facilitate harassment, threats, or unlawful discrimination",
-  "Attempting to reverse-engineer, scrape, or extract the Hunter platform itself",
+  "Attempting to reverse-engineer, scrape, or extract the 4unter platform itself",
   "Creating multiple accounts to circumvent usage limits or access controls",
   "Using Hunter outputs to build competing lead intelligence products",
   "Any activity that violates the Kenya Data Protection Act 2019 or applicable law",
@@ -40,17 +40,17 @@ export default function TermsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-zinc-100">Terms of Service &amp; Usage Policy</h1>
-            <p className="text-xs text-zinc-500 mt-0.5">Effective {effectiveDate} · Hunter by Dullu Digital</p>
+            <p className="text-xs text-zinc-500 mt-0.5">Effective {effectiveDate} · 4unter by Dullu Digital</p>
           </div>
         </div>
 
         {/* Intro */}
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-6 py-5 mb-8">
           <p className="text-sm text-zinc-300 leading-relaxed">
-            Hunter is a B2B lead intelligence and AI outreach tool built and operated by{" "}
+            4unter is a B2B lead intelligence and AI outreach tool built and operated by{" "}
             <strong className="text-zinc-100">Dullu Digital</strong> (trading as VUKA AI), registered in Kenya.
             By creating an account or using the platform, you agree to these terms in full.
-            If you do not agree, do not use Hunter.
+            If you do not agree, do not use 4unter.
           </p>
         </div>
 
@@ -94,12 +94,12 @@ export default function TermsPage() {
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-6 py-5 space-y-4 text-sm text-zinc-400 leading-relaxed">
             <p>
-              <strong className="text-zinc-200">What Hunter collects about you:</strong> Your email address,
+              <strong className="text-zinc-200">What 4unter collects about you:</strong> Your email address,
               account name, business profile information you provide during onboarding, and usage activity
               (lead scrapes, enrichments, and scores). We do not collect payment data during the beta.
             </p>
             <p>
-              <strong className="text-zinc-200">What Hunter scrapes on your behalf:</strong> Business names,
+              <strong className="text-zinc-200">What 4unter scrapes on your behalf:</strong> Business names,
               phone numbers, website URLs, addresses, and Google ratings from public sources (Google Maps,
               OpenStreetMap, public business websites). This is publicly available business information —
               not personal data of private individuals.
@@ -147,7 +147,7 @@ export default function TermsPage() {
               introducing paid plans.
             </p>
             <p>
-              <strong className="text-zinc-200">Limitation of liability.</strong> Hunter is provided as-is.
+              <strong className="text-zinc-200">Limitation of liability.</strong> 4unter is provided as-is.
               Dullu Digital is not liable for any indirect, incidental, or consequential damages arising
               from your use of the platform or the outreach you send using it.
             </p>

@@ -1,5 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/auth";
+import { getUser, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { geminiStream, extractGeminiToken } from "@/lib/gemini";
 import { logEvent } from "@/lib/logEvent";
@@ -8,6 +8,8 @@ export async function POST(req: NextRequest) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const orgId = await resolveOrgId(user.id);
+
   const { limit = 30 } = await req.json().catch(() => ({}));
 
   const db = createSupabaseServiceClient();
@@ -15,13 +17,13 @@ export async function POST(req: NextRequest) {
   const [{ data: leads }, { data: org }] = await Promise.all([
     db.from("hunter_leads")
       .select("*")
-      .eq("org_id", user.id)
+      .eq("org_id", orgId)
       .eq("enrichment_status", "done")
       .is("score", null)
       .limit(limit),
     db.from("hunter_orgs")
       .select("business_name,name,org_description,target_description,priority_signals,outreach_channel")
-      .eq("id", user.id)
+      .eq("id", orgId)
       .single(),
   ]);
 
@@ -117,6 +119,6 @@ SIGNALS: <comma-separated match signals, max 4>`;
     await new Promise((r) => setTimeout(r, 200));
   }
 
-  if (scored > 0) logEvent(user.id, "score");
+  if (scored > 0) logEvent(orgId, "score");
   return NextResponse.json({ ok: true, scored, total: leads.length });
 }

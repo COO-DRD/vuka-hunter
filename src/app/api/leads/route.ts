@@ -1,10 +1,12 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/auth";
+import { getUser, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const orgId = await resolveOrgId(user.id);
 
   const { searchParams } = req.nextUrl;
   const q        = searchParams.get("q") ?? "";
@@ -17,7 +19,7 @@ export async function GET(req: NextRequest) {
   let query = db
     .from("hunter_leads")
     .select("id,name,vertical,city,phone,email,website,google_rating,google_review_count,score,stage,enrichment_status,created_at")
-    .eq("org_id", user.id)
+    .eq("org_id", orgId)
     .order("score", { ascending: false, nullsFirst: false })
     .order("google_rating", { ascending: false, nullsFirst: false })
     .limit(limit);
