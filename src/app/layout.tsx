@@ -19,7 +19,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "4unter — AI Lead Intelligence · Kenya",
-  description: "Scrape, enrich, score and write outreach for Kenyan businesses in seconds. Powered by Gemini AI.",
+  description: "Scrape, enrich, score and write outreach for Kenyan businesses in seconds. Proprietary AI intelligence built for the Kenyan market.",
   manifest: "/manifest.json",
   openGraph: {
     title: "4unter — AI Lead Intelligence · Kenya",

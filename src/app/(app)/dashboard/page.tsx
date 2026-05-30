@@ -37,15 +37,15 @@ function getNextAction(total: number, unenriched: number, needsScore: number, sc
 } | null {
   if (total === 0)       return null;
   if (unenriched > 0)    return { label: `Enrich ${unenriched} lead${unenriched > 1 ? "s" : ""}`, desc: "Find contact details, website intelligence, and tech stack.", href: "/leads", color: "text-blue-400 bg-blue-500/10 border-blue-500/20", icon: Mail };
-  if (needsScore > 0)    return { label: `Score ${needsScore} lead${needsScore > 1 ? "s" : ""} with AI`, desc: "Gemini ranks each lead by revenue signal and fit.", href: "/leads", color: "text-purple-400 bg-purple-500/10 border-purple-500/20", icon: Sparkles };
+  if (needsScore > 0)    return { label: `Score ${needsScore} lead${needsScore > 1 ? "s" : ""} with AI`, desc: "Hunter Intelligence ranks each lead by revenue signal and fit.", href: "/leads", color: "text-purple-400 bg-purple-500/10 border-purple-500/20", icon: Sparkles };
   if (scored > 0)        return { label: "Write outreach copy for your top leads", desc: "AI-generated WhatsApp + email openers personalised per lead.", href: "/leads", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20", icon: MessageSquare };
   return { label: "Move leads through your pipeline", desc: "Track which leads are contacted, replied, and won.", href: "/pipeline", color: "text-amber-400 bg-amber-500/10 border-amber-500/20", icon: GitBranch };
 }
 
 const PIPELINE_STEPS = [
-  { step: 1, label: "Discover",  desc: "Scrape businesses from Google Maps / OpenStreetMap",  href: "/discover",  icon: Search,        time: "~2 min" },
+  { step: 1, label: "Discover",  desc: "Surface businesses from 36 Kenyan verticals",        href: "/discover",  icon: Search,        time: "~2 min" },
   { step: 2, label: "Enrich",    desc: "Crawl each website for contacts, tech stack & more",  href: "/leads",     icon: Mail,          time: "~1 min/lead" },
-  { step: 3, label: "Score",     desc: "Gemini AI ranks leads by revenue signal & fit",       href: "/leads",     icon: Sparkles,      time: "~10 sec/lead" },
+  { step: 3, label: "Score",     desc: "Hunter AI ranks leads by revenue signal & fit",        href: "/leads",     icon: Sparkles,      time: "~10 sec/lead" },
   { step: 4, label: "Outreach",  desc: "Generate personalised WhatsApp + email openers",      href: "/leads",     icon: MessageSquare, time: "~5 sec/lead" },
 ];
 

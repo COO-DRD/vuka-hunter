@@ -45,8 +45,8 @@ export default async function LandingPage() {
               Automatically.
             </h1>
             <p className="text-lg text-zinc-400 leading-relaxed">
-              Hunter scrapes Google Maps for quality Kenyan businesses, enriches each lead
-              with emails and pain signals, scores fit with AI, and writes outreach
+              Hunter surfaces quality Kenyan businesses across 36 verticals, enriches each lead
+              with emails and pain signals, scores fit with proprietary AI, and writes outreach
               copy — all in under a minute.
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -62,7 +62,7 @@ export default async function LandingPage() {
             <ul className="space-y-1.5 pt-2">
               {[
                 "Protocol-filtered leads — no spam, no irrelevant businesses",
-                "Gemini AI scoring with specific pain signals per business",
+                "Proprietary AI scoring with specific pain signals per business",
                 "One-click WhatsApp & email openers that convert",
               ].map((f) => (
                 <li key={f} className="flex items-start gap-2 text-sm text-zinc-500">
@@ -92,7 +92,7 @@ export default async function LandingPage() {
                 icon: Search,
                 step: "01",
                 title: "Discover",
-                body: "Scan Google Maps by vertical and city. Hunter applies a strict quality protocol — only rated, reviewed businesses make it through.",
+                body: "Scan 36 Kenyan verticals by city. Hunter applies a strict quality protocol — only rated, reviewed businesses make it through.",
                 color: "text-green-400",
               },
               {
@@ -106,7 +106,7 @@ export default async function LandingPage() {
                 icon: Zap,
                 step: "03",
                 title: "Score",
-                body: "Gemini AI rates every lead 0–100 and surfaces specific pain signals. Know exactly why a business is worth your time.",
+                body: "Hunter's AI engine rates every lead 0–100 and surfaces specific pain signals. Know exactly why a business is worth your time.",
                 color: "text-purple-400",
               },
               {
