@@ -1,5 +1,4 @@
 import { createClient } from "@supabase/supabase-js";
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 function sanitize(raw: unknown, maxLen = 200): string {
@@ -192,8 +191,15 @@ export async function POST(req: NextRequest) {
     }, { status: 400 });
   }
 
+  // ── Capture request context now — needed for consent audit trail ─────────
+  const ip        = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? null;
+  const userAgent = req.headers.get("user-agent")?.slice(0, 300) ?? null;
+  const now       = new Date();
+
   // ── Sign up via anon client — triggers real confirmation email ─────────────
-  // Using anon key (not service role) so Supabase sends the verification email.
+  // All org + consent data is stored in user_metadata here and committed to
+  // hunter_orgs / hunter_legal_consents only after the user clicks the link
+  // (in /auth/callback). Nothing touches the DB until email is confirmed.
   const anonClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -202,7 +208,24 @@ export async function POST(req: NextRequest) {
   const { data: authData, error: authError } = await anonClient.auth.signUp({
     email:    cleanEmail,
     password: String(password),
-    options:  { data: { full_name: cleanName } },
+    options: {
+      data: {
+        full_name:         cleanName,
+        account_type:      isCorporate ? "corporate" : "individual",
+        trial_days:        isCorporate ? 14 : 7,
+        terms_accepted_at: now.toISOString(),
+        dpa_accepted:      Boolean(dpaAccepted),
+        operating_county:  cleanCounty  || null,
+        operating_address: cleanAddress || null,
+        signup_ip:         ip,
+        signup_ua:         userAgent,
+        ...(isCorporate && {
+          company_name:  sanitize(companyName, 200),
+          company_size:  sanitize(companySize, 50),
+          billing_email: sanitize(billingEmail || email, 200).toLowerCase(),
+        }),
+      },
+    },
   });
 
   if (authError) {
@@ -221,62 +244,6 @@ export async function POST(req: NextRequest) {
   if (!authData.user || authData.user.identities?.length === 0) {
     return NextResponse.json({ error: "An account with this email already exists." }, { status: 409 });
   }
-
-  const userId = authData.user.id;
-  const db     = createSupabaseServiceClient();
-
-  const now       = new Date();
-  const trialDays = isCorporate ? 14 : 7;
-  const trialEnds = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000);
-
-  // ── Create org row (pre-verification; gated in app layout) ─────────────────
-  await db.from("hunter_orgs").upsert(
-    {
-      id:                  userId,
-      name:                cleanName,
-      credits_total:       999999,
-      credits_used:        0,
-      auth_provider:       "email",
-      terms_accepted_at:   now.toISOString(),
-      account_type:        isCorporate ? "corporate" : "individual",
-      trial_started_at:    now.toISOString(),
-      trial_ends_at:       trialEnds.toISOString(),
-      subscription_status: "trialing",
-      subscribed_plan:     "trial",
-      operating_county:    cleanCounty || null,
-      operating_address:   cleanAddress || null,
-      ...(isCorporate && {
-        company_name:  sanitize(companyName, 200),
-        company_size:  sanitize(companySize, 50),
-        billing_email: sanitize(billingEmail || email, 200).toLowerCase(),
-      }),
-    },
-    { onConflict: "id", ignoreDuplicates: true }
-  );
-
-  // ── Record legal consents (immutable audit trail — Kenya DPA 2019 s.30) ────
-  const ip        = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? null;
-  const userAgent = req.headers.get("user-agent")?.slice(0, 300) ?? null;
-
-  const consents: Array<{ consent_type: string; accepted: boolean }> = [
-    { consent_type: "terms_of_service",                  accepted: true },
-    { consent_type: "kenya_dpa_data_collection",         accepted: Boolean(dpaAccepted) },
-    { consent_type: "kenya_dpa_third_party_enrichment",  accepted: Boolean(dpaAccepted) },
-  ];
-
-  if (isCorporate) {
-    consents.push({ consent_type: "data_processing_agreement", accepted: true });
-  }
-
-  await db.from("hunter_legal_consents").insert(
-    consents.map((c) => ({
-      ...c,
-      org_id:     userId,
-      version:    "1.0",
-      ip_address: ip,
-      user_agent: userAgent,
-    }))
-  );
 
   return NextResponse.json({ success: true, requiresEmailVerification: true });
 }
