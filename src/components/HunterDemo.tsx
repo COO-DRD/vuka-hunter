@@ -138,7 +138,7 @@ function ScorePhase({ active }: { active: boolean }) {
     <div className="space-y-3">
       <div className="flex items-center gap-2 mb-1">
         <Zap className="h-3.5 w-3.5 text-purple-400" />
-        <span className="text-xs text-zinc-500 font-mono">Gemini AI · Scoring</span>
+        <span className="text-xs text-zinc-500 font-mono">Hunter Intelligence · Scoring</span>
       </div>
       <div className="rounded-lg bg-zinc-800/50 px-4 py-4 text-center">
         <p className="text-xs text-zinc-500 mb-1">Fit Score</p>

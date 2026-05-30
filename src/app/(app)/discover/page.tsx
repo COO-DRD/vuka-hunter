@@ -104,8 +104,8 @@ export default function DiscoverPage() {
             <div>
               <label className="block text-xs text-zinc-400 mb-1.5">Source</label>
               <Select value={source} onChange={(e) => setSource(e.target.value)}>
-                <option value="google_places">Google Places (richer data)</option>
-                <option value="osm">OpenStreetMap (free, no quota)</option>
+                <option value="google_places">Premium database (richer data)</option>
+                <option value="osm">Community database (free, no quota)</option>
               </Select>
             </div>
           </div>

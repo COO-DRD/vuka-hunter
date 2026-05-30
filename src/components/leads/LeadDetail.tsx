@@ -318,7 +318,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
             {mapsUrl != null && (
               <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
-                Google Maps <ExternalLink className="h-3 w-3" />
+                View on Maps <ExternalLink className="h-3 w-3" />
               </a>
             )}
           </CardContent>
