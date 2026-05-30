@@ -1,11 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   kraPin: string;
   companyRegNo: string;
   billingEmail: string;
+}
+
+// KRA PIN: one uppercase letter + 9 digits + one uppercase letter
+const KRA_RE = /^[A-Z]\d{9}[A-Z]$/;
+
+function validate(pin: string, regNo: string, billing: string): string | null {
+  if (pin && !KRA_RE.test(pin))
+    return "KRA PIN must be one letter + nine digits + one letter (e.g. A123456789B).";
+  if (billing && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(billing))
+    return "Enter a valid billing email address.";
+  if (regNo && regNo.trim().length < 3)
+    return "Company registration number must be at least 3 characters.";
+  return null;
 }
 
 export default function ComplianceForm({ kraPin, companyRegNo, billingEmail }: Props) {
@@ -16,13 +31,16 @@ export default function ComplianceForm({ kraPin, companyRegNo, billingEmail }: P
   const [msg,     setMsg]     = useState<{ ok: boolean; text: string } | null>(null);
 
   async function save() {
-    setSaving(true);
     setMsg(null);
+    const err = validate(pin.trim(), regNo.trim(), billing.trim());
+    if (err) { setMsg({ ok: false, text: err }); return; }
+
+    setSaving(true);
     try {
       const res = await fetch("/api/settings/compliance", {
-        method: "PATCH",
+        method:  "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kraPin: pin, companyRegNo: regNo, billingEmail: billing }),
+        body:    JSON.stringify({ kraPin: pin.trim(), companyRegNo: regNo.trim(), billingEmail: billing.trim().toLowerCase() }),
       });
       const data = await res.json();
       if (!res.ok) setMsg({ ok: false, text: data.error ?? "Update failed." });
@@ -37,63 +55,49 @@ export default function ComplianceForm({ kraPin, companyRegNo, billingEmail }: P
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          KRA PIN
-        </label>
-        <input
+        <label className="block text-xs text-zinc-400 mb-1.5">KRA PIN</label>
+        <Input
           type="text"
           value={pin}
-          onChange={(e) => setPin(e.target.value.toUpperCase())}
-          placeholder="A000000000Z"
+          onChange={(e) => { setPin(e.target.value.toUpperCase()); setMsg(null); }}
+          placeholder="A123456789B"
           maxLength={11}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono tracking-widest"
+          className="font-mono tracking-widest"
         />
-        <p className="mt-1 text-xs text-gray-500">Format: one letter + nine digits + one letter (e.g. A123456789B)</p>
+        <p className="mt-1 text-xs text-zinc-600">Format: one letter + nine digits + one letter (e.g. A123456789B)</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Company Registration No.
-        </label>
-        <input
+        <label className="block text-xs text-zinc-400 mb-1.5">Company Registration No.</label>
+        <Input
           type="text"
           value={regNo}
-          onChange={(e) => setRegNo(e.target.value)}
+          onChange={(e) => { setRegNo(e.target.value); setMsg(null); }}
           placeholder="PVT-123456"
           maxLength={100}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <p className="mt-1 text-xs text-gray-500">Appears on invoices. As filed with the Registrar of Companies.</p>
+        <p className="mt-1 text-xs text-zinc-600">Appears on invoices. As filed with the Registrar of Companies.</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Billing Email
-        </label>
-        <input
+        <label className="block text-xs text-zinc-400 mb-1.5">Billing Email</label>
+        <Input
           type="email"
           value={billing}
-          onChange={(e) => setBilling(e.target.value.toLowerCase())}
+          onChange={(e) => { setBilling(e.target.value.toLowerCase()); setMsg(null); }}
           placeholder="billing@yourcompany.co.ke"
           maxLength={200}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <p className="mt-1 text-xs text-gray-500">Invoices and payment receipts are sent here.</p>
+        <p className="mt-1 text-xs text-zinc-600">Invoices and payment receipts are sent here.</p>
       </div>
 
       {msg && (
-        <p className={`text-sm ${msg.ok ? "text-green-600" : "text-red-600"}`}>
-          {msg.text}
-        </p>
+        <p className={`text-xs ${msg.ok ? "text-emerald-400" : "text-red-400"}`}>{msg.text}</p>
       )}
 
-      <button
-        onClick={save}
-        disabled={saving}
-        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-      >
-        {saving ? "Saving…" : "Save compliance details"}
-      </button>
+      <Button onClick={save} loading={saving} variant="outline" size="sm">
+        Save compliance details
+      </Button>
     </div>
   );
 }

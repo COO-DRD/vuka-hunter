@@ -16,7 +16,12 @@ export default function ChangePasswordForm() {
   async function handle(e: React.FormEvent) {
     e.preventDefault();
     setErr("");
+    if (!current)       { setErr("Enter your current password."); return; }
+    if (!pw)            { setErr("Enter a new password."); return; }
     if (pw.length < 8)  { setErr("New password must be at least 8 characters."); return; }
+    if (!/[A-Za-z]/.test(pw)) { setErr("Password must include at least one letter."); return; }
+    if (!/[0-9]/.test(pw))    { setErr("Password must include at least one number."); return; }
+    if (!confirm)       { setErr("Please confirm your new password."); return; }
     if (pw !== confirm) { setErr("Passwords do not match."); return; }
     if (pw === current) { setErr("New password must be different from your current password."); return; }
     setLo(true);
