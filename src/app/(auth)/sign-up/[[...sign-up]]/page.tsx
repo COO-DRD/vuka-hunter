@@ -493,14 +493,27 @@ export default function SignUpPage() {
 
             {/* Error / already-exists states */}
             {alreadyExists ? (
-              <div className="rounded-lg border border-zinc-700 bg-zinc-900 px-3.5 py-3 text-xs">
-                <p className="text-zinc-300 font-medium mb-1">Account already exists</p>
-                <p className="text-zinc-500">
-                  An account with <span className="text-zinc-300">{email}</span> already exists.{" "}
-                  <Link href={`/sign-in?email=${encodeURIComponent(email)}`} className="text-emerald-400 hover:text-emerald-300 font-medium">
-                    Sign in instead →
-                  </Link>
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3.5 py-3 text-xs space-y-1.5">
+                <p className="text-amber-300 font-semibold">Email already registered</p>
+                <p className="text-zinc-400 leading-relaxed">
+                  <span className="text-zinc-200">{email}</span> is linked to an existing account.
+                  If you signed up recently and haven&apos;t confirmed yet, check your inbox (and spam folder) for the confirmation link.
                 </p>
+                <div className="flex items-center gap-3 pt-0.5">
+                  <Link
+                    href={`/sign-in?email=${encodeURIComponent(email)}`}
+                    className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+                  >
+                    Sign in →
+                  </Link>
+                  <span className="text-zinc-700">·</span>
+                  <Link
+                    href={`/auth/verify-email?email=${encodeURIComponent(email)}`}
+                    className="text-zinc-400 hover:text-zinc-200 transition-colors"
+                  >
+                    Resend confirmation
+                  </Link>
+                </div>
               </div>
             ) : error ? (
               <p className="text-xs text-red-400">{error}</p>

@@ -42,8 +42,8 @@ function VerifyEmailContent() {
         </div>
 
         <div className="flex justify-center mb-6">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-500/10 border border-orange-500/20">
-            <Mail className="h-7 w-7 text-orange-400" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+            <Mail className="h-7 w-7 text-emerald-400" />
           </div>
         </div>
 

@@ -239,10 +239,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg || "Sign-up failed. Try again." }, { status: 400 });
   }
 
-  // Supabase returns a user with empty identities when the email already exists
-  // (prevents email enumeration — it fakes success). Catch it here.
-  if (!authData.user || authData.user.identities?.length === 0) {
-    return NextResponse.json({ error: "An account with this email already exists." }, { status: 409 });
+  if (!authData.user) {
+    return NextResponse.json({ error: "Sign-up failed. Please try again." }, { status: 500 });
+  }
+
+  // Supabase returns identities:[] when the email is already registered
+  // (prevents enumeration — it fakes success instead of erroring).
+  // Show a clear message so the user isn't left staring at "check your email"
+  // forever while the real account sits unconfirmed or fully active.
+  if (authData.user.identities?.length === 0) {
+    return NextResponse.json({
+      error: "An account with this email already exists. Try signing in, or check your inbox for a confirmation link if you signed up recently.",
+    }, { status: 409 });
   }
 
   return NextResponse.json({ success: true, requiresEmailVerification: true });

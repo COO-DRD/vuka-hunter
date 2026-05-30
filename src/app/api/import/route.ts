@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
   }
 
   const db = createSupabaseServiceClient();
-  await db.from("hunter_orgs").upsert({ id: orgId, name: "My Workspace" }, { onConflict: "id", ignoreDuplicates: true });
 
   const leads = lines.slice(1).map((line) => {
     const values = parseCsvLine(line);

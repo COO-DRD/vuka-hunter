@@ -38,11 +38,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "A scrape job is already running. Wait for it to finish." }, { status: 429 });
   }
 
-  await db.from("hunter_orgs").upsert(
-    { id: orgId, name: "My Workspace", credits_total: 999999 },
-    { onConflict: "id", ignoreDuplicates: true }
-  );
-
   const { data: job, error } = await db
     .from("hunter_scrape_jobs")
     .insert({ org_id: orgId, vertical, city, count, source, status: "queued" })
