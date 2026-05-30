@@ -26,9 +26,9 @@ const BOT_UA = [
 // In-memory rate limiter: ip → [timestamps]
 // Evicts stale entries every 2 minutes to prevent unbounded growth.
 const ipMap = new Map<string, number[]>();
-const WINDOW_MS  = 60_000;
+const WINDOW_MS    = 60_000;
 const MAX_API_RPM  = 60;
-const MAX_AUTH_RPM = 10;  // tighter limit on auth endpoints
+const MAX_AUTH_RPM = 15;  // tighter limit on /api/auth/* endpoints only
 let lastEviction = Date.now();
 
 function evictStale() {
@@ -70,21 +70,29 @@ export async function middleware(req: NextRequest) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  // ── Tighter rate limit on auth endpoints (brute-force protection) ─────────
-  const isAuthPath = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up") || pathname.startsWith("/auth/");
-  if (isAuthPath && rateLimit(ip, MAX_AUTH_RPM)) {
-    return new NextResponse("Too many requests", { status: 429 });
-  }
-
-  // ── Public paths pass through (before rate limiter — webhooks must not be throttled) ─
+  // ── Public paths pass through — never rate-limit page navigations ────────
+  // Auth pages (/sign-in, /sign-up, /auth/callback) must NEVER be rate-limited
+  // at the page level: every page load would burn the quota, and blocking
+  // /auth/callback means confirmation email clicks show a blank 429 screen.
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
     const res = NextResponse.next();
     return addSecurityHeaders(res);
   }
 
-  // ── Rate-limit API routes ─────────────────────────────────────────────────
-  if (pathname.startsWith("/api/") && rateLimit(ip, MAX_API_RPM)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  // ── Rate-limit API routes only ────────────────────────────────────────────
+  // /api/auth/* gets a tighter cap (brute-force / credential-stuffing protection).
+  // All other /api/* routes share the general cap.
+  if (pathname.startsWith("/api/")) {
+    const limit = pathname.startsWith("/api/auth/") ? MAX_AUTH_RPM : MAX_API_RPM;
+    if (rateLimit(ip, limit)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a moment and try again." },
+        {
+          status: 429,
+          headers: { "Retry-After": "60" },
+        }
+      );
+    }
   }
 
   // ── Auth check ────────────────────────────────────────────────────────────

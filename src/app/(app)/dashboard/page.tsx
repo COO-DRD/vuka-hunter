@@ -51,13 +51,8 @@ const PIPELINE_STEPS = [
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const db = createSupabaseServiceClient();
   const orgId = await resolveOrgId(user.id);
-
-  const [{ total, hot, enriched, scored, unenriched, needsScore, recent, stageCounts }] = await Promise.all([
-    getStats(orgId),
-    db.from("hunter_orgs").upsert({ id: user.id, name: user.email ?? "My Workspace", credits_total: 999999 }, { onConflict: "id", ignoreDuplicates: true }),
-  ]);
+  const { total, hot, enriched, scored, unenriched, needsScore, recent, stageCounts } = await getStats(orgId);
 
   const totalN = total ?? 0;
   const stats = [
