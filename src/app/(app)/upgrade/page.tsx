@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Zap, User, Users, Building2, Shield, Check, ArrowRight, Loader2, MessageCircle, Mail, AlertTriangle } from "lucide-react";
+import { Zap, User, Users, Shield, Check, ArrowRight, Loader2, AlertTriangle, CheckCircle2, Phone, FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 type PlanTier = "individual" | "corporate";
@@ -94,6 +95,13 @@ export default function UpgradePage() {
   const [error,             setError]             = useState("");
   const [stripeConfigured,  setStripeConfigured]  = useState<boolean | null>(null);
 
+  // Invoice request state (used when Stripe is not configured)
+  const [reqPhone,   setReqPhone]   = useState("");
+  const [reqNote,    setReqNote]    = useState("");
+  const [reqLoading, setReqLoading] = useState(false);
+  const [reqError,   setReqError]   = useState("");
+  const [reqDone,    setReqDone]    = useState<{ ref: string; duplicate: boolean } | null>(null);
+
   useEffect(() => {
     fetch("/api/billing/configured")
       .then((r) => r.json())
@@ -110,6 +118,25 @@ export default function UpgradePage() {
 
   const plans = tier === "individual" ? INDIVIDUAL_PLANS : CORPORATE_PLANS;
   const plan  = [...INDIVIDUAL_PLANS, ...CORPORATE_PLANS].find((p) => p.id === selected)!;
+
+  async function handleRequest() {
+    setReqLoading(true);
+    setReqError("");
+    try {
+      const res  = await fetch("/api/billing/request", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ plan: selected, phone: reqPhone, note: reqNote }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setReqError(json.error ?? "Could not submit. Try again."); return; }
+      setReqDone({ ref: json.ref_number, duplicate: json.duplicate ?? false });
+    } catch {
+      setReqError("Connection error. Check your internet and try again.");
+    } finally {
+      setReqLoading(false);
+    }
+  }
 
   async function handleCheckout() {
     setLoading(true);
@@ -271,33 +298,82 @@ export default function UpgradePage() {
         )}
 
         {stripeConfigured === false ? (
-          <div className="rounded-xl border border-amber-800/40 bg-amber-950/10 px-6 py-5">
-            <p className="text-sm font-semibold text-amber-300 mb-1">Online card payment is coming soon</p>
-            <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
-              We&apos;re finalising our payment integration. Get activated today by reaching out directly — we&apos;ll set your account up within the hour.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <a
-                href={`https://wa.me/254700000000?text=Hi%2C+I+want+to+upgrade+to+4unter+${encodeURIComponent(plan.label)}+plan+(${encodeURIComponent(plan.priceLabel)}%2Fmo)`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-500 px-6 py-3 font-semibold text-white text-sm transition-colors"
-              >
-                <MessageCircle className="h-4 w-4" />
-                WhatsApp us to activate
-              </a>
-              <a
-                href={`mailto:billing@dullugroup.co.ke?subject=4unter+Upgrade+%E2%80%94+${encodeURIComponent(plan.label)}&body=Hi%2C+I+want+to+upgrade+to+the+${encodeURIComponent(plan.label)}+plan+(${encodeURIComponent(plan.priceLabel)}%2Fmo).`}
-                className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 px-6 py-3 font-semibold text-zinc-300 text-sm transition-colors"
-              >
-                <Mail className="h-4 w-4" />
-                Email billing@dullugroup.co.ke
-              </a>
+          reqDone ? (
+            <div className="rounded-xl border border-green-700/40 bg-green-950/20 px-6 py-6 text-center space-y-3">
+              <CheckCircle2 className="h-8 w-8 text-green-400 mx-auto" />
+              <p className="text-sm font-semibold text-zinc-100">
+                {reqDone.duplicate ? "You already have a pending request" : "Request received"}
+              </p>
+              <p className="text-xs text-zinc-400">
+                Reference <span className="font-mono text-amber-400 font-semibold">{reqDone.ref}</span>. We will review and activate your <strong className="text-zinc-200">{plan.label}</strong> account within 1 hour — keep an eye on your WhatsApp and email.
+              </p>
+              <p className="text-[11px] text-zinc-600">
+                Plan: {plan.label} · {plan.priceLabel}/month · {plan.seats === 1 ? "1 seat" : `${plan.seats} seats`}
+              </p>
             </div>
-            <p className="text-xs text-zinc-600 mt-4">
-              Selected: <span className="text-zinc-400 font-medium">{plan.label} — {plan.priceLabel}/month · {plan.seats === 1 ? "1 seat" : `${plan.seats} seats`}</span>
-            </p>
-          </div>
+          ) : (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-6 py-5 space-y-4">
+              <div>
+                <p className="text-sm font-semibold text-zinc-100 mb-0.5">Request invoice</p>
+                <p className="text-xs text-zinc-500">
+                  Card payment is coming soon. Send a request and we will activate your account manually within 1 hour and send you a payment link.
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-zinc-100">{plan.label}</p>
+                  <p className="text-xs text-zinc-500">{plan.priceLabel}/month · {plan.seats === 1 ? "1 seat" : `${plan.seats} seats`}</p>
+                </div>
+                <span className="text-xs text-amber-400 font-semibold bg-amber-500/10 border border-amber-500/20 rounded-full px-2.5 py-1">
+                  Selected
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-zinc-400 mb-1.5">
+                    <Phone className="inline h-3 w-3 mr-1" />
+                    WhatsApp / phone number <span className="text-zinc-600">(so we can reach you fast)</span>
+                  </label>
+                  <Input
+                    type="tel"
+                    value={reqPhone}
+                    onChange={(e) => setReqPhone(e.target.value)}
+                    placeholder="+254 7XX XXX XXX"
+                    autoComplete="tel"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-400 mb-1.5">
+                    <FileText className="inline h-3 w-3 mr-1" />
+                    Anything to add? <span className="text-zinc-600">(optional)</span>
+                  </label>
+                  <textarea
+                    value={reqNote}
+                    onChange={(e) => setReqNote(e.target.value)}
+                    rows={2}
+                    placeholder="e.g. paying by M-Pesa, need invoice for company records, team of 5 in insurance..."
+                    className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-amber-600/50 resize-none"
+                  />
+                </div>
+              </div>
+
+              {reqError && <p className="text-xs text-red-400">{reqError}</p>}
+
+              <button
+                onClick={handleRequest}
+                disabled={reqLoading}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-60 px-6 py-3 font-bold text-black text-sm transition-colors"
+              >
+                {reqLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                {reqLoading ? "Submitting..." : `Request ${plan.label} activation`}
+              </button>
+              <p className="text-[11px] text-zinc-600 text-center">
+                We will send a payment link to your email and confirm via WhatsApp.
+              </p>
+            </div>
+          )
         ) : (
           <div className="flex justify-center">
             <button
