@@ -91,8 +91,13 @@ export default function TeamPanel({ members: initialMembers, seatLimit, seatsUse
   }
 
   async function handleSaveDomain() {
-    setSavingDomain(true);
     setDomainMsg("");
+    const trimmed = domain.trim().toLowerCase();
+    if (trimmed && !/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z]{2,})+$/.test(trimmed)) {
+      setDomainMsg("Enter a valid domain (e.g. company.co.ke) or leave blank to disable.");
+      return;
+    }
+    setSavingDomain(true);
     try {
       const res  = await fetch("/api/settings/org-domain", {
         method:  "PATCH",

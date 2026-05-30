@@ -55,10 +55,14 @@ export default function SignInPage() {
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
+    // Validate before any auth call
+    if (!email.trim()) { setError("Enter your email address."); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) { setError("Enter a valid email address."); return; }
+    if (!password) { setError("Enter your password."); return; }
     setLoading(true); setError("");
     try {
       const sb = createSupabaseBrowserClient();
-      const { error } = await sb.auth.signInWithPassword({ email, password });
+      const { error } = await sb.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
       if (error) { setError(friendlyError(error.message)); return; }
       window.location.assign("/dashboard");
     } catch (err) {
@@ -82,10 +86,12 @@ export default function SignInPage() {
 
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault();
+    if (!email.trim()) { setError("Enter your email address."); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) { setError("Enter a valid email address."); return; }
     setLoading(true); setError("");
     try {
       const sb = createSupabaseBrowserClient();
-      await sb.auth.resetPasswordForEmail(email, {
+      await sb.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
         redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/auth/callback?next=/settings`,
       });
       setMode("forgot_sent");
