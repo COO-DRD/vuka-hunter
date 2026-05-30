@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     (() => {
       let q = db
         .from("hunter_leads")
-        .select("id,website,email")
+        .select("id,website,email,vertical")
         .eq("org_id", orgId)
         .eq("enrichment_status", "pending")
         .not("website", "is", null)
@@ -45,17 +45,34 @@ export async function POST(req: NextRequest) {
       continue;
     }
     try {
-      const result = await enrichWebsite(lead.website, org);
+      const vertical = (lead.vertical as string | null) ?? undefined;
+      const result = await enrichWebsite(lead.website, vertical, org);
+      const painSignals = [
+        ...result.verticalSignals.filter((s) => s.startsWith("gap:")),
+        ...result.customSignals,
+      ];
       await db.from("hunter_leads").update({
-        enrichment_status: "done",
-        enriched_at:       new Date().toISOString(),
-        emails_found:      result.emails,
-        email:             result.emails[0] ?? lead.email ?? null,
-        tech_stack:        result.techStack,
-        has_booking_system: result.hasBookingSystem,
-        has_live_chat:     result.hasLiveChat,
-        social_links:      result.socialLinks,
-        ...(result.customSignals.length > 0 && { pain_signals: result.customSignals }),
+        enrichment_status:   "done",
+        enriched_at:         new Date().toISOString(),
+        emails_found:        result.emails,
+        email:               result.emails[0] ?? lead.email ?? null,
+        tech_stack:          result.techStack,
+        has_booking_system:  result.hasBookingSystem,
+        has_live_chat:       result.hasLiveChat,
+        social_links:        result.socialLinks,
+        phones_found:        result.phones.length > 0 ? result.phones : null,
+        phone_primary:       result.phones[0] ?? null,
+        social_profiles:     Object.keys(result.socialProfiles).length > 0 ? result.socialProfiles : null,
+        vertical_signals:    result.verticalSignals.length > 0 ? result.verticalSignals : null,
+        year_established:    result.yearEstablished ?? null,
+        location_count:      result.locationCount,
+        staff_signal:        result.staffSignal ?? null,
+        certifications:      result.certifications.length > 0 ? result.certifications : null,
+        has_online_payment:  result.hasOnlinePayment,
+        has_ssl:             result.hasSsl,
+        opportunity_score:   result.opportunityScore,
+        enrichment_version:  2,
+        ...(painSignals.length > 0 && { pain_signals: painSignals }),
       }).eq("id", lead.id);
       enriched++;
     } catch (err) {
