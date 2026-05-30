@@ -111,6 +111,18 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
+  // ── Email confirmation gate ───────────────────────────────────────────────
+  // Defence-in-depth: when Supabase email confirmations are enabled, unconfirmed
+  // users can't get sessions at all — but guard here in case of edge cases.
+  if (session && !session.user.email_confirmed_at) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Please verify your email address to continue." }, { status: 403 });
+    }
+    const verifyUrl = new URL("/auth/verify-email", req.url);
+    if (session.user.email) verifyUrl.searchParams.set("email", session.user.email);
+    return NextResponse.redirect(verifyUrl);
+  }
+
   // ── Corporate member role gate ────────────────────────────────────────────
   // Members (role='member') are blocked from admin-only routes.
   // This is a fast cookie-based check — the service-role check in each API
