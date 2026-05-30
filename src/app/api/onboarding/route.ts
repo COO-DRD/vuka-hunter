@@ -1,5 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/auth";
+import { getUser, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -20,9 +20,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Business name, your name, and role are required." }, { status: 400 });
   }
 
+  const orgId = await resolveOrgId(user.id);
   const db = createSupabaseServiceClient();
   await db.from("hunter_orgs").upsert({
-    id:                  user.id,
+    id:                  orgId,
     name:                businessName.trim(),
     business_name:       businessName.trim(),
     sender_name:         senderName.trim(),

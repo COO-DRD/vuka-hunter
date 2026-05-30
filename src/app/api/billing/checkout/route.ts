@@ -16,6 +16,11 @@ const PLAN_PRICES: Record<string, { priceId: string; amount: number; seats: numb
 };
 
 export async function POST(req: NextRequest) {
+  if (!process.env.STRIPE_PRICE_STARTER || !process.env.STRIPE_PRICE_GROWTH || !process.env.STRIPE_PRICE_ENTERPRISE) {
+    console.error("[billing/checkout] STRIPE_PRICE_* env vars not configured");
+    return NextResponse.json({ error: "Payment system is not configured. Contact support." }, { status: 500 });
+  }
+
   const user = await requireUser();
   const db   = createSupabaseServiceClient();
 

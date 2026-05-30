@@ -210,6 +210,7 @@ async function syncSubscription(
   const item      = sub.items.data[0];
   const priceId   = item?.price?.id ?? null;
   const plan      = priceIdToPlan(priceId);
+  if (!plan) return; // unknown price ID — do not silently downgrade
   const seatLimit = planToSeats(plan);
 
   // In API 2026-04-22.dahlia current_period_* moved to the item level
@@ -249,14 +250,15 @@ async function syncSubscription(
   }).eq("id", orgId);
 }
 
-function priceIdToPlan(priceId: string | null): string {
-  if (!priceId) return "trial";
-  const map: Record<string, string> = {
-    [process.env.STRIPE_PRICE_STARTER    ?? "__"]: "starter",
-    [process.env.STRIPE_PRICE_GROWTH     ?? "__"]: "growth",
-    [process.env.STRIPE_PRICE_ENTERPRISE ?? "__"]: "enterprise",
-  };
-  return map[priceId] ?? "starter";
+function priceIdToPlan(priceId: string | null): string | null {
+  if (!priceId) return null;
+  const map: Record<string, string> = {};
+  if (process.env.STRIPE_PRICE_STARTER)    map[process.env.STRIPE_PRICE_STARTER]    = "starter";
+  if (process.env.STRIPE_PRICE_GROWTH)     map[process.env.STRIPE_PRICE_GROWTH]     = "growth";
+  if (process.env.STRIPE_PRICE_ENTERPRISE) map[process.env.STRIPE_PRICE_ENTERPRISE] = "enterprise";
+  const plan = map[priceId] ?? null;
+  if (!plan) console.error(`[stripe/webhook] Unknown price ID: ${priceId} — STRIPE_PRICE_* env var mismatch. No plan change applied.`);
+  return plan;
 }
 
 function planToSeats(plan: string): number {
