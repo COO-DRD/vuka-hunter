@@ -1,7 +1,8 @@
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Shield, Users, Zap, Target, MessageSquare, AlertTriangle, CalendarDays, TrendingUp } from "lucide-react";
+import { Shield, Users, Zap, Target, MessageSquare, AlertTriangle, CalendarDays, TrendingUp, Receipt } from "lucide-react";
+import { UpgradeRequestActions } from "./UpgradeRequestActions";
 
 const ADMIN_EMAILS = new Set(["ian.dullu@akamom.org", "dr.dullu@gmail.com"]);
 
@@ -37,6 +38,12 @@ async function getAnalytics() {
     db.from("hunter_workshop_registrations").select("name,email,company,role,created_at").order("created_at", { ascending: false }).limit(20),
     db.from("hunter_workshop_registrations").select("*", { count: "exact", head: true }),
   ]);
+
+  const { data: upgradeRequests } = await db
+    .from("hunter_upgrade_requests")
+    .select("id,org_id,plan,email,phone,note,status,ref_number,created_at")
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   // Aggregate event counts by type
   const byType: Record<string, number> = { scrape: 0, enrich: 0, score: 0, opener: 0 };
@@ -82,6 +89,7 @@ async function getAnalytics() {
     recentErrors: recentErrors ?? [],
     workshopRegs: workshopRegs ?? [],
     workshopCount: workshopCount ?? 0,
+    upgradeRequests: upgradeRequests ?? [],
   };
 }
 
@@ -209,6 +217,47 @@ export default async function AdminPage() {
                 <span className="text-xs font-mono text-zinc-500 w-8 text-right">{count}</span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Upgrade requests */}
+      {a.upgradeRequests.length > 0 && (
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 overflow-hidden">
+          <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+            <p className="text-xs font-semibold text-zinc-400 flex items-center gap-2">
+              <Receipt className="h-3.5 w-3.5 text-amber-400" />
+              Upgrade requests
+            </p>
+            <span className="text-xs font-mono text-zinc-600">
+              {a.upgradeRequests.filter((r: {status:string}) => r.status === "pending").length} pending
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-zinc-800/60">
+                  {["Ref","Plan","Email","Phone","Note","Requested","Actions"].map((h) => (
+                    <th key={h} className="text-left px-4 py-2 text-zinc-600 font-medium whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {a.upgradeRequests.map((r: {id:string;plan:string;email:string;phone:string|null;note:string|null;status:string;ref_number:string;created_at:string}) => (
+                  <tr key={r.id} className="border-b border-zinc-800/40 hover:bg-zinc-800/20">
+                    <td className="px-4 py-2.5 font-mono text-amber-400 font-semibold whitespace-nowrap">{r.ref_number}</td>
+                    <td className="px-4 py-2.5 text-zinc-300 capitalize">{r.plan}</td>
+                    <td className="px-4 py-2.5 text-zinc-400 max-w-[160px] truncate">{r.email}</td>
+                    <td className="px-4 py-2.5 text-zinc-500">{r.phone ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-zinc-500 max-w-[200px] truncate" title={r.note ?? ""}>{r.note ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-zinc-600 font-mono whitespace-nowrap">{r.created_at.slice(0, 16).replace("T", " ")}</td>
+                    <td className="px-4 py-2.5">
+                      <UpgradeRequestActions id={r.id} initialStatus={r.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
