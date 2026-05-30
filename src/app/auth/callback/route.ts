@@ -53,27 +53,87 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // ── Standard flow: create or refresh the org row ─────────────────────────
+  // ── Standard flow: create org on first confirmed sign-in ─────────────────
+  const meta     = user.user_metadata ?? {};
   const provider = sanitize(user.app_metadata?.provider ?? "email", 50) || "email";
-  const rawName  = user.user_metadata?.full_name ?? user.user_metadata?.name ?? "";
+  const rawName  = meta.full_name ?? meta.name ?? "";
   const name     = sanitize(rawName, 100) || sanitize(user.email, 100) || "User";
 
-  await db.from("hunter_orgs").upsert(
-    {
-      id:                  user.id,
-      name,
-      credits_total:       999999,
-      credits_used:        0,
-      auth_provider:       provider,
-      subscription_status: "trialing",
-      subscribed_plan:     "trial",
-      trial_started_at:    new Date().toISOString(),
-      trial_ends_at:       new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    { onConflict: "id", ignoreDuplicates: true }
-  );
+  const { data: existingOrg } = await db
+    .from("hunter_orgs")
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
 
-  if (user.email_confirmed_at) {
+  if (!existingOrg) {
+    if (meta.account_type) {
+      // Email signup path — create full org from metadata stored at signUp time.
+      // hunter_orgs and legal consents are only written here, after email confirmation.
+      const isCorp    = meta.account_type === "corporate";
+      const trialDays = Number(meta.trial_days ?? (isCorp ? 14 : 7));
+      const trialEnds = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000);
+      const termsAt   = meta.terms_accepted_at ? new Date(meta.terms_accepted_at) : new Date();
+
+      await db.from("hunter_orgs").insert({
+        id:                  user.id,
+        name,
+        credits_total:       999999,
+        credits_used:        0,
+        auth_provider:       "email",
+        terms_accepted_at:   termsAt.toISOString(),
+        email_verified_at:   user.email_confirmed_at ?? new Date().toISOString(),
+        account_type:        meta.account_type,
+        trial_started_at:    new Date().toISOString(),
+        trial_ends_at:       trialEnds.toISOString(),
+        subscription_status: "trialing",
+        subscribed_plan:     "trial",
+        operating_county:    sanitize(meta.operating_county,  50)  || null,
+        operating_address:   sanitize(meta.operating_address, 300) || null,
+        ...(isCorp && {
+          company_name:  sanitize(meta.company_name,  200),
+          company_size:  sanitize(meta.company_size,   50),
+          billing_email: sanitize(meta.billing_email, 200),
+        }),
+      });
+
+      // Legal consents — immutable audit trail (Kenya DPA 2019 s.30).
+      // IP + UA captured at signup time and stored in metadata for attribution.
+      const consents: Array<{ consent_type: string; accepted: boolean }> = [
+        { consent_type: "terms_of_service",                  accepted: true },
+        { consent_type: "kenya_dpa_data_collection",         accepted: Boolean(meta.dpa_accepted) },
+        { consent_type: "kenya_dpa_third_party_enrichment",  accepted: Boolean(meta.dpa_accepted) },
+      ];
+      if (isCorp) {
+        consents.push({ consent_type: "data_processing_agreement", accepted: true });
+      }
+
+      await db.from("hunter_legal_consents").insert(
+        consents.map((c) => ({
+          ...c,
+          org_id:     user.id,
+          version:    "1.0",
+          ip_address: sanitize(meta.signup_ip, 100) || null,
+          user_agent: sanitize(meta.signup_ua, 300) || null,
+        }))
+      );
+    } else {
+      // Google OAuth or other provider — minimal org creation.
+      await db.from("hunter_orgs").insert({
+        id:                  user.id,
+        name,
+        credits_total:       999999,
+        credits_used:        0,
+        auth_provider:       provider,
+        account_type:        "individual",
+        subscription_status: "trialing",
+        subscribed_plan:     "trial",
+        trial_started_at:    new Date().toISOString(),
+        trial_ends_at:       new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        email_verified_at:   user.email_confirmed_at ?? null,
+      });
+    }
+  } else if (user.email_confirmed_at) {
+    // Org already exists — stamp the verified timestamp if not yet set.
     await db
       .from("hunter_orgs")
       .update({ email_verified_at: user.email_confirmed_at })
