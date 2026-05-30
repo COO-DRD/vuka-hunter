@@ -97,34 +97,48 @@ function PasswordStrengthBar({ password, isCorporate }: { password: string; isCo
   );
 }
 
-// ── Client-side validation (mirrors server rules exactly) ─────────────────────
+// ── Client-side validation ────────────────────────────────────────────────────
+// Runs entirely in the browser. If ANY check fails, the fetch() is never called.
 function validateClientSide(fields: {
-  name: string; email: string; password: string;
+  firstName: string; lastName: string;
+  email: string; password: string;
   isCorporate: boolean;
   companyName: string; companySize: string;
   county: string; address: string;
+  termsAccepted: boolean; dpaAccepted: boolean;
 }): string | null {
-  const { name, email, password, isCorporate, companyName, companySize, county, address } = fields;
+  const {
+    firstName, lastName, email, password, isCorporate,
+    companyName, companySize, county, address,
+    termsAccepted, dpaAccepted,
+  } = fields;
 
-  // Full name
-  const words = name.trim().split(/\s+/).filter(Boolean);
-  if (words.length < 2)                          return "Please enter your full name (first and last name).";
-  if (words.some((w) => w.length < 2))           return "Each part of your name must be at least 2 characters.";
+  // Consents — belt-and-suspenders check even though button is disabled without them
+  if (!termsAccepted) return "You must accept the Terms of Service to continue.";
+  if (!dpaAccepted)   return "You must accept the Kenya Data Protection Act consent to continue.";
+
+  // Name — two separate fields, each required, each at least 2 chars
+  if (!firstName.trim())             return "First name is required.";
+  if (firstName.trim().length < 2)   return "First name must be at least 2 characters.";
+  if (!lastName.trim())              return "Last name is required.";
+  if (lastName.trim().length < 2)    return "Last name must be at least 2 characters.";
 
   // Email format
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) return "Enter a valid email address.";
+  if (!email.trim())                                                   return "Email address is required.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim()))           return "Enter a valid email address.";
 
   // Password
+  if (!password)                return "Password is required.";
   if (isCorporate) {
-    if (password.length < 12)            return "Corporate password must be at least 12 characters.";
-    if (!/[A-Z]/.test(password))         return "Password must include at least one uppercase letter.";
-    if (!/[a-z]/.test(password))         return "Password must include at least one lowercase letter.";
-    if (!/[0-9]/.test(password))         return "Password must include at least one number.";
+    if (password.length < 12)           return "Corporate password must be at least 12 characters.";
+    if (!/[A-Z]/.test(password))        return "Password must include at least one uppercase letter.";
+    if (!/[a-z]/.test(password))        return "Password must include at least one lowercase letter.";
+    if (!/[0-9]/.test(password))        return "Password must include at least one number.";
     if (!/[^A-Za-z0-9]/.test(password)) return "Password must include a special character (e.g. !@#$%).";
   } else {
-    if (password.length < 8)   return "Password must be at least 8 characters.";
-    if (!/[A-Za-z]/.test(password)) return "Password must include at least one letter.";
-    if (!/[0-9]/.test(password))    return "Password must include at least one number.";
+    if (password.length < 8)            return "Password must be at least 8 characters.";
+    if (!/[A-Za-z]/.test(password))     return "Password must include at least one letter.";
+    if (!/[0-9]/.test(password))        return "Password must include at least one number.";
   }
 
   // Corporate-specific
@@ -145,10 +159,11 @@ function validateClientSide(fields: {
 export default function SignUpPage() {
   const [accountType, setAccountType] = useState<"individual" | "corporate">("individual");
 
-  const [name,     setName]     = useState("");
-  const [email,    setEmail]    = useState("");
-  const [password, setPassword] = useState("");
-  const [showPw,   setShowPw]   = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName,  setLastName]  = useState("");
+  const [email,     setEmail]     = useState("");
+  const [password,  setPassword]  = useState("");
+  const [showPw,    setShowPw]    = useState(false);
 
   const [county,  setCounty]  = useState("");
   const [address, setAddress] = useState("");
@@ -174,28 +189,26 @@ export default function SignUpPage() {
     e.preventDefault();
     setAlreadyExists(false);
 
-    if (!allConsentsGiven) {
-      setError(isCorporate
-        ? "You must accept all consent declarations to continue."
-        : "You must accept the Terms and Kenya DPA consent to continue."
-      );
-      return;
-    }
-
-    // ── Run ALL validation client-side BEFORE touching the API ──────────────
+    // ── Single gate: validate EVERYTHING before any network call ────────────
+    // If this returns a string, we stop here. Nothing is sent to the server.
     const validationError = validateClientSide({
-      name, email, password, isCorporate, companyName, companySize, county, address,
+      firstName, lastName, email, password, isCorporate,
+      companyName, companySize, county, address,
+      termsAccepted, dpaAccepted,
     });
     if (validationError) { setError(validationError); return; }
 
+    // Only reaches here when every field is valid and consents are given.
     setLoading(true);
     setError("");
     try {
+      const fullName = `${firstName.trim()} ${lastName.trim()}`;
       const res = await fetch("/api/auth/signup", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({
-          name, email, password,
+          name:          fullName,
+          email, password,
           termsAccepted: true,
           dpaAccepted:   true,
           accountType,
@@ -220,8 +233,8 @@ export default function SignUpPage() {
   }
 
   async function handleGoogle() {
-    if (!allConsentsGiven) {
-      setError("Please accept the required consents before signing up with Google.");
+    if (!termsAccepted || !dpaAccepted) {
+      setError("Accept the required consents above before signing up with Google.");
       return;
     }
     setGoogleLoading(true);
@@ -336,13 +349,19 @@ export default function SignUpPage() {
           </div>
 
           <form onSubmit={handleSignUp} className="space-y-3">
-            {/* Name */}
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">Full name <span className="text-zinc-600">(first and last)</span></label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
-                <Input type="text" value={name} onChange={(e) => { setName(e.target.value); setError(""); }}
-                  placeholder="Jane Mwangi" required autoFocus autoComplete="name" className="pl-9" />
+            {/* Name — two separate fields */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1.5">First name</label>
+                <Input type="text" value={firstName}
+                  onChange={(e) => { setFirstName(e.target.value); setError(""); }}
+                  placeholder="Jane" required autoFocus autoComplete="given-name" />
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1.5">Last name</label>
+                <Input type="text" value={lastName}
+                  onChange={(e) => { setLastName(e.target.value); setError(""); }}
+                  placeholder="Mwangi" required autoComplete="family-name" />
               </div>
             </div>
 
