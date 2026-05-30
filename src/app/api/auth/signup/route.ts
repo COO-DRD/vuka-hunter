@@ -169,15 +169,28 @@ export async function POST(req: NextRequest) {
     }
     const coError = validateCompanyName(rawCo);
     if (coError) return NextResponse.json({ error: coError }, { status: 400 });
+
+    const cleanSize = sanitize(companySize, 50);
+    if (!cleanSize) {
+      return NextResponse.json({ error: "Company size is required for corporate accounts." }, { status: 400 });
+    }
   }
 
   // ── County validation ──────────────────────────────────────────────────────
   const cleanCounty = sanitize(operatingCounty, 50);
+  if (isCorporate && !cleanCounty) {
+    return NextResponse.json({ error: "Operating county is required for corporate accounts." }, { status: 400 });
+  }
   if (cleanCounty && !KENYA_COUNTIES.has(cleanCounty)) {
     return NextResponse.json({ error: "Select a valid Kenya county." }, { status: 400 });
   }
 
   const cleanAddress = sanitize(operatingAddress, 300);
+  if (isCorporate && cleanAddress.length < 8) {
+    return NextResponse.json({
+      error: "A verifiable physical or postal address is required for corporate accounts.",
+    }, { status: 400 });
+  }
 
   // ── Sign up via anon client — triggers real confirmation email ─────────────
   // Using anon key (not service role) so Supabase sends the verification email.
