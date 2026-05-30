@@ -63,12 +63,12 @@ function scorePassword(pw: string, isCorporate: boolean): {
     if (/[^A-Za-z0-9]/.test(pw)) score++;
     else hints.push("One special character (!@#$%)");
     const labels = ["Very weak","Weak","Fair","Strong","Very strong"];
-    const colors = ["bg-red-500","bg-orange-500","bg-yellow-500","bg-lime-500","bg-emerald-500"];
+    const colors = ["bg-red-500","bg-orange-500","bg-yellow-500","bg-lime-500","bg-amber-500"];
     return { score, label: labels[score] ?? "Very weak", color: colors[score] ?? "bg-red-500", hints };
   }
 
   const labels = ["Weak","Fair","Strong","Very strong"];
-  const colors = ["bg-red-500","bg-yellow-500","bg-lime-500","bg-emerald-500"];
+  const colors = ["bg-red-500","bg-yellow-500","bg-lime-500","bg-amber-500"];
   return { score, label: labels[score - 1] ?? "Weak", color: colors[score - 1] ?? "bg-red-500", hints };
 }
 
@@ -86,7 +86,7 @@ function PasswordStrengthBar({ password, isCorporate }: { password: string; isCo
         ))}
       </div>
       <div className="flex items-center justify-between">
-        <span className={cn("text-xs", pct >= 75 ? "text-emerald-400" : pct >= 50 ? "text-yellow-400" : "text-zinc-500")}>
+        <span className={cn("text-xs", pct >= 75 ? "text-amber-400" : pct >= 50 ? "text-yellow-400" : "text-zinc-500")}>
           {label}
         </span>
         {hints.length > 0 && (
@@ -256,7 +256,7 @@ export default function SignUpPage() {
       {/* ── Brand panel ── */}
       <div className="hidden lg:flex lg:w-[480px] xl:w-[520px] shrink-0 flex-col auth-grid-bg relative overflow-hidden">
         {/* Glow overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/40 via-transparent to-teal-950/30 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-950/40 via-transparent to-teal-950/30 pointer-events-none" />
         {/* Large watermark mark */}
         <div className="absolute -bottom-12 -right-12 opacity-[0.04] text-white">
           <HunterMark className="h-80 w-80" />
@@ -278,16 +278,16 @@ export default function SignUpPage() {
             <div className="space-y-4">
               {PERKS.map(({ icon: Icon, text }, i) => (
                 <div key={text} className={`flex items-center gap-3 animate-fade-up delay-${(i + 1) * 75}`}>
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                    <Icon className="h-4 w-4 text-emerald-400" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <Icon className="h-4 w-4 text-amber-400" />
                   </div>
                   <span className="text-sm text-zinc-400">{text}</span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-10 rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-5 py-4">
-              <p className="text-sm font-semibold text-emerald-400 mb-1">
+            <div className="mt-10 rounded-xl border border-amber-900/50 bg-amber-950/20 px-5 py-4">
+              <p className="text-sm font-semibold text-amber-400 mb-1">
                 {isCorporate ? "14-Day Corporate Trial" : "7-Day Free Trial"}
               </p>
               <p className="text-xs text-zinc-500 leading-relaxed">
@@ -319,7 +319,7 @@ export default function SignUpPage() {
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 rounded-lg border py-2.5 text-sm font-medium transition-colors",
                   accountType === type
-                    ? "border-emerald-600/60 bg-emerald-600/10 text-zinc-100"
+                    ? "border-amber-600/60 bg-amber-600/10 text-zinc-100"
                     : "border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
                 )}>
                 {type === "individual" ? <User className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
@@ -329,7 +329,7 @@ export default function SignUpPage() {
           </div>
 
           {isCorporate && (
-            <div className="mb-4 rounded-lg border border-teal-900/40 bg-teal-950/10 px-4 py-3 text-xs text-teal-400">
+            <div className="mb-4 rounded-lg border border-amber-900/40 bg-amber-950/10 px-4 py-3 text-xs text-amber-400">
               Corporate accounts get a <strong>14-day trial</strong>, 5 seats, team workspace, and priority support.
               Address and county verification is required. Password policy is stricter (12+ chars with complexity).
             </div>
@@ -398,7 +398,7 @@ export default function SignUpPage() {
             {/* Location */}
             <div className="space-y-2 pt-1 border-t border-zinc-800">
               <p className="text-xs text-zinc-500 pt-1">
-                Operating location (Kenya){isCorporate && <span className="text-teal-500 ml-1">— required for corporate</span>}
+                Operating location (Kenya){isCorporate && <span className="text-amber-500 ml-1">— required for corporate</span>}
               </p>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1.5">
@@ -406,7 +406,7 @@ export default function SignUpPage() {
                 </label>
                 <select value={county} onChange={(e) => { setCounty(e.target.value); setError(""); }}
                   required={isCorporate}
-                  className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-600/50">
+                  className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-amber-600/50">
                   <option value="">Select county…</option>
                   {KENYA_COUNTIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -443,7 +443,7 @@ export default function SignUpPage() {
                   <label className="block text-xs text-zinc-400 mb-1.5">Company size <span className="text-zinc-500">*</span></label>
                   <select value={companySize} onChange={(e) => { setCompanySize(e.target.value); setError(""); }}
                     required={isCorporate}
-                    className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-600/50">
+                    className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-amber-600/50">
                     <option value="">Select size…</option>
                     {COMPANY_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -464,7 +464,7 @@ export default function SignUpPage() {
 
               <ConsentCheckbox id="terms" checked={termsAccepted} onChange={(v) => { setTerms(v); setError(""); }}>
                 I accept the{" "}
-                <Link href="/terms" target="_blank" className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2">
+                <Link href="/terms" target="_blank" className="text-amber-400 hover:text-amber-300 underline underline-offset-2">
                   Terms of Service &amp; Usage Policy
                 </Link>
               </ConsentCheckbox>
@@ -502,7 +502,7 @@ export default function SignUpPage() {
                 <div className="flex items-center gap-3 pt-0.5">
                   <Link
                     href={`/sign-in?email=${encodeURIComponent(email)}`}
-                    className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+                    className="text-amber-400 hover:text-amber-300 font-medium transition-colors"
                   >
                     Sign in →
                   </Link>
@@ -529,7 +529,7 @@ export default function SignUpPage() {
           </p>
           <p className="text-center text-xs text-zinc-500 mt-2">
             Already have an account?{" "}
-            <Link href="/sign-in" className="text-emerald-400 hover:text-emerald-300 font-medium">Sign in</Link>
+            <Link href="/sign-in" className="text-amber-400 hover:text-amber-300 font-medium">Sign in</Link>
           </p>
         </div>
       </div>
@@ -547,7 +547,7 @@ function ConsentCheckbox({
       <div className="relative mt-0.5 shrink-0">
         <input id={id} type="checkbox" checked={checked}
           onChange={(e) => onChange(e.target.checked)} className="sr-only peer" />
-        <div className="h-4 w-4 rounded border border-zinc-600 bg-zinc-900 peer-checked:bg-emerald-600 peer-checked:border-emerald-600 transition-colors flex items-center justify-center">
+        <div className="h-4 w-4 rounded border border-zinc-600 bg-zinc-900 peer-checked:bg-amber-600 peer-checked:border-amber-600 transition-colors flex items-center justify-center">
           {checked && (
             <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 12 12">
               <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

@@ -29,15 +29,15 @@ export function BottomNav() {
               className="flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors relative"
             >
               {active && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-full bg-gradient-to-r from-emerald-400 to-teal-500" />
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-full bg-gradient-to-r from-amber-400 to-amber-500" />
               )}
               <Icon className={cn(
                 "h-5 w-5 transition-all",
-                active ? "text-emerald-400 stroke-[2.5]" : "text-zinc-600"
+                active ? "text-amber-400 stroke-[2.5]" : "text-zinc-600"
               )} />
               <span className={cn(
                 "text-[10px] font-medium transition-colors",
-                active ? "text-emerald-400" : "text-zinc-600"
+                active ? "text-amber-400" : "text-zinc-600"
               )}>
                 {label}
               </span>

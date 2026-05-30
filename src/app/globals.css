@@ -3,8 +3,8 @@
 :root {
   --background: #09090b;
   --foreground: #f4f4f5;
-  --brand:      #10b981;
-  --brand-glow: rgba(16, 185, 129, 0.15);
+  --brand:      #F59E0B;
+  --brand-glow: rgba(245, 158, 11, 0.15);
 }
 
 @theme inline {
@@ -55,7 +55,7 @@ body {
 
 /* ── Brand gradient text ─────────────────────────────────────────── */
 .text-brand-gradient {
-  background: linear-gradient(135deg, #34d399, #0d9488);
+  background: linear-gradient(135deg, #FCD34D, #D97706);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

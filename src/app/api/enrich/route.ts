@@ -1,5 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser, resolveOrgId } from "@/lib/auth";
+import { getUser, resolveOrgId, checkOrgAccess, ACCESS_DENIED } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { isSafeUrl, enrichWebsite, computeReachabilityScore, getDecisionTitles } from "@/lib/enrichLead";
 import { logEvent, logError } from "@/lib/logEvent";
@@ -16,7 +16,15 @@ export async function POST(req: NextRequest) {
 
   const orgId = await resolveOrgId(user.id);
 
-  const { leadId } = await req.json();
+  const access = await checkOrgAccess(orgId);
+  if (!access.allowed) {
+    return NextResponse.json(
+      { error: ACCESS_DENIED[access.reason!], reason: access.reason, upgradeUrl: "/upgrade" },
+      { status: 402 }
+    );
+  }
+
+  const { leadId, mode: modeOverride } = await req.json();
   if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
 
   const db = createSupabaseServiceClient();
@@ -40,7 +48,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Website URL is not a public address" }, { status: 400 });
   }
 
-  const mode = getMode((org as Record<string, unknown> | null)?.enrichment_mode as string | undefined);
+  const mode = getMode(modeOverride ?? (org as Record<string, unknown> | null)?.enrichment_mode as string | undefined);
 
   try {
     const vertical = (lead.vertical as string | null) ?? undefined;

@@ -6,7 +6,7 @@ type Variant = "default" | "ghost" | "outline" | "destructive" | "link";
 type Size = "sm" | "md" | "lg" | "icon";
 
 const variants: Record<Variant, string> = {
-  default:     "bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-500 text-white shadow-sm shadow-emerald-900/30",
+  default:     "bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-500 text-white shadow-sm shadow-amber-900/30",
   ghost:       "hover:bg-zinc-800 text-zinc-300 hover:text-zinc-100",
   outline:     "border border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600 text-zinc-300",
   destructive: "bg-red-900 hover:bg-red-800 text-red-100",
@@ -32,7 +32,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center gap-2 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-950 disabled:opacity-50 disabled:pointer-events-none",
+        "inline-flex items-center justify-center gap-2 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-950 disabled:opacity-50 disabled:pointer-events-none",
         variants[variant],
         sizes[size],
         className

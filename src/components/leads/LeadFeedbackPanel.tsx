@@ -33,7 +33,7 @@ const GROUP_LABELS = { positive: "Positive", neutral: "Neutral", signal: "Data i
 
 const OUTCOME_COLORS: Record<string, string> = {
   converted:      "border-green-500/40 bg-green-500/10 text-green-400",
-  meeting:        "border-emerald-500/40 bg-emerald-500/10 text-emerald-400",
+  meeting:        "border-amber-500/40 bg-amber-500/10 text-amber-400",
   replied:        "border-blue-500/40 bg-blue-500/10 text-blue-400",
   no_response:    "border-zinc-600/40 bg-zinc-800/60 text-zinc-400",
   not_interested: "border-zinc-600/40 bg-zinc-800/60 text-zinc-400",

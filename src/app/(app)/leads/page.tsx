@@ -5,6 +5,7 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { VERTICALS, STAGES, scoreColor } from "@/lib/utils";
+import { MODE_OPTIONS } from "@/lib/enrichmentModes";
 import {
   Search, Star, Globe, Phone, ChevronRight,
   RefreshCw, Filter, Zap,
@@ -41,7 +42,8 @@ export default function LeadsPage() {
   const [filterV, setFilterV]     = useState("");
   const [filterStage, setFilterStage] = useState("");
   const [filterScore, setFilterScore] = useState("");
-  const [enriching, setEnriching] = useState<string | null>(null);
+  const [enriching, setEnriching]       = useState<string | null>(null);
+  const [enrichMode, setEnrichMode]     = useState("general");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce search — avoid firing on every keystroke
@@ -69,7 +71,11 @@ export default function LeadsPage() {
   async function enrichLead(id: string) {
     setEnriching(id);
     try {
-      const res = await fetch("/api/enrich", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: id }) });
+      const res = await fetch("/api/enrich", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: id, mode: enrichMode }),
+      });
       if (!res.ok) throw new Error("Enrichment failed");
       toast.success("Enriched — open lead to score with AI");
       fetchLeads();
@@ -118,6 +124,17 @@ export default function LeadsPage() {
           <option value="70">Hot (70+)</option>
           <option value="40">Warm (40+)</option>
         </Select>
+        <div className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900/60 px-2.5 h-8">
+          <Zap className="h-3 w-3 text-amber-400 shrink-0" />
+          <Select
+            value={enrichMode}
+            onChange={(e) => setEnrichMode(e.target.value)}
+            className="h-6 text-xs border-0 bg-transparent p-0 pr-6 focus:ring-0"
+            title="Enrichment intelligence mode — applies when you click Enrich on a lead"
+          >
+            {MODE_OPTIONS.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
+          </Select>
+        </div>
       </div>
 
       {/* Table */}
@@ -141,7 +158,7 @@ export default function LeadsPage() {
               <tr><td colSpan={7} className="px-4 py-12 text-center">
                 <Filter className="h-6 w-6 text-zinc-600 mx-auto mb-2" />
                 <p className="text-zinc-500 text-sm">No leads found</p>
-                <Link href="/discover" className="text-xs text-emerald-400 hover:underline">Discover some →</Link>
+                <Link href="/discover" className="text-xs text-amber-400 hover:underline">Discover some →</Link>
               </td></tr>
             ) : (
               leads.map((lead) => (

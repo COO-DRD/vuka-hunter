@@ -92,7 +92,7 @@ export default function ComplianceForm({ kraPin, companyRegNo, billingEmail }: P
       </div>
 
       {msg && (
-        <p className={`text-xs ${msg.ok ? "text-emerald-400" : "text-red-400"}`}>{msg.text}</p>
+        <p className={`text-xs ${msg.ok ? "text-amber-400" : "text-red-400"}`}>{msg.text}</p>
       )}
 
       <Button onClick={save} loading={saving} variant="outline" size="sm">

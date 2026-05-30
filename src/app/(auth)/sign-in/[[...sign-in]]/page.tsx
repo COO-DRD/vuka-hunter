@@ -190,7 +190,7 @@ export default function SignInPage() {
 
         <p className="text-center text-xs text-zinc-500 mt-5">
           No account?{" "}
-          <Link href="/sign-up" className="text-emerald-400 hover:text-emerald-300 font-medium">Create one free</Link>
+          <Link href="/sign-up" className="text-amber-400 hover:text-amber-300 font-medium">Create one free</Link>
         </p>
         <p className="text-center text-xs text-zinc-700 mt-2">
           <Link href="/terms" className="hover:text-zinc-500 transition-colors">Terms of Service</Link>
@@ -204,7 +204,7 @@ export default function SignInPage() {
       {/* ── Brand panel (desktop only) ── */}
       <div className="hidden lg:flex lg:w-[480px] xl:w-[520px] shrink-0 flex-col auth-grid-bg relative overflow-hidden">
         {/* Gradient vignette */}
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-emerald-950/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-amber-950/20 pointer-events-none" />
         {/* Large watermark icon */}
         <div className="absolute -bottom-16 -right-16 opacity-[0.04] text-white">
           <HunterMark className="h-80 w-80" />
@@ -227,8 +227,8 @@ export default function SignInPage() {
               {FEATURES.map(({ icon: Icon, text }, i) => (
                 <div key={text}
                   className={`flex items-center gap-3 animate-fade-up delay-${(i + 1) * 75}`}>
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600/10 border border-emerald-600/20">
-                    <Icon className="h-4 w-4 text-emerald-400" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-600/10 border border-amber-600/20">
+                    <Icon className="h-4 w-4 text-amber-400" />
                   </div>
                   <span className="text-sm text-zinc-400">{text}</span>
                 </div>

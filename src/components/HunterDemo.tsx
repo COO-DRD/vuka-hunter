@@ -132,7 +132,7 @@ function ScorePhase({ active }: { active: boolean }) {
   }, [active]);
 
   const pct = (score / 100) * 100;
-  const color = score >= 70 ? "from-green-500 to-emerald-400" : score >= 40 ? "from-yellow-500 to-orange-400" : "from-red-500 to-red-400";
+  const color = score >= 70 ? "from-green-500 to-amber-400" : score >= 40 ? "from-yellow-500 to-orange-400" : "from-red-500 to-red-400";
 
   return (
     <div className="space-y-3">

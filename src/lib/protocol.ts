@@ -449,28 +449,36 @@ export const PROTOCOL_CITIES = [
 export const TIER_A_KEYS = Object.values(PROTOCOL).filter((v) => v.tier === "A").map((v) => v.key);
 export const TIER_B_KEYS = Object.values(PROTOCOL).filter((v) => v.tier === "B").map((v) => v.key);
 
+export interface ProtocolOverrides {
+  minRating?: number;
+  minReviews?: number;
+}
+
 /**
  * Returns true if a scraped lead passes the protocol for its vertical.
- * This runs on every lead before it enters the DB.
+ * Optional overrides let callers relax/tighten thresholds per-job without
+ * touching the global defaults stored in PROTOCOL.
  */
 export function passesProtocol(lead: {
   name: string;
   google_rating?: number | null;
   google_review_count?: number | null;
   vertical?: string | null;
-}): { pass: boolean; reason?: string } {
+}, overrides?: ProtocolOverrides): { pass: boolean; reason?: string } {
   const vp = PROTOCOL[lead.vertical ?? ""];
   if (!vp) return { pass: false, reason: `Vertical "${lead.vertical}" not in protocol` };
 
-  const rating  = lead.google_rating ?? 0;
-  const reviews = lead.google_review_count ?? 0;
-  const name    = lead.name.toLowerCase();
+  const minRating  = overrides?.minRating  ?? vp.minRating;
+  const minReviews = overrides?.minReviews ?? vp.minReviews;
+  const rating     = lead.google_rating ?? 0;
+  const reviews    = lead.google_review_count ?? 0;
+  const name       = lead.name.toLowerCase();
 
-  if (rating < vp.minRating) {
-    return { pass: false, reason: `Rating ${rating} below minimum ${vp.minRating} for ${vp.label}` };
+  if (rating < minRating) {
+    return { pass: false, reason: `Rating ${rating} below minimum ${minRating} for ${vp.label}` };
   }
-  if (reviews < vp.minReviews) {
-    return { pass: false, reason: `${reviews} reviews below minimum ${vp.minReviews} for ${vp.label}` };
+  if (reviews < minReviews) {
+    return { pass: false, reason: `${reviews} reviews below minimum ${minReviews} for ${vp.label}` };
   }
   for (const blocked of vp.nameBlocklist) {
     if (name.includes(blocked.toLowerCase())) {
@@ -490,12 +498,12 @@ export function applyProtocol<T extends {
   google_rating?: number | null;
   google_review_count?: number | null;
   vertical?: string | null;
-}>(leads: T[]): { accepted: T[]; rejected: { lead: T; reason: string }[] } {
+}>(leads: T[], overrides?: ProtocolOverrides): { accepted: T[]; rejected: { lead: T; reason: string }[] } {
   const accepted: T[] = [];
   const rejected: { lead: T; reason: string }[] = [];
 
   for (const lead of leads) {
-    const { pass, reason } = passesProtocol(lead);
+    const { pass, reason } = passesProtocol(lead, overrides);
     if (pass) accepted.push(lead);
     else rejected.push({ lead, reason: reason! });
   }

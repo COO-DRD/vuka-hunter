@@ -49,14 +49,14 @@ export function Sidebar({ email }: { email: string | null }) {
               className={cn(
                 "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
                 active
-                  ? "bg-emerald-600/10 text-emerald-400 ring-1 ring-emerald-600/20"
+                  ? "bg-amber-600/10 text-amber-400 ring-1 ring-amber-600/20"
                   : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
               )}
             >
-              <Icon className={cn("h-4 w-4 shrink-0 transition-colors", active ? "text-emerald-400" : "group-hover:text-zinc-300")} />
+              <Icon className={cn("h-4 w-4 shrink-0 transition-colors", active ? "text-amber-400" : "group-hover:text-zinc-300")} />
               {label}
               {active && (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-amber-500" />
               )}
             </Link>
           );
@@ -68,7 +68,7 @@ export function Sidebar({ email }: { email: string | null }) {
             className={cn(
               "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
               path.startsWith("/admin")
-                ? "bg-emerald-600/10 text-emerald-400 ring-1 ring-emerald-600/20"
+                ? "bg-amber-600/10 text-amber-400 ring-1 ring-amber-600/20"
                 : "text-zinc-700 hover:bg-zinc-900 hover:text-zinc-500"
             )}
           >
@@ -81,7 +81,7 @@ export function Sidebar({ email }: { email: string | null }) {
       {/* User */}
       <div className="border-t border-zinc-800/60 px-3 py-3 space-y-1">
         <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-xs font-bold text-white">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-amber-600 text-xs font-bold text-white">
             {initial}
           </div>
           <span className="text-xs text-zinc-400 truncate flex-1 min-w-0" title={email ?? ""}>{email ?? "—"}</span>

@@ -77,7 +77,6 @@ export async function GET(req: NextRequest) {
       await db.from("hunter_orgs").insert({
         id:                  user.id,
         name,
-        credits_total:       999999,
         credits_used:        0,
         auth_provider:       "email",
         terms_accepted_at:   termsAt.toISOString(),
@@ -87,6 +86,7 @@ export async function GET(req: NextRequest) {
         trial_ends_at:       trialEnds.toISOString(),
         subscription_status: "trialing",
         subscribed_plan:     "trial",
+        seat_limit:          isCorp ? 5 : 1,
         operating_county:    sanitize(meta.operating_county,  50)  || null,
         operating_address:   sanitize(meta.operating_address, 300) || null,
         ...(isCorp && {
@@ -121,12 +121,12 @@ export async function GET(req: NextRequest) {
       await db.from("hunter_orgs").insert({
         id:                  user.id,
         name,
-        credits_total:       999999,
         credits_used:        0,
         auth_provider:       provider,
         account_type:        "individual",
         subscription_status: "trialing",
         subscribed_plan:     "trial",
+        seat_limit:          1,
         trial_started_at:    new Date().toISOString(),
         trial_ends_at:       new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         email_verified_at:   user.email_confirmed_at ?? null,
