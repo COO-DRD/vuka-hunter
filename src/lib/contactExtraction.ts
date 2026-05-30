@@ -57,11 +57,13 @@ async function geminiExtract(prompt: string): Promise<unknown> {
 export async function extractContactsFromAboutPage(
   html: string,
   mode: ModeConfig,
+  verticalTitles?: string[],
 ): Promise<ContactCandidate[]> {
   if (!html || html.length < 200) return [];
 
   const text = htmlToText(html);
-  const titlesHint = mode.targetTitles.join(", ");
+  const allTitles = [...new Set([...(verticalTitles ?? []), ...mode.targetTitles])];
+  const titlesHint = allTitles.join(", ");
 
   const prompt = `Extract named people from this webpage text. Focus on: ${titlesHint}.
 Only include people explicitly named. Ignore generic "our team" phrases with no names.
@@ -91,10 +93,12 @@ ${text}`;
 export async function extractContactsFromInstagramBio(
   bio: string,
   mode: ModeConfig,
+  verticalTitles?: string[],
 ): Promise<ContactCandidate[]> {
   if (!bio || bio.length < 10) return [];
 
-  const titlesHint = mode.targetTitles.join(", ");
+  const allTitles = [...new Set([...(verticalTitles ?? []), ...mode.targetTitles])];
+  const titlesHint = allTitles.join(", ");
   const prompt = `Extract a named person from this Instagram business bio if present. Focus on: ${titlesHint}.
 Return a JSON array — nothing else, no markdown:
 [{"name":"...","title":"...","phone":"...or null"}]

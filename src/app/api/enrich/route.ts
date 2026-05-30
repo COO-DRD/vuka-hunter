@@ -1,7 +1,7 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { isSafeUrl, enrichWebsite, computeReachabilityScore } from "@/lib/enrichLead";
+import { isSafeUrl, enrichWebsite, computeReachabilityScore, getDecisionTitles } from "@/lib/enrichLead";
 import { logEvent, logError } from "@/lib/logEvent";
 import { getMode } from "@/lib/enrichmentModes";
 import {
@@ -43,13 +43,19 @@ export async function POST(req: NextRequest) {
   const mode = getMode((org as Record<string, unknown> | null)?.enrichment_mode as string | undefined);
 
   try {
-    const enriched = await enrichWebsite(lead.website, org ?? undefined);
+    const vertical = (lead.vertical as string | null) ?? undefined;
+    const enriched = await enrichWebsite(lead.website, vertical, org ?? undefined);
     const reachabilityScore = computeReachabilityScore(
       enriched.emails,
-      (lead.phone as string | null) ?? null,
+      enriched.phones,
       enriched.whatsappNumber,
       enriched.socialLinks,
     );
+
+    const painSignals = [
+      ...enriched.verticalSignals.filter((s) => s.startsWith("gap:")),
+      ...enriched.customSignals,
+    ];
 
     await db.from("hunter_leads").update({
       enrichment_status:       "done",
@@ -63,16 +69,30 @@ export async function POST(req: NextRequest) {
       whatsapp_number:         enriched.whatsappNumber ?? null,
       digital_readiness_score: enriched.digitalReadinessScore,
       reachability_score:      reachabilityScore,
-      ...(enriched.customSignals.length > 0 && { pain_signals: enriched.customSignals }),
+      // v2 fields
+      phones_found:            enriched.phones.length > 0 ? enriched.phones : null,
+      phone_primary:           enriched.phones[0] ? enriched.phones[0] : null,
+      social_profiles:         Object.keys(enriched.socialProfiles).length > 0 ? enriched.socialProfiles : null,
+      vertical_signals:        enriched.verticalSignals.length > 0 ? enriched.verticalSignals : null,
+      year_established:        enriched.yearEstablished ?? null,
+      location_count:          enriched.locationCount,
+      staff_signal:            enriched.staffSignal ?? null,
+      certifications:          enriched.certifications.length > 0 ? enriched.certifications : null,
+      has_online_payment:      enriched.hasOnlinePayment,
+      has_ssl:                 enriched.hasSsl,
+      opportunity_score:       enriched.opportunityScore,
+      enrichment_version:      2,
+      ...(painSignals.length > 0 && { pain_signals: painSignals }),
     }).eq("id", leadId).eq("org_id", orgId);
 
+    const vTitles = getDecisionTitles(vertical);
     if (process.env.GEMINI_API_KEY) {
       const [aboutContacts, igContacts] = await Promise.all([
         enriched.aboutPageHtml
-          ? extractContactsFromAboutPage(enriched.aboutPageHtml, mode)
+          ? extractContactsFromAboutPage(enriched.aboutPageHtml, mode, vTitles)
           : Promise.resolve([]),
         enriched.instagramBio
-          ? extractContactsFromInstagramBio(enriched.instagramBio, mode)
+          ? extractContactsFromInstagramBio(enriched.instagramBio, mode, vTitles)
           : Promise.resolve([]),
       ]);
       const contacts = mergeContacts(aboutContacts, igContacts);
