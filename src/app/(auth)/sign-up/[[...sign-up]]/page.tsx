@@ -126,6 +126,8 @@ export default function SignUpPage() {
   const [companySize,  setCompanySize]  = useState("");
   const [billingEmail, setBillingEmail] = useState("");
 
+  const [hp, setHp] = useState("");
+
   const [error,         setError]         = useState("");
   const [loading,       setLoading]       = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -155,6 +157,7 @@ export default function SignUpPage() {
           accountType,
           operatingCounty:  county || null,
           operatingAddress: address || null,
+          _hp: hp,
           ...(isCorporate && {
             companyName, companySize,
             billingEmail: billingEmail || email,
@@ -398,6 +401,13 @@ export default function SignUpPage() {
                   </>
                 )}
               </ConsentCheckbox>
+            </div>
+
+            {/* Honeypot — hidden from real users, bots auto-fill it */}
+            <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", width: 0, height: 0, overflow: "hidden", opacity: 0 }}>
+              <label htmlFor="_hp_f">Website</label>
+              <input id="_hp_f" type="text" name="website" value={hp} onChange={(e) => setHp(e.target.value)}
+                tabIndex={-1} autoComplete="nope" />
             </div>
 
             {error && <p className="text-xs text-red-400">{error}</p>}
