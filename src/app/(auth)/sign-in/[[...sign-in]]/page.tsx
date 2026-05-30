@@ -92,7 +92,7 @@ export default function SignInPage() {
     try {
       const sb = createSupabaseBrowserClient();
       await sb.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/auth/callback?next=/settings`,
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/auth/callback?next=/auth/new-password`,
       });
       setMode("forgot_sent");
     } catch { setError("Couldn't send reset email. Check your connection."); }

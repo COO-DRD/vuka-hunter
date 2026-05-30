@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/auth/callback", "/auth/confirm", "/auth/verify-email", "/api/webhooks", "/api/auth/resend-verification", "/api/workshop", "/terms", "/workshop"];
+const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/auth/callback", "/auth/confirm", "/auth/verify-email", "/auth/new-password", "/api/webhooks", "/api/auth/resend-verification", "/api/workshop", "/terms", "/workshop"];
 
 // Routes that only the org admin (account owner) may access.
 // Corporate members with role='member' are blocked.

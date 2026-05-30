@@ -1,7 +1,7 @@
 {
-  "name": "Dullu Digital Hunter",
-  "short_name": "Hunter",
-  "description": "B2B lead intelligence & AI outreach platform",
+  "name": "4unter by Dullu Digital",
+  "short_name": "4unter",
+  "description": "B2B lead intelligence and AI outreach for Kenyan markets",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
