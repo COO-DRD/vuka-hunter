@@ -1,16 +1,17 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { requireUser } from "@/lib/auth";
+import { requireUser, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const user = await requireUser();
-  const db   = createSupabaseServiceClient();
+  const user  = await requireUser();
+  const orgId = await resolveOrgId(user.id);
+  const db    = createSupabaseServiceClient();
 
   // Only corporate admins can invite
   const { data: org } = await db
     .from("hunter_orgs")
     .select("account_type, seat_limit, seats_used, company_name")
-    .eq("id", user.id)
+    .eq("id", orgId)
     .single();
 
   if (org?.account_type !== "corporate") {
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
     const { data: existing } = await db
       .from("hunter_org_members")
       .select("id")
-      .eq("org_id", user.id)
+      .eq("org_id", orgId)
       .eq("user_id", email)
       .maybeSingle();
 
@@ -53,11 +54,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Create invite record
-    const { data: invite } = await db
+    const { data: invite, error: inviteDbError } = await db
       .from("hunter_org_invites")
       .upsert(
         {
-          org_id:     user.id,
+          org_id:     orgId,
           email,
           role:       "member",
           status:     "pending",
@@ -69,17 +70,23 @@ export async function POST(req: NextRequest) {
       .select("token")
       .single();
 
-    // Send invite via Supabase Auth (sends email with set-password link)
-    const redirectTo = `${siteUrl}/auth/callback?invite_org=${user.id}&invite_token=${invite?.token ?? ""}`;
-    const { error: inviteError } = await db.auth.admin.inviteUserByEmail(email, {
-      redirectTo,
-      data: { invited_to_org: user.id, org_name: org.company_name ?? "your organisation" },
-    });
+    if (inviteDbError) {
+      results.push({ email, status: `error: ${inviteDbError.message}` });
+      continue;
+    }
+
+    // With Clerk, invite emails are sent via Clerk's own invitation flow.
+    // We store the invite token and the user signs up via Clerk's sign-up page,
+    // then the webhook links them to this org.
+    const inviteUrl = `${siteUrl}/sign-up?invite_org=${orgId}&invite_token=${invite?.token ?? ""}&email=${encodeURIComponent(email)}`;
 
     results.push({
       email,
-      status: inviteError ? `error: ${inviteError.message}` : "invited",
+      status: "invited",
     });
+
+    // Log the invite URL for now (in production you'd send this via a transactional email service)
+    console.log(`[invite] ${email} invite URL: ${inviteUrl}`);
   }
 
   return NextResponse.json({ results });

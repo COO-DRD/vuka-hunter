@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { requireUser } from "@/lib/auth";
+import { requireUser, resolveOrgId } from "@/lib/auth";
 
 let _stripe: Stripe | null = null;
 function getStripe() {
@@ -22,8 +22,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Payment system is not configured. Contact support." }, { status: 500 });
   }
 
-  const user = await requireUser();
-  const db   = createSupabaseServiceClient();
+  const user  = await requireUser();
+  const orgId = await resolveOrgId(user.id);
+  const db    = createSupabaseServiceClient();
 
   let body: { plan: string; idempotency_key: string };
   try {
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
     .from("hunter_payment_intents")
     .select("id, stripe_payment_intent_id, status, metadata")
     .eq("idempotency_key", idempotency_key)
-    .eq("org_id", user.id)
+    .eq("org_id", orgId)
     .maybeSingle();
 
   if (existing) {
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
   const { data: sub } = await db
     .from("hunter_subscriptions")
     .select("stripe_customer_id")
-    .eq("org_id", user.id)
+    .eq("org_id", orgId)
     .maybeSingle();
 
   let customerId = sub?.stripe_customer_id ?? null;
@@ -76,18 +77,18 @@ export async function POST(req: NextRequest) {
     const { data: org } = await db
       .from("hunter_orgs")
       .select("name, billing_email")
-      .eq("id", user.id)
+      .eq("id", orgId)
       .single();
 
     const customer = await getStripe().customers.create({
       email:    user.email ?? undefined,
       name:     org?.name ?? undefined,
-      metadata: { org_id: user.id },
+      metadata: { org_id: orgId },
     });
     customerId = customer.id;
 
     await db.from("hunter_subscriptions").upsert(
-      { org_id: user.id, stripe_customer_id: customerId },
+      { org_id: orgId, stripe_customer_id: customerId },
       { onConflict: "org_id" }
     );
   }
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
       amount:   planConfig.amount,
       currency: "kes",
       customer: customerId,
-      metadata: { org_id: user.id, plan },
+      metadata: { org_id: orgId, plan },
       description: `Hunter ${plan} plan — ${planConfig.seats} seats`,
       automatic_payment_methods: { enabled: true },
     },

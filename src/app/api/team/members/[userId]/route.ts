@@ -1,5 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { requireUser, getMemberRole } from "@/lib/auth";
+import { requireUser, getMemberRole, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 type RouteCtx = { params: Promise<{ userId: string }> };
@@ -7,11 +7,12 @@ type RouteCtx = { params: Promise<{ userId: string }> };
 // PATCH — suspend or reinstate a member
 export async function PATCH(req: NextRequest, { params }: RouteCtx) {
   const { userId: targetUserId } = await params;
-  const admin = await requireUser();
-  const db    = createSupabaseServiceClient();
+  const admin       = await requireUser();
+  const adminOrgId  = await resolveOrgId(admin.id);
+  const db          = createSupabaseServiceClient();
 
   // Requester must be the org admin (org owner)
-  const role = await getMemberRole(admin.id, admin.id);
+  const role = await getMemberRole(admin.id, adminOrgId);
   if (role !== "admin") {
     return NextResponse.json({ error: "Only the organisation admin can manage members." }, { status: 403 });
   }
@@ -20,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
   const { data: org } = await db
     .from("hunter_orgs")
     .select("account_type, seat_limit")
-    .eq("id", admin.id)
+    .eq("id", adminOrgId)
     .single();
 
   if (org?.account_type !== "corporate") {
@@ -45,7 +46,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const { data: orgFresh } = await db
       .from("hunter_orgs")
       .select("seat_limit, seats_used")
-      .eq("id", admin.id)
+      .eq("id", adminOrgId)
       .single();
     if (orgFresh && orgFresh.seats_used >= orgFresh.seat_limit) {
       return NextResponse.json({ error: "No seats available. Upgrade your plan to reinstate this member." }, { status: 403 });
@@ -57,7 +58,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
   const { error } = await db
     .from("hunter_org_members")
     .update({ status: newStatus })
-    .eq("org_id", admin.id)
+    .eq("org_id", adminOrgId)
     .eq("user_id", targetUserId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -67,10 +68,11 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
 // DELETE — permanently remove a member from the org
 export async function DELETE(req: NextRequest, { params }: RouteCtx) {
   const { userId: targetUserId } = await params;
-  const admin = await requireUser();
-  const db    = createSupabaseServiceClient();
+  const admin      = await requireUser();
+  const adminOrgId = await resolveOrgId(admin.id);
+  const db         = createSupabaseServiceClient();
 
-  const role = await getMemberRole(admin.id, admin.id);
+  const role = await getMemberRole(admin.id, adminOrgId);
   if (role !== "admin") {
     return NextResponse.json({ error: "Only the organisation admin can remove members." }, { status: 403 });
   }
@@ -78,7 +80,7 @@ export async function DELETE(req: NextRequest, { params }: RouteCtx) {
   const { data: org } = await db
     .from("hunter_orgs")
     .select("account_type")
-    .eq("id", admin.id)
+    .eq("id", adminOrgId)
     .single();
 
   if (org?.account_type !== "corporate") {
@@ -92,22 +94,21 @@ export async function DELETE(req: NextRequest, { params }: RouteCtx) {
   const { error } = await db
     .from("hunter_org_members")
     .delete()
-    .eq("org_id", admin.id)
+    .eq("org_id", adminOrgId)
     .eq("user_id", targetUserId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Expire any pending invites for this specific user (look up their email first)
+  // Expire any pending invites for this user — look up their email via Clerk
+  // Note: with Clerk we don't have admin.getUserById on the service client,
+  // but we can look up the invite by user_id directly (stored as clerk user ID)
   try {
-    const { data: { user: targetUser } } = await db.auth.admin.getUserById(targetUserId);
-    if (targetUser?.email) {
-      await db
-        .from("hunter_org_invites")
-        .update({ status: "expired" })
-        .eq("org_id", admin.id)
-        .eq("status", "pending")
-        .eq("email", targetUser.email.toLowerCase());
-    }
+    await db
+      .from("hunter_org_invites")
+      .update({ status: "expired" })
+      .eq("org_id", adminOrgId)
+      .eq("status", "pending")
+      .eq("invited_user_id", targetUserId);
   } catch {
     // Non-critical: proceed even if invite cleanup fails
   }
