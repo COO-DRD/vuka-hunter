@@ -1,21 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { requireUser, resolveOrgId } from "@/lib/auth";
 
-let _stripe: Stripe | null = null;
-function getStripe() {
-  if (!_stripe) _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-04-22.dahlia" });
-  return _stripe;
+const PAYSTACK_BASE = "https://api.paystack.co";
+const PLAN_AMOUNT   = 200000; // KES 2,000 in kobo (Paystack uses smallest currency unit — KES uses kobo)
+
+function getSecret() {
+  const key = process.env.PAYSTACK_SECRET_KEY;
+  if (!key) throw new Error("PAYSTACK_SECRET_KEY not set");
+  return key;
 }
 
-const PLAN_PRICES: Record<string, { priceId: string; amount: number }> = {
-  pro: { priceId: process.env.STRIPE_PRICE_PRO ?? "", amount: 200000 }, // KES 2,000
-};
+async function paystackPost(path: string, body: object) {
+  const res = await fetch(`${PAYSTACK_BASE}${path}`, {
+    method:  "POST",
+    headers: {
+      Authorization:  `Bearer ${getSecret()}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (!res.ok || !json.status) throw new Error(json.message ?? "Paystack error");
+  return json.data;
+}
 
 export async function POST(req: NextRequest) {
-  if (!process.env.STRIPE_PRICE_PRO) {
-    console.error("[billing/checkout] STRIPE_PRICE_PRO not configured");
+  if (!process.env.PAYSTACK_SECRET_KEY) {
     return NextResponse.json({ error: "Payment system is not configured. Contact support." }, { status: 500 });
   }
 
@@ -24,119 +35,60 @@ export async function POST(req: NextRequest) {
   const db    = createSupabaseServiceClient();
 
   let body: { plan: string; idempotency_key: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
-  }
+  try { body = await req.json(); }
+  catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
 
   const { plan, idempotency_key } = body;
-
-  if (!plan || !PLAN_PRICES[plan]) {
-    return NextResponse.json({ error: "Invalid plan." }, { status: 400 });
-  }
+  if (plan !== "pro") return NextResponse.json({ error: "Invalid plan." }, { status: 400 });
   if (!idempotency_key || idempotency_key.length < 16) {
-    return NextResponse.json({ error: "idempotency_key required (UUID from client)" }, { status: 400 });
+    return NextResponse.json({ error: "idempotency_key required" }, { status: 400 });
   }
 
-  const planConfig = PLAN_PRICES[plan];
-
-  // ── Idempotency: return existing intent if this key was already used ────────
+  // Idempotency: return existing intent if key was already used
   const { data: existing } = await db
     .from("hunter_payment_intents")
-    .select("id, stripe_payment_intent_id, status, metadata")
+    .select("id, metadata")
     .eq("idempotency_key", idempotency_key)
     .eq("org_id", orgId)
     .maybeSingle();
 
   if (existing) {
-    // Retrieve the live client_secret from Stripe for this intent
-    if (existing.stripe_payment_intent_id) {
-      const pi = await getStripe().paymentIntents.retrieve(existing.stripe_payment_intent_id);
-      return NextResponse.json({
-        client_secret:     pi.client_secret,
-        payment_intent_id: existing.id,
-        idempotent:        true,
-      });
-    }
+    const authUrl = (existing.metadata as Record<string, string>)?.authorization_url;
+    if (authUrl) return NextResponse.json({ authorization_url: authUrl, idempotent: true });
   }
 
-  // ── Ensure Stripe customer exists ───────────────────────────────────────────
-  const { data: sub } = await db
-    .from("hunter_subscriptions")
-    .select("stripe_customer_id")
-    .eq("org_id", orgId)
-    .maybeSingle();
+  const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://4unter.dullugroup.co.ke"}/billing/verify`;
 
-  let customerId = sub?.stripe_customer_id ?? null;
-
-  if (!customerId) {
-    const { data: org } = await db
-      .from("hunter_orgs")
-      .select("name, billing_email")
-      .eq("id", orgId)
-      .single();
-
-    const customer = await getStripe().customers.create({
-      email:    user.email ?? undefined,
-      name:     org?.name ?? undefined,
-      metadata: { org_id: orgId },
-    });
-    customerId = customer.id;
-
-    await db.from("hunter_subscriptions").upsert(
-      { org_id: orgId, stripe_customer_id: customerId },
-      { onConflict: "org_id" }
-    );
-  }
-
-  // ── Create Stripe PaymentIntent with idempotency key ───────────────────────
-  const stripeIntent = await getStripe().paymentIntents.create(
-    {
-      amount:   planConfig.amount,
-      currency: "kes",
-      customer: customerId,
-      metadata: { org_id: orgId, plan },
-      description: `Hunter ${plan} plan`,
-      automatic_payment_methods: { enabled: true },
-    },
-    { idempotencyKey: idempotency_key }
-  );
-
-  // ── Write to hunter_payment_intents ────────────────────────────────────────
-  const { data: dbIntent } = await db
-    .from("hunter_payment_intents")
-    .insert({
-      org_id:                   user.id,
-      idempotency_key,
-      stripe_payment_intent_id: stripeIntent.id,
-      stripe_customer_id:       customerId,
-      amount:                   planConfig.amount,
-      currency:                 "kes",
+  const txData = await paystackPost("/transaction/initialize", {
+    email:        user.email,
+    amount:       PLAN_AMOUNT,
+    currency:     "KES",
+    reference:    idempotency_key,
+    callback_url: callbackUrl,
+    metadata: {
+      org_id: orgId,
       plan,
-      description:              `Hunter ${plan} plan`,
-      status:                   "initiated",
-      metadata:                 { plan },
-    })
-    .select("id")
-    .single();
+      custom_fields: [
+        { display_name: "Plan",    variable_name: "plan",    value: "4unter Pro" },
+        { display_name: "Org ID",  variable_name: "org_id",  value: orgId },
+      ],
+    },
+  });
 
-  // ── Log initiation event to ledger ─────────────────────────────────────────
-  if (dbIntent) {
-    await db.from("hunter_payment_events").insert({
-      org_id:            user.id,
-      payment_intent_id: dbIntent.id,
-      stripe_event_id:   `local_init_${stripeIntent.id}`,
-      event_type:        "payment.initiated",
-      amount:            planConfig.amount,
-      currency:          "kes",
-      stripe_payload:    { payment_intent_id: stripeIntent.id, plan },
-    });
-  }
+  await db.from("hunter_payment_intents").insert({
+    org_id:          orgId,
+    idempotency_key,
+    amount:          PLAN_AMOUNT,
+    currency:        "kes",
+    plan,
+    description:     "4unter Pro",
+    status:          "initiated",
+    metadata:        { authorization_url: txData.authorization_url, reference: txData.reference },
+  });
 
   return NextResponse.json({
-    client_secret:     stripeIntent.client_secret,
-    payment_intent_id: dbIntent?.id ?? null,
+    authorization_url: txData.authorization_url,
+    reference:         txData.reference,
     idempotent:        false,
   });
 }

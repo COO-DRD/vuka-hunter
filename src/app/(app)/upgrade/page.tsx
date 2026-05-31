@@ -78,12 +78,8 @@ export default function UpgradePage() {
         }
         return;
       }
-      const params = new URLSearchParams({
-        client_secret:     json.client_secret,
-        payment_intent_id: json.payment_intent_id ?? "",
-        plan:              PLAN.id,
-      });
-      window.location.assign(`/billing/pay?${params.toString()}`);
+      // Paystack: redirect to hosted payment page
+      window.location.assign(json.authorization_url);
     } catch {
       setError("Something went wrong. Please check your connection.");
     } finally {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { sendWorkshopConfirmationEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -15,13 +16,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid email address" }, { status: 422 });
   }
 
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanName  = name.trim();
+
   const db = createSupabaseServiceClient();
   const { error } = await db.from("hunter_workshop_registrations").insert({
-    name: name.trim(),
-    email: email.trim().toLowerCase(),
-    phone: phone?.trim() || null,
+    name:    cleanName,
+    email:   cleanEmail,
+    phone:   phone?.trim() || null,
     company: company?.trim() || null,
-    role: role?.trim() || null,
+    role:    role?.trim() || null,
   });
 
   if (error) {
@@ -30,6 +34,26 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ error: "Registration failed. Please try again." }, { status: 500 });
   }
+
+  // Grant 30-day Pro trial to any existing account with this email
+  const { data: org } = await db
+    .from("hunter_orgs")
+    .select("id, subscription_status, trial_ends_at")
+    .eq("email", cleanEmail)
+    .maybeSingle();
+
+  if (org) {
+    const trialEnd = new Date();
+    trialEnd.setDate(trialEnd.getDate() + 30);
+    await db.from("hunter_orgs").update({
+      subscribed_plan:     "pro",
+      subscription_status: "trialing",
+      trial_ends_at:       trialEnd.toISOString(),
+    }).eq("id", org.id);
+  }
+
+  // Send confirmation email (best effort — don't fail registration if email fails)
+  await sendWorkshopConfirmationEmail(cleanEmail, cleanName).catch(() => {});
 
   return NextResponse.json({ ok: true });
 }
