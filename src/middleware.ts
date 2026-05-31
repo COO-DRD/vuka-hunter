@@ -8,10 +8,14 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks(.*)",
   "/api/workshop",
   "/api/billing/configured",
+  "/api/health",
   "/terms",
   "/workshop",
   "/",
 ]);
+
+// Pages search engines are allowed to index
+const isIndexableRoute = createRouteMatcher(["/", "/workshop", "/terms"]);
 
 const ADMIN_ONLY_PATHS = [
   "/settings",
@@ -120,11 +124,14 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     }
   }
 
-  return addSecurityHeaders(NextResponse.next());
+  return addSecurityHeaders(NextResponse.next(), isIndexableRoute(req));
 });
 
-function addSecurityHeaders(res: NextResponse): NextResponse {
-  res.headers.set("X-Robots-Tag",            "noindex, nofollow, noarchive, nosnippet");
+function addSecurityHeaders(res: NextResponse, allowIndex = false): NextResponse {
+  res.headers.set(
+    "X-Robots-Tag",
+    allowIndex ? "index, follow" : "noindex, nofollow, noarchive, nosnippet",
+  );
   res.headers.set("X-Frame-Options",         "DENY");
   res.headers.set("X-Content-Type-Options",  "nosniff");
   res.headers.set("Referrer-Policy",         "no-referrer");

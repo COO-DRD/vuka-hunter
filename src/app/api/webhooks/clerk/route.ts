@@ -1,6 +1,7 @@
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { addToResendAudience, sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   let evt: Awaited<ReturnType<typeof verifyWebhook>>;
@@ -25,14 +26,19 @@ export async function POST(req: NextRequest) {
         .maybeSingle();
 
       if (!existing) {
+        const displayName = email.split("@")[0];
         await db.from("hunter_orgs").insert({
           id:               crypto.randomUUID(),
           clerk_id:         clerkUserId,
-          name:             email.split("@")[0],
+          name:             displayName,
           email,
           trial_started_at: new Date().toISOString(),
           trial_ends_at:    new Date(Date.now() + 7 * 86400000).toISOString(),
         });
+        await Promise.all([
+          addToResendAudience(email, displayName),
+          sendWelcomeEmail(email, displayName),
+        ]);
       }
       break;
     }

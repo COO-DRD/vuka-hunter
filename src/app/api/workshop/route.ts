@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { sendWorkshopConfirmationEmail } from "@/lib/email";
+import { sendWorkshopConfirmationEmail, addToResendAudience } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -52,8 +52,11 @@ export async function POST(req: NextRequest) {
     }).eq("id", org.id);
   }
 
-  // Send confirmation email (best effort — don't fail registration if email fails)
-  await sendWorkshopConfirmationEmail(cleanEmail, cleanName).catch(() => {});
+  // best-effort: audience sync + confirmation email
+  await Promise.allSettled([
+    addToResendAudience(cleanEmail, cleanName),
+    sendWorkshopConfirmationEmail(cleanEmail, cleanName),
+  ]);
 
   return NextResponse.json({ ok: true });
 }

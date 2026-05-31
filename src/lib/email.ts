@@ -7,6 +7,26 @@ function getResend() {
 }
 
 const FROM = "4unter <noreply@4unter.dullugroup.co.ke>";
+
+export async function addToResendAudience(
+  email: string,
+  firstName?: string,
+  lastName?: string,
+): Promise<void> {
+  const audienceId = process.env.RESEND_AUDIENCE_ID;
+  if (!audienceId) return;
+  try {
+    await getResend().contacts.create({
+      audienceId,
+      email,
+      firstName: firstName ?? undefined,
+      lastName:  lastName  ?? undefined,
+      unsubscribed: false,
+    });
+  } catch {
+    // best-effort — never block the main flow
+  }
+}
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://4unter.dullugroup.co.ke";
 
 export async function sendTrialReminderEmail(to: string, daysLeft: number, name?: string) {
