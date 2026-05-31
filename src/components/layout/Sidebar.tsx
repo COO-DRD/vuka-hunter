@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Search, Users, GitBranch,
-  Settings, Upload, LogOut, Shield
+  Settings, Upload, LogOut, Shield, Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useClerk } from "@clerk/nextjs";
@@ -11,14 +11,50 @@ import { HunterWordmark } from "@/components/HunterLogo";
 
 const ADMIN_EMAILS = new Set(["ian.dullu@akamom.org", "dr.dullu@gmail.com"]);
 
-export const NAV = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/discover",  icon: Search,          label: "Discover"  },
-  { href: "/leads",     icon: Users,           label: "Leads"     },
-  { href: "/pipeline",  icon: GitBranch,       label: "Pipeline"  },
-  { href: "/import",    icon: Upload,          label: "Import"    },
-  { href: "/settings",  icon: Settings,        label: "Settings"  },
+const SECTIONS = [
+  {
+    label: "Intelligence",
+    items: [
+      { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+      { href: "/discover",  icon: Search,          label: "Discover"  },
+      { href: "/leads",     icon: Users,           label: "Leads"     },
+      { href: "/pipeline",  icon: GitBranch,       label: "Pipeline"  },
+    ],
+  },
+  {
+    label: "Tools",
+    items: [
+      { href: "/import",   icon: Upload, label: "Import" },
+    ],
+  },
+  {
+    label: "Workspace",
+    items: [
+      { href: "/settings", icon: Settings, label: "Settings" },
+      { href: "/upgrade",  icon: Zap,      label: "Upgrade"  },
+    ],
+  },
 ];
+
+function NavItem({ href, icon: Icon, label, active }: {
+  href: string; icon: React.ComponentType<{ className?: string }>; label: string; active: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-2.5 rounded-md px-3 py-[7px] text-sm font-medium transition-all",
+        "border-l-2",
+        active
+          ? "border-amber-500 bg-amber-500/8 text-amber-300"
+          : "border-transparent text-[--text-3] hover:text-[--text-1] hover:bg-white/5"
+      )}
+    >
+      <Icon className={cn("h-[15px] w-[15px] shrink-0", active ? "text-amber-400" : "")} />
+      {label}
+    </Link>
+  );
+}
 
 export function Sidebar({ email }: { email: string | null }) {
   const path   = usePathname();
@@ -26,68 +62,67 @@ export function Sidebar({ email }: { email: string | null }) {
   const { signOut } = useClerk();
   const initial = email ? email[0].toUpperCase() : "?";
 
-  async function handleSignOut() {
-    await signOut(() => router.push("/sign-in"));
-  }
-
   return (
-    <aside className="hidden md:flex h-screen w-56 flex-col border-r border-zinc-800/60 bg-zinc-950 shrink-0">
+    <aside
+      className="hidden md:flex h-screen w-56 flex-col shrink-0"
+      style={{ background: "var(--bg-surface)", borderRight: "1px solid var(--border)" }}
+    >
       {/* Logo */}
-      <div className="flex items-center px-4 py-5 border-b border-zinc-800/60">
+      <div className="flex items-center px-4 py-[18px]" style={{ borderBottom: "1px solid var(--border)" }}>
         <HunterWordmark size="sm" />
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
-        {NAV.map(({ href, icon: Icon, label }) => {
-          const active = path.startsWith(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
-                active
-                  ? "bg-amber-600/10 text-amber-400 ring-1 ring-amber-600/20"
-                  : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
-              )}
-            >
-              <Icon className={cn("h-4 w-4 shrink-0 transition-colors", active ? "text-amber-400" : "group-hover:text-zinc-300")} />
+      {/* Nav sections */}
+      <nav className="flex-1 overflow-y-auto py-3 space-y-5">
+        {SECTIONS.map(({ label, items }) => (
+          <div key={label}>
+            <p className="px-4 mb-1 text-[10px] font-semibold tracking-widest uppercase" style={{ color: "var(--text-3)" }}>
               {label}
-              {active && (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-amber-500" />
-              )}
-            </Link>
-          );
-        })}
+            </p>
+            <div className="space-y-px px-2">
+              {items.map(({ href, icon, label: itemLabel }) => (
+                <NavItem
+                  key={href}
+                  href={href}
+                  icon={icon}
+                  label={itemLabel}
+                  active={path.startsWith(href)}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
 
+        {/* Admin — only visible to admin emails */}
         {email && ADMIN_EMAILS.has(email) && (
-          <Link
-            href="/admin"
-            className={cn(
-              "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
-              path.startsWith("/admin")
-                ? "bg-amber-600/10 text-amber-400 ring-1 ring-amber-600/20"
-                : "text-zinc-700 hover:bg-zinc-900 hover:text-zinc-500"
-            )}
-          >
-            <Shield className="h-4 w-4 shrink-0" />
-            Admin
-          </Link>
+          <div>
+            <p className="px-4 mb-1 text-[10px] font-semibold tracking-widest uppercase" style={{ color: "var(--text-3)" }}>
+              Admin
+            </p>
+            <div className="space-y-px px-2">
+              <NavItem href="/admin" icon={Shield} label="Analytics" active={path.startsWith("/admin")} />
+            </div>
+          </div>
         )}
       </nav>
 
-      {/* User */}
-      <div className="border-t border-zinc-800/60 px-3 py-3 space-y-1">
-        <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-amber-600 text-xs font-bold text-white">
+      {/* User footer */}
+      <div className="px-3 py-3 space-y-1" style={{ borderTop: "1px solid var(--border)" }}>
+        <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-md">
+          <div
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-black"
+            style={{ background: "var(--brand)" }}
+          >
             {initial}
           </div>
-          <span className="text-xs text-zinc-400 truncate flex-1 min-w-0" title={email ?? ""}>{email ?? "—"}</span>
+          <span className="text-xs truncate flex-1 min-w-0" style={{ color: "var(--text-2)" }}>
+            {email ?? "—"}
+          </span>
         </div>
         <button
-          onClick={handleSignOut}
-          className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-900 hover:text-zinc-300 transition-colors"
+          onClick={() => signOut(() => router.push("/sign-in"))}
+          className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors hover:bg-white/5"
+          style={{ color: "var(--text-3)" }}
         >
           <LogOut className="h-3.5 w-3.5 shrink-0" />
           Sign out
