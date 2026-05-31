@@ -16,7 +16,8 @@ export async function GET() {
   ] = await Promise.all([
     db.from("hunter_leads")
       .select("id,stage,score,vertical,enrichment_status,has_booking_system,has_live_chat,social_links,email,phone,whatsapp_number,opener_generated_at,created_at")
-      .eq("org_id", orgId),
+      .eq("org_id", orgId)
+      .limit(2000),
     db.from("hunter_outreach_log")
       .select("created_at,channel")
       .eq("org_id", orgId)

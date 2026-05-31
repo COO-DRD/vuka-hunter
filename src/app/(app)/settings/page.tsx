@@ -3,15 +3,13 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Zap, Infinity, Mail, Calendar, ShieldCheck, Hash, Building2,
-  Pencil, CheckCircle2, XCircle, ExternalLink, MapPin, Users,
-  FileText, AlertCircle, BadgeCheck,
+  Pencil, CheckCircle2, XCircle, ExternalLink, MapPin,
+  FileText, BadgeCheck,
 } from "lucide-react";
 import Link from "next/link";
 import ChangePasswordForm from "./ChangePasswordForm";
 import ClearLeadsButton from "./ClearLeadsButton";
 import EnrichmentModeSelector from "@/components/settings/EnrichmentModeSelector";
-import ComplianceForm from "./ComplianceForm";
-import TeamPanel from "./TeamPanel";
 import { MobileSignOut } from "./MobileSignOut";
 
 export default async function SettingsPage() {
@@ -27,14 +25,6 @@ export default async function SettingsPage() {
     .eq("org_id", orgId)
     .order("accepted_at", { ascending: false });
 
-  const { data: members } = org?.account_type === "corporate"
-    ? await db.from("hunter_org_members").select("user_id, role, status, display_name, last_active_at").eq("org_id", orgId).order("created_at")
-    : { data: null };
-
-  const seatsUsed  = org?.seats_used  ?? 1;
-  const seatLimit  = org?.seat_limit  ?? 5;
-
-  const isCorporate   = org?.account_type === "corporate";
   const creditsUsed   = org?.credits_used ?? 0;
   const initial       = user.email ? user.email[0].toUpperCase() : "?";
   const memberSince   = org?.created_at
@@ -44,7 +34,7 @@ export default async function SettingsPage() {
   const trialEnd      = org?.trial_ends_at ? new Date(org.trial_ends_at) : null;
   const trialDaysLeft = trialEnd ? Math.max(0, Math.ceil((trialEnd.getTime() - Date.now()) / 86400000)) : 0;
   const isTrialing    = org?.subscription_status === "trialing";
-  const planLabels: Record<string, string> = { trial: "Free Trial", solo: "Solo", team: "Team", starter: "Starter", growth: "Growth", enterprise: "Enterprise" };
+  const planLabels: Record<string, string> = { trial: "Free Trial", solo: "Solo", team: "Team" };
   const planLabel = planLabels[org?.subscribed_plan ?? "trial"] ?? "Free Trial";
 
   const statusColour: Record<string, string> = {
@@ -95,9 +85,7 @@ export default async function SettingsPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-lg font-bold text-stone-900">{planLabel}</p>
-              <p className="text-xs text-stone-400 mt-0.5">
-                {isCorporate ? `${org?.seat_limit ?? 5} seats · ${org?.seats_used ?? 1} in use` : "Individual account"}
-              </p>
+              <p className="text-xs text-stone-400 mt-0.5">Individual account</p>
             </div>
             {isTrialing && trialEnd && (
               <div className="text-right">
@@ -119,8 +107,7 @@ export default async function SettingsPage() {
           </div>
           {isTrialing && (
             <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
-              After your trial, plans start at <span className="font-semibold">KES 5,000/month</span> for corporate
-              or <span className="font-semibold">KES 2,500/month</span> for individual.
+              After your trial, plans start at <span className="font-semibold">KES 1,500/month</span>.
               Upgrade any time — contact <span className="font-medium">billing@dullugroup.co.ke</span>
             </div>
           )}
@@ -138,7 +125,7 @@ export default async function SettingsPage() {
             <div>
               <p className="text-sm font-semibold text-stone-900">{user.email}</p>
               <p className="text-xs text-stone-400 mt-0.5 capitalize">
-                {isCorporate ? "Corporate admin" : "Individual"} · {org?.name}
+                Individual · {org?.name}
               </p>
             </div>
           </div>
@@ -177,7 +164,7 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <SettingRow icon={Building2} label="Business">{org?.business_name || org?.company_name || org?.name || "—"}</SettingRow>
+            <SettingRow icon={Building2} label="Business">{org?.business_name || org?.name || "—"}</SettingRow>
             <SettingRow icon={Mail} label="Sender name">{org?.sender_name || "—"}</SettingRow>
             {org?.org_description && (
               <SettingRow icon={Zap} label="What you do">
@@ -198,46 +185,6 @@ export default async function SettingsPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* ── Corporate team ── */}
-      {isCorporate && (
-        <Card className="mb-4">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Team</CardTitle>
-              <Link href="/upgrade" className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-500 transition-colors">
-                <Users className="h-3 w-3" /> Upgrade seats
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <TeamPanel
-              members={members ?? []}
-              seatLimit={seatLimit}
-              seatsUsed={seatsUsed}
-              orgDomain={org?.org_domain ?? null}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── Compliance ── */}
-      {isCorporate && (
-        <Card className="mb-4">
-          <CardHeader><CardTitle>Billing &amp; Compliance</CardTitle></CardHeader>
-          <CardContent>
-            <p className="text-xs text-stone-400 mb-4">
-              Required for tax-compliant invoicing. KRA PIN appears on all receipts issued to your organisation.
-              Company registration number is used for enterprise contract verification.
-            </p>
-            <ComplianceForm
-              kraPin={org?.kra_pin ?? ""}
-              companyRegNo={org?.company_reg_no ?? ""}
-              billingEmail={org?.billing_email ?? ""}
-            />
-          </CardContent>
-        </Card>
-      )}
 
       {/* ── Data & Privacy ── */}
       <Card className="mb-4">

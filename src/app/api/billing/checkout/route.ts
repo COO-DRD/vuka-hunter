@@ -9,15 +9,13 @@ function getStripe() {
   return _stripe;
 }
 
-const PLAN_PRICES: Record<string, { priceId: string; amount: number; seats: number }> = {
-  solo:       { priceId: process.env.STRIPE_PRICE_SOLO       ?? "", amount: 250000,  seats: 1  }, // KES 2,500
-  starter:    { priceId: process.env.STRIPE_PRICE_STARTER    ?? "", amount: 500000,  seats: 5  }, // KES 5,000
-  growth:     { priceId: process.env.STRIPE_PRICE_GROWTH     ?? "", amount: 1200000, seats: 15 }, // KES 12,000
-  enterprise: { priceId: process.env.STRIPE_PRICE_ENTERPRISE ?? "", amount: 2500000, seats: 30 }, // KES 25,000
+const PLAN_PRICES: Record<string, { priceId: string; amount: number }> = {
+  solo: { priceId: process.env.STRIPE_PRICE_SOLO ?? "", amount: 150000 }, // KES 1,500
+  team: { priceId: process.env.STRIPE_PRICE_TEAM ?? "", amount: 550000 }, // KES 5,500
 };
 
 export async function POST(req: NextRequest) {
-  if (!process.env.STRIPE_PRICE_SOLO || !process.env.STRIPE_PRICE_STARTER || !process.env.STRIPE_PRICE_GROWTH || !process.env.STRIPE_PRICE_ENTERPRISE) {
+  if (!process.env.STRIPE_PRICE_SOLO || !process.env.STRIPE_PRICE_TEAM) {
     console.error("[billing/checkout] STRIPE_PRICE_* env vars not configured");
     return NextResponse.json({ error: "Payment system is not configured. Contact support." }, { status: 500 });
   }
@@ -36,7 +34,7 @@ export async function POST(req: NextRequest) {
   const { plan, idempotency_key } = body;
 
   if (!plan || !PLAN_PRICES[plan]) {
-    return NextResponse.json({ error: "Invalid plan. Choose starter, growth, or enterprise." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid plan. Choose solo or team." }, { status: 400 });
   }
   if (!idempotency_key || idempotency_key.length < 16) {
     return NextResponse.json({ error: "idempotency_key required (UUID from client)" }, { status: 400 });
@@ -100,7 +98,7 @@ export async function POST(req: NextRequest) {
       currency: "kes",
       customer: customerId,
       metadata: { org_id: orgId, plan },
-      description: `Hunter ${plan} plan — ${planConfig.seats} seats`,
+      description: `Hunter ${plan} plan`,
       automatic_payment_methods: { enabled: true },
     },
     { idempotencyKey: idempotency_key }
@@ -119,7 +117,7 @@ export async function POST(req: NextRequest) {
       plan,
       description:              `Hunter ${plan} plan`,
       status:                   "initiated",
-      metadata:                 { seats: planConfig.seats },
+      metadata:                 { plan },
     })
     .select("id")
     .single();

@@ -229,6 +229,8 @@ export async function scrapeFoursquare(
   return results.filter((r) => r.name);
 }
 
+const SCRAPE_TIMEOUT_MS = 250_000;
+
 export async function runScrapeJob(
   jobId: string,
   orgId: string,
@@ -244,6 +246,14 @@ export async function runScrapeJob(
     .from("hunter_scrape_jobs")
     .update({ status: "running", started_at: new Date().toISOString() })
     .eq("id", jobId);
+
+  const timer = setTimeout(async () => {
+    await db.from("hunter_scrape_jobs").update({
+      status:      "error",
+      error:       "Job timed out after 250s",
+      finished_at: new Date().toISOString(),
+    }).eq("id", jobId);
+  }, SCRAPE_TIMEOUT_MS);
 
   try {
     const raw =
@@ -311,5 +321,7 @@ export async function runScrapeJob(
       finished_at: new Date().toISOString(),
     }).eq("id", jobId);
     logError("/api/scrape", msg, orgId, { jobId });
+  } finally {
+    clearTimeout(timer);
   }
 }
