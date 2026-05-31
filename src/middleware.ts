@@ -130,9 +130,7 @@ function addSecurityHeaders(res: NextResponse): NextResponse {
   res.headers.set("Referrer-Policy",         "no-referrer");
   res.headers.set("Permissions-Policy",      "camera=(), microphone=(), geolocation=()");
   res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
-  res.headers.set("Cross-Origin-Opener-Policy",   "same-origin");
-  res.headers.set("Cross-Origin-Resource-Policy",  "same-origin");
-  res.headers.set("Cross-Origin-Embedder-Policy",  "require-corp");
+  res.headers.set("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
   res.headers.set(
     "Content-Security-Policy",
     [
