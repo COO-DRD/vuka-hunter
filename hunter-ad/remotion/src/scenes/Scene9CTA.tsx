@@ -87,7 +87,7 @@ export const Scene9CTA: React.FC = () => {
         fontFamily: 'Inter, sans-serif', fontSize: 52, fontWeight: 700,
         color: C.white, letterSpacing: '0.01em',
       }}>
-        hunter.dullugroup.co.ke
+        4unter.dullugroup.co.ke
       </div>
 
       {/* Pipeline pills */}

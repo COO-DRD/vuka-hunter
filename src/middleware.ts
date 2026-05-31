@@ -54,7 +54,7 @@ function rateLimit(ip: string, max: number): boolean {
   return hits.length > max;
 }
 
-const CANONICAL_HOST = "hunter.dullugroup.co.ke";
+const CANONICAL_HOST = "4unter.dullugroup.co.ke";
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   const { pathname } = req.nextUrl;
@@ -137,12 +137,12 @@ function addSecurityHeaders(res: NextResponse): NextResponse {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://js.stripe.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+      "script-src 'self' 'unsafe-inline' https://js.stripe.com https://*.clerk.accounts.dev https://*.4unter.dullugroup.co.ke https://challenges.cloudflare.com",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://maps.googleapis.com https://accounts.google.com https://api.stripe.com https://hooks.stripe.com https://*.clerk.accounts.dev https://clerk.io",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://maps.googleapis.com https://accounts.google.com https://api.stripe.com https://hooks.stripe.com https://*.clerk.accounts.dev https://*.4unter.dullugroup.co.ke https://clerk.io",
       "font-src 'self' https://fonts.gstatic.com",
-      "frame-src https://js.stripe.com https://hooks.stripe.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+      "frame-src https://js.stripe.com https://hooks.stripe.com https://*.clerk.accounts.dev https://*.4unter.dullugroup.co.ke https://challenges.cloudflare.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

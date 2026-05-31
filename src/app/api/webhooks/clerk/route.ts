@@ -12,37 +12,84 @@ export async function POST(req: NextRequest) {
 
   const db = createSupabaseServiceClient();
 
-  if (evt.type === "user.created") {
-    const { id: clerkUserId, email_addresses } = evt.data;
-    const email = email_addresses?.[0]?.email_address ?? "";
+  switch (evt.type) {
+    // ── User lifecycle ────────────────────────────────────────────────
+    case "user.created": {
+      const { id: clerkUserId, email_addresses } = evt.data;
+      const email = email_addresses?.[0]?.email_address ?? "";
 
-    // Idempotent: skip if already exists (can happen on webhook retries)
-    const { data: existing } = await db
-      .from("hunter_orgs")
-      .select("id")
-      .eq("clerk_id", clerkUserId)
-      .maybeSingle();
+      const { data: existing } = await db
+        .from("hunter_orgs")
+        .select("id")
+        .eq("clerk_id", clerkUserId)
+        .maybeSingle();
 
-    if (!existing) {
-      const orgId = crypto.randomUUID();
-      await db.from("hunter_orgs").insert({
-        id:               orgId,
-        clerk_id:         clerkUserId,
-        name:             email.split("@")[0],
-        trial_started_at: new Date().toISOString(),
-        trial_ends_at:    new Date(Date.now() + 7 * 86400000).toISOString(),
-      });
+      if (!existing) {
+        await db.from("hunter_orgs").insert({
+          id:               crypto.randomUUID(),
+          clerk_id:         clerkUserId,
+          name:             email.split("@")[0],
+          email,
+          trial_started_at: new Date().toISOString(),
+          trial_ends_at:    new Date(Date.now() + 7 * 86400000).toISOString(),
+        });
+      }
+      break;
     }
-  }
 
-  if (evt.type === "user.deleted") {
-    const { id: clerkUserId } = evt.data;
-    if (clerkUserId) {
+    case "user.updated": {
+      const { id: clerkUserId, email_addresses, first_name, last_name } = evt.data;
+      const email = email_addresses?.[0]?.email_address ?? null;
+      const fullName = [first_name, last_name].filter(Boolean).join(" ") || null;
+
+      const patch: Record<string, string> = {};
+      if (email)    patch.email = email;
+      if (fullName) patch.name  = fullName;
+
+      if (Object.keys(patch).length > 0) {
+        await db.from("hunter_orgs").update(patch).eq("clerk_id", clerkUserId);
+      }
+      break;
+    }
+
+    case "user.deleted": {
+      const { id: clerkUserId } = evt.data;
+      if (clerkUserId) {
+        await db
+          .from("hunter_orgs")
+          .update({ subscription_status: "cancelled" })
+          .eq("clerk_id", clerkUserId);
+      }
+      break;
+    }
+
+    // ── Session events (product analytics) ───────────────────────────
+    case "session.created": {
+      const { user_id } = evt.data;
       await db
         .from("hunter_orgs")
-        .update({ subscription_status: "cancelled" })
-        .eq("clerk_id", clerkUserId);
+        .update({ last_active_at: new Date().toISOString() })
+        .eq("clerk_id", user_id);
+      break;
     }
+
+    // session.ended / session.removed / session.revoked — acknowledged,
+    // no write needed until we build a security audit log
+    case "session.ended":
+    case "session.removed":
+    case "session.revoked":
+      break;
+
+    // ── Email events ──────────────────────────────────────────────────
+    // email.created fires when Clerk sends verification/magic-link emails.
+    // Acknowledged only — useful for debugging delivery issues.
+    case "email.created":
+      break;
+
+    // ── Organization events ───────────────────────────────────────────
+    // We use a custom org system, not Clerk Orgs. Acknowledge and move on.
+    default:
+      break;
   }
 
   return new Response("OK", { status: 200 });

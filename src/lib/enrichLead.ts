@@ -34,7 +34,7 @@ async function fetchPage(url: string, signal: AbortSignal): Promise<string> {
   const res = await fetch(url, {
     signal,
     headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; 4UNTER-Enricher/2.0; +https://hunter.dullugroup.co.ke)",
+      "User-Agent": "Mozilla/5.0 (compatible; 4UNTER-Enricher/2.0; +https://4unter.dullugroup.co.ke)",
       "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
       "Accept-Language": "en-US,en;q=0.9,sw;q=0.8",
     },
