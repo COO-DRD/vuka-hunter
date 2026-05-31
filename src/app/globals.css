@@ -1,10 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #09090b;
-  --foreground: #f4f4f5;
-  --brand:      #F59E0B;
-  --brand-glow: rgba(245, 158, 11, 0.15);
+  --background:   #0d1117;
+  --bg-surface:   #161b22;
+  --bg-elevated:  #1c2128;
+  --border:       #30363d;
+  --text-1:       #e6edf3;
+  --text-2:       #8b949e;
+  --text-3:       #6e7681;
+  --foreground:   #e6edf3;
+  --brand:        #F59E0B;
+  --brand-dim:    rgba(245, 158, 11, 0.08);
+  --brand-glow:   rgba(245, 158, 11, 0.15);
 }
 
 @theme inline {
