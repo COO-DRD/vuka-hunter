@@ -6,7 +6,7 @@ import {
   Settings, Upload, LogOut, Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useClerk } from "@clerk/nextjs";
 import { HunterWordmark } from "@/components/HunterLogo";
 
 const ADMIN_EMAILS = new Set(["ian.dullu@akamom.org", "dr.dullu@gmail.com"]);
@@ -23,12 +23,11 @@ export const NAV = [
 export function Sidebar({ email }: { email: string | null }) {
   const path   = usePathname();
   const router = useRouter();
+  const { signOut } = useClerk();
   const initial = email ? email[0].toUpperCase() : "?";
 
-  async function signOut() {
-    const sb = createSupabaseBrowserClient();
-    await sb.auth.signOut();
-    router.push("/sign-in");
+  async function handleSignOut() {
+    await signOut(() => router.push("/sign-in"));
   }
 
   return (
@@ -87,7 +86,7 @@ export function Sidebar({ email }: { email: string | null }) {
           <span className="text-xs text-zinc-400 truncate flex-1 min-w-0" title={email ?? ""}>{email ?? "—"}</span>
         </div>
         <button
-          onClick={signOut}
+          onClick={handleSignOut}
           className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-900 hover:text-zinc-300 transition-colors"
         >
           <LogOut className="h-3.5 w-3.5 shrink-0" />

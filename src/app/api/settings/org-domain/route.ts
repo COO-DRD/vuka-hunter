@@ -1,17 +1,18 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { requireUser } from "@/lib/auth";
+import { requireUser, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 const DOMAIN_RE = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z]{2,})+$/i;
 
 export async function PATCH(req: NextRequest) {
-  const user = await requireUser();
-  const db   = createSupabaseServiceClient();
+  const user  = await requireUser();
+  const orgId = await resolveOrgId(user.id);
+  const db    = createSupabaseServiceClient();
 
   const { data: org } = await db
     .from("hunter_orgs")
     .select("account_type")
-    .eq("id", user.id)
+    .eq("id", orgId)
     .single();
 
   if (org?.account_type !== "corporate") {
@@ -34,7 +35,7 @@ export async function PATCH(req: NextRequest) {
       .from("hunter_orgs")
       .select("id")
       .ilike("org_domain", raw)
-      .neq("id", user.id)
+      .neq("id", orgId)
       .maybeSingle();
 
     if (existing) {
@@ -48,7 +49,7 @@ export async function PATCH(req: NextRequest) {
       org_domain:          raw || null,
       org_domain_verified: !!raw,
     })
-    .eq("id", user.id);
+    .eq("id", orgId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true, orgDomain: raw || null });

@@ -1,5 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { requireUser } from "@/lib/auth";
+import { requireUser, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 function sanitize(raw: unknown, maxLen = 200): string {
@@ -12,8 +12,9 @@ function isValidKraPin(pin: string): boolean {
 }
 
 export async function PATCH(req: NextRequest) {
-  const user = await requireUser();
-  const db   = createSupabaseServiceClient();
+  const user  = await requireUser();
+  const orgId = await resolveOrgId(user.id);
+  const db    = createSupabaseServiceClient();
 
   let body: Record<string, unknown>;
   try { body = await req.json(); }
@@ -56,7 +57,7 @@ export async function PATCH(req: NextRequest) {
   const { error } = await db
     .from("hunter_orgs")
     .update(updates)
-    .eq("id", user.id);
+    .eq("id", orgId);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

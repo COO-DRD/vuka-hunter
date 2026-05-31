@@ -1,5 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/auth";
+import { getUser, resolveOrgId } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ jobId: string }> }) {
@@ -7,12 +7,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ job
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const orgId = await resolveOrgId(user.id);
   const db = createSupabaseServiceClient();
   const { data: job } = await db
     .from("hunter_scrape_jobs")
     .select("id,status,progress,total,error")
     .eq("id", jobId)
-    .eq("org_id", user.id)
+    .eq("org_id", orgId)
     .single();
 
   if (!job) return NextResponse.json({ error: "Job not found" }, { status: 404 });

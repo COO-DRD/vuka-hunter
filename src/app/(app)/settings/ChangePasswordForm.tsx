@@ -1,11 +1,12 @@
 "use client";
 import { useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KeyRound, CheckCircle } from "lucide-react";
 
 export default function ChangePasswordForm() {
+  const { user } = useUser();
   const [current, setCurrent] = useState("");
   const [pw, setPw]           = useState("");
   const [confirm, setCon]     = useState("");
@@ -26,25 +27,22 @@ export default function ChangePasswordForm() {
     if (pw === current) { setErr("New password must be different from your current password."); return; }
     setLo(true);
     try {
-      const sb = createSupabaseBrowserClient();
+      if (!user) { setErr("Session expired. Please sign in again."); return; }
 
-      // Verify identity before allowing the change
-      const { data: { user } } = await sb.auth.getUser();
-      if (!user?.email) { setErr("Session expired. Please sign in again."); return; }
-
-      const { error: authErr } = await sb.auth.signInWithPassword({
-        email: user.email,
-        password: current,
+      await user.updatePassword({
+        currentPassword: current,
+        newPassword: pw,
       });
-      if (authErr) { setErr("Current password is incorrect."); return; }
-
-      const { error: updateErr } = await sb.auth.updateUser({ password: pw });
-      if (updateErr) { setErr(updateErr.message); return; }
 
       setDone(true);
       setCurrent(""); setPw(""); setCon("");
-    } catch {
-      setErr("Something went wrong. Try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Something went wrong. Try again.";
+      if (msg.toLowerCase().includes("current") || msg.toLowerCase().includes("incorrect") || msg.toLowerCase().includes("invalid")) {
+        setErr("Current password is incorrect.");
+      } else {
+        setErr(msg);
+      }
     } finally {
       setLo(false);
     }
