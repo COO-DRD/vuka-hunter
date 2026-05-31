@@ -74,3 +74,16 @@ body {
   background-image: radial-gradient(circle, #2a2a2e 1px, transparent 1px);
   background-size: 28px 28px;
 }
+
+/* ── Clerk card: strip default box so the form sits flush on the page ── */
+.cl-card,
+.cl-cardBox {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+.cl-rootBox { width: 100% !important; }
+.cl-header  { display: none !important; }
