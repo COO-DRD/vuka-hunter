@@ -3,10 +3,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Zap, ChevronRight, ChevronLeft, Check, Building2,
+  ChevronRight, ChevronLeft, Check, Building2,
   Users, UserPlus, X, Mail, Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HunterWordmark } from "@/components/HunterLogo";
 
 // ── Reuse the same role/signal/channel constants ──────────────────────────────
 const ROLES = [
@@ -178,10 +179,7 @@ export default function CorporateOnboardingWizard({
 
         {/* Logo + corporate badge */}
         <div className="flex items-center gap-3 justify-center mb-8">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600">
-            <Zap className="h-4 w-4 text-white" />
-          </div>
-          <span className="font-bold text-zinc-100 text-lg tracking-tight">4unter</span>
+          <HunterWordmark size="sm" />
           <span className="flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400">
             <Building2 className="h-3 w-3" /> Corporate
           </span>

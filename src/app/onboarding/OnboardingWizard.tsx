@@ -2,8 +2,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Zap, ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HunterWordmark } from "@/components/HunterLogo";
 
 const ROLES = [
   { value: "agency",       label: "Agency / Consultant",     desc: "I sell services, software, or expertise to other businesses",          icon: "🏢" },
@@ -129,11 +130,8 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
       <div className="w-full max-w-xl">
 
         {/* Logo */}
-        <div className="flex items-center gap-2 justify-center mb-10">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600">
-            <Zap className="h-4 w-4 text-white" />
-          </div>
-          <span className="font-bold text-zinc-100 text-lg tracking-tight">4unter</span>
+        <div className="flex justify-center mb-10">
+          <HunterWordmark size="sm" />
         </div>
 
         {/* Progress dots */}
@@ -143,8 +141,8 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
               key={s}
               className={cn(
                 "rounded-full transition-all",
-                s === step   ? "h-2 w-6 bg-red-500" :
-                s < step     ? "h-2 w-2 bg-red-700"  :
+                s === step   ? "h-2 w-6 bg-amber-500" :
+                s < step     ? "h-2 w-2 bg-amber-600"  :
                                "h-2 w-2 bg-zinc-700"
               )}
             />
@@ -167,7 +165,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                   className={cn(
                     "text-left rounded-xl border p-4 transition-all",
                     useCase === r.value
-                      ? "border-red-500 bg-red-950/20 ring-1 ring-red-500/40"
+                      ? "border-amber-500 bg-amber-500/10 ring-1 ring-amber-500/30"
                       : "border-zinc-800 bg-zinc-900/40 hover:border-zinc-600"
                   )}
                 >
@@ -219,7 +217,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                   onChange={(e) => setOrgDescription(e.target.value)}
                   placeholder={descPlaceholder}
                   rows={3}
-                  className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-red-500 resize-none"
+                  className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
                 />
               </div>
             </div>
@@ -252,7 +250,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                   placeholder={targetPlaceholder}
                   rows={4}
                   autoFocus
-                  className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-red-500 resize-none"
+                  className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
                 />
               </div>
 
@@ -266,7 +264,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                       className={cn(
                         "rounded-lg border py-2.5 text-sm font-medium transition-all",
                         channel === c.value
-                          ? "border-red-500 bg-red-950/20 text-red-300"
+                          ? "border-amber-500 bg-amber-500/10 text-amber-300"
                           : "border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300"
                       )}
                     >
@@ -307,14 +305,14 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                     disabled={disabled}
                     className={cn(
                       "w-full text-left rounded-xl border px-4 py-3 transition-all flex items-start gap-3",
-                      selected  ? "border-red-500 bg-red-950/20"
+                      selected  ? "border-amber-500 bg-amber-500/10"
                                 : disabled ? "border-zinc-800/50 opacity-40 cursor-not-allowed"
                                 : "border-zinc-800 hover:border-zinc-600"
                     )}
                   >
                     <div className={cn(
                       "mt-0.5 h-4 w-4 shrink-0 rounded border flex items-center justify-center",
-                      selected ? "border-red-500 bg-red-500" : "border-zinc-600"
+                      selected ? "border-amber-500 bg-amber-500" : "border-zinc-600"
                     )}>
                       {selected && <Check className="h-2.5 w-2.5 text-white" />}
                     </div>
