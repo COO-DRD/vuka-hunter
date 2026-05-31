@@ -1,4 +1,4 @@
-import { requireUser } from "@/lib/auth";
+import { requireUser, resolveOrgId } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -15,19 +15,20 @@ import TeamPanel from "./TeamPanel";
 import { MobileSignOut } from "./MobileSignOut";
 
 export default async function SettingsPage() {
-  const user = await requireUser();
-  const db   = createSupabaseServiceClient();
+  const user  = await requireUser();
+  const orgId = await resolveOrgId(user.id);
+  const db    = createSupabaseServiceClient();
 
-  const { data: org } = await db.from("hunter_orgs").select("*").eq("id", user.id).single();
+  const { data: org } = await db.from("hunter_orgs").select("*").eq("id", orgId).single();
 
   const { data: consents } = await db
     .from("hunter_legal_consents")
     .select("consent_type, accepted, accepted_at")
-    .eq("org_id", user.id)
+    .eq("org_id", orgId)
     .order("accepted_at", { ascending: false });
 
   const { data: members } = org?.account_type === "corporate"
-    ? await db.from("hunter_org_members").select("user_id, role, status, display_name, last_active_at").eq("org_id", user.id).order("created_at")
+    ? await db.from("hunter_org_members").select("user_id, role, status, display_name, last_active_at").eq("org_id", orgId).order("created_at")
     : { data: null };
 
   const seatsUsed  = org?.seats_used  ?? 1;
@@ -36,8 +37,8 @@ export default async function SettingsPage() {
   const isCorporate   = org?.account_type === "corporate";
   const creditsUsed   = org?.credits_used ?? 0;
   const initial       = user.email ? user.email[0].toUpperCase() : "?";
-  const memberSince   = user.created_at
-    ? new Date(user.created_at).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })
+  const memberSince   = org?.created_at
+    ? new Date(org.created_at).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })
     : "—";
 
   const trialEnd      = org?.trial_ends_at ? new Date(org.trial_ends_at) : null;
@@ -149,9 +150,9 @@ export default async function SettingsPage() {
               {org?.auth_provider === "google" ? "Google OAuth" : "Email / Password"}
             </SettingRow>
             <SettingRow icon={BadgeCheck} label="Email verified">
-              {user.email_confirmed_at
-                ? <span className="text-green-400">Verified {new Date(user.email_confirmed_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</span>
-                : <span className="text-amber-400 flex items-center gap-1"><AlertCircle className="h-3.5 w-3.5" /> Not yet verified</span>
+              {org?.email_verified_at
+                ? <span className="text-green-400">Verified {new Date(org.email_verified_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</span>
+                : <span className="text-green-400">Verified</span>
               }
             </SettingRow>
             {org?.operating_county && (
