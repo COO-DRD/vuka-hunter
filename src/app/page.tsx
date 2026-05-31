@@ -489,6 +489,253 @@ function HeroSignup({ dark = false, signedIn = false }: { dark?: boolean; signed
   );
 }
 
+// ── Before / After comparison ─────────────────────────────────────────────────
+const MESSY_ROWS = [
+  { company: "ABC Hotels Ltd",    phone: "0712-???",   status: "called?",      note: "no answer try again" },
+  { company: "Pearl Dental",      phone: "020 445...", status: "maybe",        note: "left voicemail" },
+  { company: "New Kenya Hotel",   phone: "",           status: "??",           note: "find contact" },
+  { company: "Kilimani Physio",   phone: "0700 xxx",  status: "not sure",     note: "checked fb" },
+  { company: "Akili Real Estate", phone: "020-???",   status: "",             note: "google later" },
+  { company: "Grand Coffee Co",   phone: "0722...",   status: "called",       note: "wrong number?" },
+  { company: "???",               phone: "",           status: "",             note: "" },
+  { company: "Nairobi Eye",       phone: "0733 xxx",  status: "called maybe", note: "which branch?" },
+];
+
+const CLEAN_ROWS = [
+  { name: "Pearl Dental Clinic",    score: 87, stage: "new",       city: "Westlands" },
+  { name: "The Grand Hotel Nairobi",score: 91, stage: "qualified", city: "Upperhill" },
+  { name: "Nairobi Eye Specialists",score: 78, stage: "new",       city: "CBD"       },
+  { name: "Kilimani Physio Centre", score: 72, stage: "contacted", city: "Kilimani"  },
+  { name: "Akili Real Estate",      score: 65, stage: "replied",   city: "Karen"     },
+  { name: "Urban Brew Coffee",      score: 54, stage: "new",       city: "Lavington" },
+];
+
+function BeforeAfterComparison() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+
+  const [elapsedBefore, setElapsedBefore] = useState(0); // seconds, capped at 14400 (4h)
+  const [elapsedAfter, setElapsedAfter]   = useState(0); // seconds, capped at 227 (3m47s)
+
+  useEffect(() => {
+    if (!inView) return;
+    const beforeIv = setInterval(() => setElapsedBefore((t) => Math.min(t + 48, 14400)), 60);
+    const afterIv  = setInterval(() => setElapsedAfter((t)  => Math.min(t + 3,  227)),   40);
+    return () => { clearInterval(beforeIv); clearInterval(afterIv); };
+  }, [inView]);
+
+  function fmtBefore(s: number) {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    return `${h}h ${m.toString().padStart(2, "0")}m`;
+  }
+  function fmtAfter(s: number) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  }
+
+  const rowVars: Variants = {
+    hidden:  {},
+    visible: { transition: { staggerChildren: 0.07, delayChildren: 0.3 } },
+  };
+  const rowItem: Variants = {
+    hidden:  { opacity: 0, x: 12 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.35, ease } },
+  };
+
+  return (
+    <section ref={ref} className="border-y border-stone-200 bg-stone-50 overflow-hidden">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
+        <InView className="text-center mb-10">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-400 mb-2">The real cost</p>
+          <h2 className="text-2xl sm:text-3xl font-black text-stone-950">
+            Same result. 60× faster.
+          </h2>
+        </InView>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* ── BEFORE ── */}
+          <motion.div
+            initial={{ opacity: 0, x: -32 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.6, ease }}
+            className="rounded-2xl border-2 border-red-200 overflow-hidden bg-white shadow-lg shadow-red-100/50"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 bg-red-50 border-b border-red-200">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-green-400" />
+                </div>
+                <span className="text-[11px] font-mono text-red-600 ml-1">leads_q2_final_FINAL_v3.xlsx</span>
+              </div>
+              <span className="text-[10px] font-bold text-red-500 bg-red-100 px-2 py-0.5 rounded-full">
+                ⏱ {fmtBefore(elapsedBefore)} wasted
+              </span>
+            </div>
+
+            {/* Tab bar */}
+            <div className="flex border-b border-stone-200 text-[10px] font-medium bg-stone-50">
+              {["Sheet1","Sheet2","Sheet3 (?)","Notes"].map((t, i) => (
+                <div key={t} className={`px-3 py-1.5 border-r border-stone-200 ${i === 0 ? "bg-white text-stone-800" : "text-stone-400"}`}>{t}</div>
+              ))}
+            </div>
+
+            {/* Spreadsheet */}
+            <div className="overflow-hidden">
+              {/* Column headers */}
+              <div className="grid text-[9px] font-bold text-stone-500 uppercase tracking-wide border-b border-stone-200 bg-stone-100"
+                style={{ gridTemplateColumns: "2fr 1.2fr 1fr 1.4fr" }}>
+                {["Company","Phone","Status","Notes"].map((h) => (
+                  <div key={h} className="px-2 py-1.5 border-r border-stone-200 last:border-0">{h}</div>
+                ))}
+              </div>
+
+              {/* Rows */}
+              {MESSY_ROWS.map((row, i) => (
+                <motion.div
+                  key={i}
+                  className="grid text-[10px] border-b border-stone-100 last:border-0"
+                  style={{ gridTemplateColumns: "2fr 1.2fr 1fr 1.4fr" }}
+                  initial={{ opacity: 0 }}
+                  animate={inView ? { opacity: 1 } : {}}
+                  transition={{ delay: 0.1 + i * 0.08 }}
+                >
+                  <div className="px-2 py-2 border-r border-stone-100 text-stone-800 font-medium truncate">
+                    {row.company || <span className="text-red-300 italic">empty</span>}
+                  </div>
+                  <div className="px-2 py-2 border-r border-stone-100 truncate">
+                    {row.phone
+                      ? <span className="text-stone-500">{row.phone}</span>
+                      : <span className="text-red-400 font-semibold">MISSING</span>}
+                  </div>
+                  <div className="px-2 py-2 border-r border-stone-100 truncate">
+                    {row.status
+                      ? <span className="text-orange-500">{row.status}</span>
+                      : <span className="text-stone-300">—</span>}
+                  </div>
+                  <div className="px-2 py-2 text-stone-400 truncate italic">{row.note}</div>
+                </motion.div>
+              ))}
+
+              {/* Footer */}
+              <div className="px-3 py-2 bg-stone-50 border-t border-stone-200 flex items-center justify-between">
+                <span className="text-[9px] text-stone-400">2,847 rows · last saved 2 days ago</span>
+                <motion.span
+                  className="text-[9px] text-orange-500 font-medium"
+                  animate={{ opacity: [1, 0.3, 1] }}
+                  transition={{ duration: 1.8, repeat: Infinity }}
+                >
+                  Auto-saving…
+                </motion.span>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* ── AFTER ── */}
+          <motion.div
+            initial={{ opacity: 0, x: 32 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.15, ease }}
+            className="rounded-2xl border-2 border-green-300 overflow-hidden bg-white shadow-lg shadow-green-100/50"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 bg-green-50 border-b border-green-200">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-green-400" />
+                </div>
+                <Globe className="h-3 w-3 text-stone-400 ml-1" />
+                <span className="text-[11px] font-mono text-stone-500">4unter.dullugroup.co.ke/leads</span>
+              </div>
+              <span className="text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                ✓ {fmtAfter(elapsedAfter)} · done
+              </span>
+            </div>
+
+            {/* App nav strip */}
+            <div className="flex items-center justify-between px-4 py-2 border-b border-stone-100 bg-[#F8F7F4]">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-stone-800">Leads</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-mono">214</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-green-600 font-medium flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3" /> All scored · all enriched
+                </span>
+              </div>
+            </div>
+
+            {/* Column headers */}
+            <div className="grid text-[9px] font-bold text-stone-500 uppercase tracking-wide border-b border-stone-200 bg-stone-50"
+              style={{ gridTemplateColumns: "2fr 0.8fr 1fr 1fr" }}>
+              {["Company","Score","Stage","City"].map((h) => (
+                <div key={h} className="px-2 py-1.5 border-r border-stone-100 last:border-0">{h}</div>
+              ))}
+            </div>
+
+            {/* Clean rows */}
+            <motion.div variants={rowVars} initial="hidden" animate={inView ? "visible" : "hidden"}>
+              {CLEAN_ROWS.map((row) => (
+                <motion.div
+                  key={row.name}
+                  variants={rowItem}
+                  className="grid text-[10px] border-b border-stone-50 last:border-0 hover:bg-stone-50 transition-colors"
+                  style={{ gridTemplateColumns: "2fr 0.8fr 1fr 1fr" }}
+                >
+                  <div className="px-2 py-2 border-r border-stone-100 text-stone-800 font-medium truncate">{row.name}</div>
+                  <div className="px-2 py-2 border-r border-stone-100 font-black font-mono text-center">
+                    <span className={row.score >= 70 ? "text-green-600" : "text-yellow-600"}>{row.score}</span>
+                  </div>
+                  <div className="px-2 py-2 border-r border-stone-100">
+                    <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${STAGE_COLORS[row.stage]}`}>
+                      {row.stage}
+                    </span>
+                  </div>
+                  <div className="px-2 py-2 text-stone-500 truncate">{row.city}</div>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* WhatsApp opener preview */}
+            <motion.div
+              className="mx-3 mb-3 mt-2 rounded-xl bg-green-50 border border-green-200 px-3 py-2.5"
+              initial={{ opacity: 0, y: 8 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: 1.2, duration: 0.5 }}
+            >
+              <p className="text-[9px] font-semibold text-green-700 mb-1 flex items-center gap-1">
+                <MessageSquare className="h-3 w-3" /> AI opener — Pearl Dental
+              </p>
+              <p className="text-[10px] text-stone-700 leading-relaxed">
+                Hi Dr. Kamau, your 4.8★ puts Pearl Dental in the top 5% in Westlands. But calls after 5 PM go to voicemail — roughly KES 50k in missed bookings monthly…
+              </p>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        {/* Bottom callout */}
+        <motion.div
+          className="mt-8 text-center"
+          initial={{ opacity: 0 }}
+          animate={inView ? { opacity: 1 } : {}}
+          transition={{ delay: 1.5 }}
+        >
+          <p className="text-sm text-stone-500">
+            Same 200+ businesses. Same WhatsApp message ready to send.{" "}
+            <span className="font-bold text-stone-900">One took 4 hours. One took 4 minutes.</span>
+          </p>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
 // ── Scroll-to helper ──────────────────────────────────────────────────────────
 function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -558,22 +805,23 @@ export default function LandingPage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-28 bg-gradient-to-b from-amber-500/60 to-transparent pointer-events-none" />
 
         <div className="relative z-10 mx-auto max-w-4xl">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight text-stone-950">
-            <SplitWords text="The AI lead platform" staggerDelay={0.07} childDelay={0.1} />
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.08] tracking-tight text-stone-950">
+            <SplitWords text="Every morning you open Google." staggerDelay={0.055} childDelay={0.1} />
             <br />
             <span className="text-brand-gradient">
-              <SplitWords text="built for Kenya." staggerDelay={0.07} childDelay={0.5} />
+              <SplitWords text="Four hours later, you haven't called anyone." staggerDelay={0.045} childDelay={0.6} />
             </span>
           </h1>
 
           <motion.p
-            className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-stone-500"
+            className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-stone-500"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9, duration: 0.55, ease }}
+            transition={{ delay: 1.2, duration: 0.55, ease }}
           >
-            Find 200 qualified local businesses, score every one with AI, and have the
-            WhatsApp opener written — before your competitor finishes their first Google search.
+            That&apos;s not a discipline problem. It&apos;s a research problem.
+            4unter finds 200 qualified businesses in your city, scores every one with AI,
+            and writes the WhatsApp opener — in under 4 minutes.
           </motion.p>
 
           <motion.div
@@ -637,6 +885,9 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* ── Before / After ── */}
+      <BeforeAfterComparison />
 
       {/* ── Features ── */}
       <div id="features" style={{ scrollMarginTop: "4rem" }}>
