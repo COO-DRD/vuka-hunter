@@ -1,21 +1,24 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { scoreColor, scoreBg } from "@/lib/utils";
 import {
   Zap, RefreshCw, Copy, Check, Star, Phone, Mail, Globe,
   MapPin, ExternalLink, CheckCircle, AlertCircle, Clock,
-  MessageCircle, Send,
+  MessageCircle, Send, ShieldCheck, Shield, Award,
+  Link2, Bot,
 } from "lucide-react";
 import { toast } from "sonner";
 import StageSelector from "@/components/leads/StageSelector";
 import { LeadFeedbackPanel } from "@/components/leads/LeadFeedbackPanel";
+import { CallGuide } from "@/components/leads/CallGuide";
 
 type Lead = Record<string, unknown>;
 type Channel = "whatsapp" | "email";
 
+// ── SSE reader ─────────────────────────────────────────────────────────────────
 function readSSE(
   res: Response,
   onToken: (t: string) => void,
@@ -49,61 +52,506 @@ function readSSE(
   })();
 }
 
+// ── Score helpers (theme-aware) ────────────────────────────────────────────────
+function scoreTextColor(s: number) {
+  if (s >= 70) return "text-green-600";
+  if (s >= 40) return "text-yellow-600";
+  return "text-red-500";
+}
+function scoreBorderColor(s: number): string {
+  if (s >= 70) return "#16a34a";
+  if (s >= 40) return "#d97706";
+  return "#dc2626";
+}
+
+// ── Business Intelligence panel ────────────────────────────────────────────────
+const SIGNAL_LABELS: Record<string, string> = {
+  "gap:no-booking":   "No booking system",
+  "gap:no-live-chat": "No live chat",
+  "gap:no-payment":   "No online payments",
+  "gap:no-ssl":       "No SSL",
+  "gap:no-email":     "No email found",
+  "gap:no-whatsapp":  "No WhatsApp",
+  "has:ssl":          "SSL secured",
+  "has:website":      "Has website",
+  "has:booking":      "Has booking",
+  "has:live-chat":    "Has live chat",
+  "has:payment":      "Has online payment",
+  "has:whatsapp":     "Has WhatsApp",
+  "has:social":       "Active social media",
+  "has:instagram":    "Instagram presence",
+  "has:facebook":     "Facebook page",
+  "has:linkedin":     "LinkedIn profile",
+};
+
+const SOCIAL_LABELS: Record<string, string> = {
+  facebook:  "Facebook",
+  instagram: "Instagram",
+  twitter:   "Twitter / X",
+  linkedin:  "LinkedIn",
+  tiktok:    "TikTok",
+  youtube:   "YouTube",
+  whatsapp:  "WhatsApp Business",
+};
+
+function ScoreBar({ value, color }: { value: number; color: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--bg-elevated)" }}>
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${Math.min(value, 100)}%` }} />
+      </div>
+      <span className="text-xs font-semibold tabular-nums w-7 text-right" style={{ color: "var(--text-1)" }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function Divider() {
+  return <div className="border-t my-3" style={{ borderColor: "var(--border)" }} />;
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-3)" }}>
+      {children}
+    </p>
+  );
+}
+
+function IntelPanel({
+  lead, onEnrich, enriching,
+}: {
+  lead: Lead;
+  onEnrich: () => void;
+  enriching: boolean;
+}) {
+  const enrichStatus     = lead.enrichment_status       as string | null;
+  const enrichedAt       = lead.enriched_at             as string | null;
+  const googleRating     = lead.google_rating           as number | null;
+  const reviewCount      = lead.google_review_count     as number | null;
+  const address          = lead.address                 as string | null;
+  const mapsUrl          = lead.google_maps_url         as string | null;
+  const website          = lead.website                 as string | null;
+  const phone            = lead.phone                   as string | null;
+  const emailsFound      = lead.emails_found            as string[] | null;
+  const techStack        = lead.tech_stack              as string[] | null;
+  const hasBooking       = lead.has_booking_system      as boolean | null;
+  const hasChat          = lead.has_live_chat           as boolean | null;
+  const hasPayment       = lead.has_online_payment      as boolean | null;
+  const hasSsl           = lead.has_ssl                 as boolean | null;
+  const socialLinks      = lead.social_links            as Record<string, string> | null;
+  const digitalScore     = lead.digital_readiness_score as number | null;
+  const opportunityScore = lead.opportunity_score       as number | null;
+  const reachScore       = lead.reachability_score      as number | null;
+  const phonesFound      = lead.phones_found            as string[] | null;
+  const whatsappNum      = lead.whatsapp_number         as string | null;
+  const verticalSignals  = lead.vertical_signals        as string[] | null;
+  const painSignalsRaw   = lead.pain_signals            as string[] | null;
+  const yearEstablished  = lead.year_established        as number | null;
+  const locationCount    = lead.location_count          as number | null;
+  const staffSignal      = lead.staff_signal            as string | null;
+  const certifications   = lead.certifications          as string[] | null;
+  const dmName           = lead.decision_maker_name     as string | null;
+  const dmTitle          = lead.decision_maker_title    as string | null;
+  const vertical         = lead.vertical                as string;
+
+  const isDone = enrichStatus === "done";
+
+  // Deduplicate phones
+  const allPhones = [
+    ...(phonesFound ?? []),
+    ...(phone && !(phonesFound ?? []).includes(phone) ? [phone] : []),
+  ].filter(Boolean);
+
+  const allEmails = emailsFound ?? [];
+
+  const allSignals = [...(verticalSignals ?? []), ...(painSignalsRaw ?? [])];
+  const gaps = allSignals
+    .filter((s) => s.startsWith("gap:"))
+    .map((s) => SIGNAL_LABELS[s] ?? s.replace("gap:", "").replace(/-/g, " "));
+  const haves = allSignals
+    .filter((s) => s.startsWith("has:"))
+    .map((s) => SIGNAL_LABELS[s] ?? s.replace("has:", "").replace(/-/g, " "));
+
+  const activeSocials = Object.entries(socialLinks ?? {})
+    .filter(([, url]) => !!url)
+    .map(([platform, url]) => ({ platform, label: SOCIAL_LABELS[platform] ?? platform, url }));
+
+  const hostname = (url: string) => {
+    try { return new URL(url).hostname; } catch { return url; }
+  };
+
+  const hasOpsData = yearEstablished || staffSignal || (locationCount ?? 0) > 1 || (certifications?.length ?? 0) > 0;
+  const hasScores  = digitalScore != null || opportunityScore != null || reachScore != null;
+
+  return (
+    <div className="p-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>
+          Business Intelligence
+        </h2>
+        {enrichedAt && (
+          <span className="text-[10px]" style={{ color: "var(--text-3)" }}>
+            {new Date(enrichedAt).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
+          </span>
+        )}
+      </div>
+
+      {/* Google profile card */}
+      {googleRating != null && (
+        <div className="rounded-lg p-3 mb-1" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Star
+                  key={i}
+                  className={`h-3 w-3 ${i <= Math.round(googleRating) ? "text-yellow-400 fill-yellow-400" : "text-stone-300"}`}
+                />
+              ))}
+            </div>
+            <span className="text-sm font-bold" style={{ color: "var(--text-1)" }}>{googleRating}</span>
+            <span className="text-xs" style={{ color: "var(--text-3)" }}>
+              ({reviewCount?.toLocaleString()} reviews)
+            </span>
+          </div>
+          <p className="text-xs capitalize mb-1" style={{ color: "var(--text-2)" }}>{vertical}</p>
+          {address && (
+            <p className="text-[11px] flex items-start gap-1" style={{ color: "var(--text-3)" }}>
+              <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
+              {address}
+            </p>
+          )}
+          {mapsUrl && (
+            <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] text-blue-500 hover:text-blue-600 mt-1.5">
+              Open in Google Maps <ExternalLink className="h-2.5 w-2.5" />
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* Website */}
+      {website && (
+        <>
+          <Divider />
+          <SectionLabel>Website</SectionLabel>
+          <div className="flex items-center gap-1.5">
+            {hasSsl === true  && <ShieldCheck className="h-3.5 w-3.5 text-green-500 shrink-0" />}
+            {hasSsl === false && <Shield className="h-3.5 w-3.5 text-red-400 shrink-0" />}
+            {hasSsl == null   && <Globe className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--text-3)" }} />}
+            <a href={website} target="_blank" rel="noopener noreferrer"
+              className="text-xs text-blue-500 hover:text-blue-600 truncate flex items-center gap-1 min-w-0">
+              {hostname(website)}
+              <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />
+            </a>
+          </div>
+        </>
+      )}
+
+      {/* Contact signals */}
+      {(allPhones.length > 0 || allEmails.length > 0 || whatsappNum) && (
+        <>
+          <Divider />
+          <SectionLabel>Contact Signals</SectionLabel>
+          <div className="space-y-1.5">
+            {allPhones.map((p, i) => (
+              <div key={i} className="flex items-center gap-1.5">
+                <Phone className="h-3 w-3 shrink-0" style={{ color: "var(--text-3)" }} />
+                <a href={`tel:${p}`} className="text-xs hover:underline" style={{ color: "var(--text-1)" }}>{p}</a>
+              </div>
+            ))}
+            {whatsappNum && (
+              <div className="flex items-center gap-1.5">
+                <MessageCircle className="h-3 w-3 shrink-0 text-green-500" />
+                <a
+                  href={`https://wa.me/${whatsappNum.replace(/\D/g, "")}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="text-xs text-green-600 hover:underline"
+                >
+                  {whatsappNum}
+                </a>
+              </div>
+            )}
+            {allEmails.map((e, i) => (
+              <div key={i} className="flex items-center gap-1.5">
+                <Mail className="h-3 w-3 shrink-0" style={{ color: "var(--text-3)" }} />
+                <a href={`mailto:${e}`} className="text-xs truncate hover:underline" style={{ color: "var(--text-1)" }}>{e}</a>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Social presence */}
+      {activeSocials.length > 0 && (
+        <>
+          <Divider />
+          <SectionLabel>Social Presence</SectionLabel>
+          <div className="flex flex-wrap gap-1.5">
+            {activeSocials.map(({ platform, label, url }) => (
+              <a
+                key={platform}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors hover:opacity-80"
+                style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-2)" }}
+              >
+                <Link2 className="h-2.5 w-2.5" />
+                {label}
+              </a>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Decision maker */}
+      {dmName && (
+        <>
+          <Divider />
+          <SectionLabel>Key Contact</SectionLabel>
+          <div className="flex items-center gap-2">
+            <div
+              className="h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-bold text-black shrink-0"
+              style={{ background: "var(--brand)" }}
+            >
+              {dmName[0].toUpperCase()}
+            </div>
+            <div>
+              <p className="text-xs font-medium" style={{ color: "var(--text-1)" }}>{dmName}</p>
+              {dmTitle && <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{dmTitle}</p>}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Operations */}
+      {hasOpsData && (
+        <>
+          <Divider />
+          <SectionLabel>Operations</SectionLabel>
+          <div className="space-y-1">
+            {yearEstablished && (
+              <div className="flex items-center justify-between text-[11px]">
+                <span style={{ color: "var(--text-3)" }}>Established</span>
+                <span style={{ color: "var(--text-1)" }}>
+                  {yearEstablished}
+                  <span style={{ color: "var(--text-3)" }}> ({new Date().getFullYear() - yearEstablished} yrs)</span>
+                </span>
+              </div>
+            )}
+            {staffSignal && (
+              <div className="flex items-center justify-between text-[11px]">
+                <span style={{ color: "var(--text-3)" }}>Staff</span>
+                <span style={{ color: "var(--text-1)" }}>{staffSignal}</span>
+              </div>
+            )}
+            {(locationCount ?? 0) > 1 && (
+              <div className="flex items-center justify-between text-[11px]">
+                <span style={{ color: "var(--text-3)" }}>Locations</span>
+                <span style={{ color: "var(--text-1)" }}>{locationCount} branches</span>
+              </div>
+            )}
+          </div>
+          {certifications && certifications.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {certifications.map((c) => (
+                <span key={c} className="inline-flex items-center gap-1 text-[11px]"
+                  style={{ color: "var(--text-2)" }}>
+                  <Award className="h-2.5 w-2.5 text-amber-500" />
+                  {c}
+                </span>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Tech & capabilities */}
+      {isDone && (
+        <>
+          <Divider />
+          <SectionLabel>Capabilities</SectionLabel>
+          <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 mb-2">
+            {([
+              { label: "Booking system", value: hasBooking },
+              { label: "Live chat",      value: hasChat },
+              { label: "Online payment", value: hasPayment },
+              { label: "SSL",            value: hasSsl },
+            ] as { label: string; value: boolean | null }[]).map(({ label, value }) =>
+              value != null ? (
+                <div key={label} className="flex items-center gap-1.5 text-[11px]">
+                  <div className={`h-1.5 w-1.5 rounded-full shrink-0 ${value ? "bg-green-500" : "bg-stone-300"}`} />
+                  <span style={{ color: value ? "var(--text-1)" : "var(--text-3)" }}>{label}</span>
+                </div>
+              ) : null
+            )}
+          </div>
+          {techStack && techStack.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {techStack.map((t) => (
+                <span
+                  key={t}
+                  className="text-[10px] px-1.5 py-0.5 rounded"
+                  style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-2)" }}
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Intelligence scores */}
+      {hasScores && (
+        <>
+          <Divider />
+          <SectionLabel>Intelligence Scores</SectionLabel>
+          <div className="space-y-2.5">
+            {digitalScore != null && (
+              <div>
+                <p className="text-[11px] mb-1" style={{ color: "var(--text-2)" }}>Digital readiness</p>
+                <ScoreBar value={digitalScore} color="bg-blue-500" />
+              </div>
+            )}
+            {opportunityScore != null && (
+              <div>
+                <p className="text-[11px] mb-1" style={{ color: "var(--text-2)" }}>Opportunity</p>
+                <ScoreBar value={opportunityScore} color="bg-amber-500" />
+              </div>
+            )}
+            {reachScore != null && (
+              <div>
+                <p className="text-[11px] mb-1" style={{ color: "var(--text-2)" }}>Reachability</p>
+                <ScoreBar value={reachScore} color="bg-green-500" />
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Gaps — sales opportunities */}
+      {gaps.length > 0 && (
+        <>
+          <Divider />
+          <SectionLabel>Gaps Found</SectionLabel>
+          <div className="space-y-1.5">
+            {gaps.map((g) => (
+              <div key={g} className="flex items-center gap-1.5 text-[11px]">
+                <div className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
+                <span style={{ color: "var(--text-2)" }}>{g}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Haves */}
+      {haves.length > 0 && (
+        <>
+          <Divider />
+          <SectionLabel>Already Has</SectionLabel>
+          <div className="space-y-1.5">
+            {haves.map((h) => (
+              <div key={h} className="flex items-center gap-1.5 text-[11px]">
+                <div className="h-1.5 w-1.5 rounded-full bg-green-400 shrink-0" />
+                <span style={{ color: "var(--text-2)" }}>{h}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Enrich CTA if not yet done */}
+      {!isDone && (
+        <>
+          <Divider />
+          <div
+            className="rounded-lg p-4 text-center"
+            style={{ background: "var(--bg-elevated)", border: "1px dashed var(--border)" }}
+          >
+            <Bot className="h-7 w-7 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
+            <p className="text-xs font-medium mb-1" style={{ color: "var(--text-1)" }}>
+              Enrich for full intel
+            </p>
+            <p className="text-[11px] mb-3" style={{ color: "var(--text-3)" }}>
+              Website crawl reveals tech stack, emails, social profiles, staff signals & more
+            </p>
+            <Button size="sm" variant="outline" onClick={onEnrich} loading={enriching} className="w-full">
+              <RefreshCw className="h-3.5 w-3.5" /> Enrich Now
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
 export default function LeadDetail({ lead }: { lead: Lead }) {
+  const router = useRouter();
+
   // ── Score state ────────────────────────────────────────────────────────────
-  const [score,        setScore]        = useState<number | null>((lead.score as number) ?? null);
-  const [displayScore, setDisplayScore] = useState<number | null>((lead.score as number) ?? null);
-  const [reasoning,    setReasoning]    = useState<string>((lead.score_reasoning as string) ?? "");
-  const [liveReasoning,setLiveReasoning]= useState("");
-  const [painSignals,  setPainSignals]  = useState<string[]>((lead.pain_signals as string[]) ?? []);
-  const [scoring,      setScoring]      = useState(false);
+  const [displayScore,  setDisplayScore]  = useState<number | null>((lead.score as number) ?? null);
+  const [reasoning,     setReasoning]     = useState<string>((lead.score_reasoning as string) ?? "");
+  const [liveReasoning, setLiveReasoning] = useState("");
+  const [painSignals,   setPainSignals]   = useState<string[]>((lead.pain_signals as string[]) ?? []);
+  const [scoring,       setScoring]       = useState(false);
 
   // ── Opener state ───────────────────────────────────────────────────────────
-  const [waOpener,    setWaOpener]    = useState<string>((lead.opener_whatsapp as string) ?? (lead.opener_text as string) ?? "");
-  const [emailOpener, setEmailOpener] = useState<string>((lead.opener_email   as string) ?? "");
-  const [emailSubject,setEmailSubject]= useState<string>((lead.opener_subject as string) ?? "");
-  const [liveRaw,     setLiveRaw]     = useState("");   // raw stream before parsing
-  const [generating,  setGenerating]  = useState(false);
+  const [waOpener,     setWaOpener]     = useState<string>((lead.opener_whatsapp as string) ?? (lead.opener_text as string) ?? "");
+  const [emailOpener,  setEmailOpener]  = useState<string>((lead.opener_email   as string) ?? "");
+  const [emailSubject, setEmailSubject] = useState<string>((lead.opener_subject as string) ?? "");
+  const [liveRaw,      setLiveRaw]      = useState("");
+  const [generating,   setGenerating]   = useState(false);
 
   // ── Outreach state ─────────────────────────────────────────────────────────
-  const [channel,      setChannel]      = useState<Channel>("whatsapp");
-  const [sending,      setSending]      = useState(false);
-  const [sentWa,       setSentWa]       = useState(false);
-  const [sentEmail,    setSentEmail]    = useState(false);
-  const [copied,       setCopied]       = useState(false);
-  const [contactedAt,  setContactedAt]  = useState<string | null>((lead.contacted_at as string) ?? null);
-  const [lastOutcome,  setLastOutcome]  = useState<string | null>((lead.last_outcome as string) ?? null);
+  const [channel,     setChannel]     = useState<Channel>("whatsapp");
+  const [sentWa,      setSentWa]      = useState(false);
+  const [sentEmail,   setSentEmail]   = useState(false);
+  const [copied,      setCopied]      = useState(false);
+  const [contactedAt, setContactedAt] = useState<string | null>((lead.contacted_at as string) ?? null);
+  const [lastOutcome, setLastOutcome] = useState<string | null>((lead.last_outcome as string) ?? null);
 
   // ── Other ──────────────────────────────────────────────────────────────────
   const [enriching, setEnriching] = useState(false);
+  const [liveLead,  setLiveLead]  = useState<Lead>(lead);
   const [notes,     setNotes]     = useState<string>((lead.notes as string) ?? "");
   const [saving,    setSaving]    = useState(false);
 
   // ── Typed lead fields ──────────────────────────────────────────────────────
-  // (declared before effects so auto-generate can read them)
-  const name        = lead.name        as string;
-  const vertical    = lead.vertical    as string;
-  const city        = lead.city        as string | null;
-  const googleRating= lead.google_rating         as number | null;
-  const reviewCount = lead.google_review_count   as number | null;
-  const phone       = lead.phone       as string | null;
-  const email       = (lead.email      as string | null) ?? (lead.emails_found as string[])?.[0] ?? null;
-  const emailsFound = lead.emails_found           as string[] | null;
-  const website     = lead.website     as string | null;
-  const address     = lead.address     as string | null;
-  const mapsUrl     = lead.google_maps_url        as string | null;
-  const techStack   = lead.tech_stack  as string[] | null;
-  const hasBooking  = lead.has_booking_system     as boolean | null;
-  const hasChat     = lead.has_live_chat          as boolean | null;
-  const enrichStatus= lead.enrichment_status      as string;
+  const name        = lead.name                       as string;
+  const vertical    = lead.vertical                   as string;
+  const city        = lead.city                       as string | null;
+  const googleRating= lead.google_rating              as number | null;
+  const reviewCount = lead.google_review_count        as number | null;
+  const phone       = lead.phone                      as string | null;
+  const email       = (lead.email as string | null) ?? (lead.emails_found as string[])?.[0] ?? null;
+  const emailsFound = lead.emails_found               as string[] | null;
+  const website     = lead.website                    as string | null;
+  const address     = lead.address                    as string | null;
+  const mapsUrl     = lead.google_maps_url            as string | null;
+  const techStack   = liveLead.tech_stack                 as string[] | null;
+  const hasBooking  = liveLead.has_booking_system         as boolean | null;
+  const hasChat     = liveLead.has_live_chat              as boolean | null;
+  const enrichStatus= (liveLead.enrichment_status         as string) ?? "pending";
+
+  // Gaps for the call guide (gap:* signals from enrichment)
+  const callGuideGaps = useMemo(() => {
+    const vSig = liveLead.vertical_signals as string[] | null;
+    const pSig = liveLead.pain_signals     as string[] | null;
+    return [...(vSig ?? []), ...(pSig ?? [])].filter(s => s.startsWith("gap:"));
+  }, [liveLead]);
 
   // ── Auto-generate opener on mount if none exists ───────────────────────────
   const autoGenRef = useRef(false);
   useEffect(() => {
-    if (autoGenRef.current) return;      // run once
+    if (autoGenRef.current) return;
     autoGenRef.current = true;
-    const hasOpener = !!(lead.opener_whatsapp || lead.opener_text);
-    if (!hasOpener) doOpener();          // silently generates in background
+    if (!(lead.opener_whatsapp || lead.opener_text)) doOpener();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -114,14 +562,14 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
     const iv = setInterval(() => {
       cur = Math.min(cur + step, target);
       setDisplayScore(cur);
-      if (cur >= target) { setScore(target); clearInterval(iv); }
+      if (cur >= target) clearInterval(iv);
     }, 20);
   }
 
   // ── Actions ────────────────────────────────────────────────────────────────
   async function doScore() {
     setScoring(true);
-    setLiveReasoning(""); setReasoning(""); setPainSignals([]); setDisplayScore(null); setScore(null);
+    setLiveReasoning(""); setReasoning(""); setPainSignals([]); setDisplayScore(null);
     try {
       const res = await fetch("/api/score", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -132,7 +580,8 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
         readSSE(res,
           (t) => setLiveReasoning((p) => p + t),
           (payload) => {
-            setLiveReasoning(""); setReasoning(payload.reasoning as string);
+            setLiveReasoning("");
+            setReasoning(payload.reasoning as string);
             setPainSignals((payload.pain_signals as string[]) ?? []);
             animateScore(payload.score as number);
             toast.success(`Scored ${payload.score}/100`);
@@ -159,9 +608,9 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
           (t) => setLiveRaw((p) => p + t),
           (payload) => {
             setLiveRaw("");
-            setWaOpener(payload.whatsapp as string ?? "");
-            setEmailOpener(payload.email   as string ?? "");
-            setEmailSubject(payload.subject as string ?? "");
+            setWaOpener((payload.whatsapp as string) ?? "");
+            setEmailOpener((payload.email   as string) ?? "");
+            setEmailSubject((payload.subject as string) ?? "");
             toast.success("Openers ready");
             resolve();
           },
@@ -174,12 +623,47 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
 
   async function doEnrich() {
     setEnriching(true);
-    const res = await fetch("/api/enrich", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ leadId: lead.id }),
-    });
-    setEnriching(false);
-    if (res.ok) toast.success("Enriched"); else toast.error("Enrichment failed");
+    try {
+      const res  = await fetch("/api/enrich", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: lead.id }),
+      });
+      const json = await res.json();
+      if (res.ok && json.enriched) {
+        const e = json.enriched as Record<string, unknown>;
+        setLiveLead((prev) => ({
+          ...prev,
+          enrichment_status:       "done",
+          enriched_at:             new Date().toISOString(),
+          emails_found:            e.emails,
+          email:                   (e.emails as string[])?.[0] ?? prev.email,
+          tech_stack:              e.techStack,
+          has_booking_system:      e.hasBookingSystem,
+          has_live_chat:           e.hasLiveChat,
+          has_online_payment:      e.hasOnlinePayment,
+          has_ssl:                 e.hasSsl,
+          social_links:            e.socialLinks,
+          whatsapp_number:         (e.whatsappNumber as string | null) ?? null,
+          digital_readiness_score: e.digitalReadinessScore,
+          opportunity_score:       e.opportunityScore,
+          phones_found:            (e.phones as string[])?.length > 0 ? e.phones : null,
+          vertical_signals:        (e.verticalSignals as string[])?.length > 0 ? e.verticalSignals : null,
+          year_established:        (e.yearEstablished as number | null) ?? null,
+          location_count:          e.locationCount,
+          staff_signal:            (e.staffSignal as string | null) ?? null,
+          certifications:          (e.certifications as string[])?.length > 0 ? e.certifications : null,
+        }));
+        toast.success("Lead enriched");
+        router.refresh();
+      } else {
+        setLiveLead((prev) => ({ ...prev, enrichment_status: "failed" }));
+        toast.error((json as { error?: string }).error ?? "Enrichment failed");
+      }
+    } catch {
+      toast.error("Enrichment failed — please retry");
+    } finally {
+      setEnriching(false);
+    }
   }
 
   async function saveNotes() {
@@ -197,7 +681,6 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
     const subject = channel === "email" ? emailSubject : undefined;
     if (!message) { toast.error("Generate an opener first"); return; }
 
-    // Build URL client-side — must open synchronously or iOS Safari blocks it
     let actionUrl: string | null = null;
     if (channel === "whatsapp" && phone) {
       const digits = phone.replace(/\D/g, "");
@@ -212,199 +695,206 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
       actionUrl = `mailto:${email}?${params.toString()}`;
     }
 
-    if (!actionUrl) { toast.error(channel === "whatsapp" ? "No phone number" : "No email address"); return; }
-
-    // Open synchronously (must be in same call stack as click to avoid popup block)
-    if (channel === "whatsapp") {
-      window.location.href = actionUrl; // wa.me handles redirect; stays in same tab
-    } else {
-      window.location.href = actionUrl; // mailto: opens Mail app in-place
+    if (!actionUrl) {
+      toast.error(channel === "whatsapp" ? "No phone number" : "No email address");
+      return;
     }
+
+    window.location.href = actionUrl;
 
     if (channel === "whatsapp") { setSentWa(true); toast.success("WhatsApp opened — tap Send"); }
     else                        { setSentEmail(true); toast.success("Mail app opened — tap Send"); }
 
-    const now = new Date().toISOString();
-    setContactedAt(now);
-
-    // Log the outreach in the background (don't await — user already left the page context)
+    setContactedAt(new Date().toISOString());
     fetch("/api/outreach", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ leadId: lead.id, channel, message, subject }),
-    }).catch(() => { /* silent — logging failure doesn't affect UX */ });
+    }).catch(() => {});
   }
 
   async function copyActive() {
-    const text = channel === "whatsapp" ? waOpener : emailOpener;
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(channel === "whatsapp" ? waOpener : emailOpener);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
 
-  // ── Derived display ────────────────────────────────────────────────────────
+  // ── Derived ────────────────────────────────────────────────────────────────
   const activeReasoning = liveReasoning || reasoning;
-  const scoreCardClass  = displayScore != null ? scoreBg(displayScore) : "border-zinc-800";
   const hasOpeners      = !!(waOpener || emailOpener);
   const isStreaming     = generating && !!liveRaw;
+  const activeOpener    = channel === "whatsapp" ? waOpener : emailOpener;
+  const canSend         = (channel === "whatsapp" && !!waOpener && !!phone)
+                        || (channel === "email"    && !!emailOpener && !!email);
 
-  // What to show in the message preview
-  const previewText = isStreaming
-    ? liveRaw
-    : channel === "whatsapp" ? waOpener : emailOpener;
-
-  const canSendWa    = channel === "whatsapp" && !!waOpener && !!phone;
-  const canSendEmail = channel === "email"     && !!emailOpener && !!email;
-  const canSend      = canSendWa || canSendEmail;
+  const scoreStyle = displayScore != null
+    ? { borderColor: scoreBorderColor(displayScore) }
+    : {};
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6 gap-2">
-        <div className="min-w-0">
-          <h1 className="text-lg md:text-xl font-bold text-zinc-100 truncate">{name}</h1>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-xs text-zinc-400">
-            <span>{vertical}</span>
-            {city != null && <><span>·</span><span>{city}</span></>}
-            {googleRating != null && (
-              <span className="flex items-center gap-1">
-                <span>·</span>
-                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                {googleRating} ({reviewCount?.toLocaleString()})
-              </span>
-            )}
-          </div>
-        </div>
-        <StageSelector leadId={lead.id as string} currentStage={lead.stage as string} />
-      </div>
+    <div className="flex min-h-full">
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* ── Left: main content ────────────────────────────────────────────── */}
+      <div className="flex-1 min-w-0 p-4 md:p-6 pb-24 md:pb-6 space-y-4">
 
-        {/* Contact */}
-        <Card className="lg:col-span-1">
-          <CardHeader><CardTitle>Contact</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            {phone != null && (
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-zinc-500 shrink-0" />
-                <a href={`tel:${phone}`} className="text-sm text-zinc-300 hover:text-zinc-100">{phone}</a>
-              </div>
-            )}
-            {(emailsFound != null && emailsFound.length > 0 || email != null) && (
-              <div className="flex items-start gap-2">
-                <Mail className="h-4 w-4 text-zinc-500 shrink-0 mt-0.5" />
-                <div className="min-w-0">
-                  {email != null && <p className="text-sm text-zinc-300 truncate">{email}</p>}
-                  {emailsFound?.filter((e) => e !== email).map((e) => (
-                    <p key={e} className="text-xs text-zinc-500 truncate">{e}</p>
-                  ))}
-                </div>
-              </div>
-            )}
-            {website != null && (
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-zinc-500 shrink-0" />
-                <a href={website} target="_blank" rel="noopener noreferrer"
-                  className="text-sm text-zinc-300 hover:text-zinc-100 truncate flex items-center gap-1">
-                  {new URL(website).hostname}<ExternalLink className="h-3 w-3 opacity-50 shrink-0" />
-                </a>
-              </div>
-            )}
-            {address != null && (
-              <div className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 text-zinc-500 shrink-0 mt-0.5" />
-                <span className="text-sm text-zinc-300">{address}</span>
-              </div>
-            )}
-            {mapsUrl != null && (
-              <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
-                View on Maps <ExternalLink className="h-3 w-3" />
-              </a>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* AI Score */}
-        <Card className={`lg:col-span-1 border ${scoreCardClass} transition-colors duration-500`}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>AI Score</CardTitle>
-              {displayScore != null && (
-                <span className={`text-2xl font-black tabular-nums ${scoreColor(displayScore)}`}>
-                  {displayScore}
+        {/* Header */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h1 className="text-lg md:text-xl font-bold truncate" style={{ color: "var(--text-1)" }}>
+              {name}
+            </h1>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-xs" style={{ color: "var(--text-3)" }}>
+              <span>{vertical}</span>
+              {city && <><span>·</span><span>{city}</span></>}
+              {googleRating != null && (
+                <span className="flex items-center gap-1">
+                  <span>·</span>
+                  <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                  {googleRating} ({reviewCount?.toLocaleString()})
                 </span>
               )}
             </div>
-          </CardHeader>
-          <CardContent>
-            {scoring && !activeReasoning && (
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
-                <Zap className="h-3.5 w-3.5 text-yellow-400 animate-pulse" /> Analysing…
-              </div>
-            )}
-            {activeReasoning && (
-              <p className="text-xs text-zinc-400 leading-relaxed mb-3">
-                {activeReasoning}
-                {scoring && <span className="inline-block w-0.5 h-3 bg-zinc-400 ml-0.5 animate-pulse" />}
-              </p>
-            )}
-            {!scoring && painSignals.length > 0 && (
-              <div>
-                <p className="text-xs text-zinc-500 mb-2 font-medium">Pain signals</p>
-                <div className="flex flex-wrap gap-1">
-                  {painSignals.map((s) => <Badge key={s} variant="red" className="text-xs">{s}</Badge>)}
+          </div>
+          <StageSelector leadId={lead.id as string} currentStage={lead.stage as string} />
+        </div>
+
+        {/* Top cards: Contact | AI Score | Enrichment */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+          {/* Contact */}
+          <Card>
+            <CardHeader><CardTitle>Contact</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {phone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 shrink-0" style={{ color: "var(--text-3)" }} />
+                  <a href={`tel:${phone}`} className="text-sm hover:underline" style={{ color: "var(--text-2)" }}>
+                    {phone}
+                  </a>
                 </div>
-              </div>
-            )}
-            {!scoring && displayScore == null && !activeReasoning && (
-              <div className="text-center py-4">
-                <Zap className="h-6 w-6 text-zinc-600 mx-auto mb-2" />
-                <p className="text-xs text-zinc-500">Not scored yet</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+              {(emailsFound?.length || email) && (
+                <div className="flex items-start gap-2">
+                  <Mail className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "var(--text-3)" }} />
+                  <div className="min-w-0">
+                    {email && <p className="text-sm truncate" style={{ color: "var(--text-2)" }}>{email}</p>}
+                    {emailsFound?.filter((e) => e !== email).map((e) => (
+                      <p key={e} className="text-xs truncate" style={{ color: "var(--text-3)" }}>{e}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {website && (
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 shrink-0" style={{ color: "var(--text-3)" }} />
+                  <a
+                    href={website} target="_blank" rel="noopener noreferrer"
+                    className="text-sm truncate flex items-center gap-1 hover:underline" style={{ color: "var(--text-2)" }}
+                  >
+                    {(() => { try { return new URL(website).hostname; } catch { return website; } })()}
+                    <ExternalLink className="h-3 w-3 opacity-50 shrink-0" />
+                  </a>
+                </div>
+              )}
+              {address && (
+                <div className="flex items-start gap-2">
+                  <MapPin className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "var(--text-3)" }} />
+                  <span className="text-sm" style={{ color: "var(--text-2)" }}>{address}</span>
+                </div>
+              )}
+              {mapsUrl && (
+                <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600">
+                  View on Maps <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Enrichment */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Enrichment</CardTitle>
-              {enrichStatus === "done"   ? <CheckCircle className="h-4 w-4 text-green-400" />
-               : enrichStatus === "failed" ? <AlertCircle className="h-4 w-4 text-red-400" />
-               : <Clock className="h-4 w-4 text-zinc-500" />}
-            </div>
-          </CardHeader>
-          <CardContent>
-            {enrichStatus === "done" ? (
-              <div className="space-y-2">
-                {hasBooking != null && (
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-500">Booking system</span>
-                    <Badge variant={hasBooking ? "green" : "red"}>{hasBooking ? "Yes" : "No"}</Badge>
-                  </div>
-                )}
-                {hasChat != null && (
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-500">Live chat</span>
-                    <Badge variant={hasChat ? "green" : "red"}>{hasChat ? "Yes" : "No"}</Badge>
-                  </div>
-                )}
-                {techStack != null && techStack.length > 0 && (
-                  <div>
-                    <p className="text-xs text-zinc-500 mb-1">Tech stack</p>
-                    <div className="flex flex-wrap gap-1">
-                      {techStack.map((t) => <Badge key={t} variant="outline" className="text-xs">{t}</Badge>)}
-                    </div>
-                  </div>
+          {/* AI Score */}
+          <Card style={scoreStyle}>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>AI Score</CardTitle>
+                {displayScore != null && (
+                  <span className={`text-2xl font-black tabular-nums ${scoreTextColor(displayScore)}`}>
+                    {displayScore}
+                  </span>
                 )}
               </div>
-            ) : <p className="text-xs text-zinc-500">Not enriched yet</p>}
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent>
+              {scoring && !activeReasoning && (
+                <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-3)" }}>
+                  <Zap className="h-3.5 w-3.5 text-yellow-400 animate-pulse" /> Analysing…
+                </div>
+              )}
+              {activeReasoning && (
+                <p className="text-xs leading-relaxed mb-3" style={{ color: "var(--text-2)" }}>
+                  {activeReasoning}
+                  {scoring && (
+                    <span className="inline-block w-0.5 h-3 ml-0.5 animate-pulse" style={{ background: "var(--text-2)" }} />
+                  )}
+                </p>
+              )}
+              {!scoring && painSignals.length > 0 && (
+                <div>
+                  <p className="text-xs mb-2 font-medium" style={{ color: "var(--text-3)" }}>Pain signals</p>
+                  <div className="flex flex-wrap gap-1">
+                    {painSignals.map((s) => <Badge key={s} variant="red" className="text-xs">{s}</Badge>)}
+                  </div>
+                </div>
+              )}
+              {!scoring && displayScore == null && !activeReasoning && (
+                <div className="text-center py-4">
+                  <Zap className="h-6 w-6 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
+                  <p className="text-xs" style={{ color: "var(--text-3)" }}>Not scored yet</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* ── Outreach card ── */}
-        <Card className="lg:col-span-3">
+          {/* Call Guide (replaces sparse Enrichment card after enrichment) */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>{enrichStatus === "done" ? "Call Guide" : "Enrichment"}</CardTitle>
+                {enriching
+                  ? <RefreshCw className="h-4 w-4 animate-spin" style={{ color: "var(--text-3)" }} />
+                  : enrichStatus === "done"
+                    ? <CheckCircle className="h-4 w-4 text-green-500" />
+                    : enrichStatus === "failed"
+                      ? <AlertCircle className="h-4 w-4 text-red-400" />
+                      : <Clock className="h-4 w-4" style={{ color: "var(--text-3)" }} />}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {enriching ? (
+                <div className="flex items-center gap-2 py-2 text-xs" style={{ color: "var(--text-3)" }}>
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Crawling website…
+                </div>
+              ) : enrichStatus === "done" ? (
+                <CallGuide
+                  vertical={vertical}
+                  dmName={liveLead.decision_maker_name as string | undefined}
+                  rawGaps={callGuideGaps}
+                />
+              ) : enrichStatus === "failed" ? (
+                <div className="text-center py-4 space-y-2">
+                  <AlertCircle className="h-5 w-5 mx-auto text-red-400" />
+                  <p className="text-xs text-red-500">Enrichment failed</p>
+                  <Button variant="ghost" size="sm" onClick={doEnrich} className="text-xs">
+                    Retry
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-xs" style={{ color: "var(--text-3)" }}>Not enriched yet</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ── Outreach ─────────────────────────────────────────────────────── */}
+        <Card>
           <CardHeader>
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <CardTitle>Outreach</CardTitle>
@@ -419,104 +909,124 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
                   size="sm"
                   onClick={doOpener}
                   loading={generating}
-                  className="bg-red-600 hover:bg-red-500 text-white"
+                  className="bg-amber-500 hover:bg-amber-400 text-black font-semibold"
                 >
                   <Zap className="h-3.5 w-3.5" />
-                  {hasOpeners ? "Regenerate" : "Generate Openers"}
+                  {hasOpeners ? "Regenerate" : "Generate"}
                 </Button>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            {/* Channel tab selector */}
+
+            {/* Channel tabs */}
             {(hasOpeners || isStreaming) && (
-              <div className="flex gap-1 mb-3 p-1 bg-zinc-900 rounded-lg w-fit">
-                <button
-                  onClick={() => setChannel("whatsapp")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                    channel === "whatsapp"
-                      ? "bg-green-600 text-white"
-                      : "text-zinc-400 hover:text-zinc-200"
-                  }`}
-                >
-                  <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
-                  {sentWa && <Check className="h-3 w-3" />}
-                </button>
-                <button
-                  onClick={() => setChannel("email")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                    channel === "email"
-                      ? "bg-blue-600 text-white"
-                      : "text-zinc-400 hover:text-zinc-200"
-                  }`}
-                >
-                  <Mail className="h-3.5 w-3.5" /> Email
-                  {sentEmail && <Check className="h-3 w-3" />}
-                </button>
-              </div>
-            )}
-
-            {/* Email subject line */}
-            {channel === "email" && emailSubject && (
-              <div className="mb-2 px-3 py-2 bg-zinc-900 rounded-md border border-zinc-700">
-                <span className="text-xs text-zinc-500 font-medium mr-2">Subject:</span>
-                <span className="text-xs text-zinc-200">{emailSubject}</span>
-              </div>
-            )}
-
-            {/* Message preview */}
-            {(previewText || isStreaming) && (
-              <div className="relative rounded-lg border border-zinc-700 bg-zinc-900/50 p-4 mb-3">
-                <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap">
-                  {previewText}
-                  {isStreaming && (
-                    <span className="inline-block w-0.5 h-4 bg-zinc-300 ml-0.5 animate-pulse" />
-                  )}
-                </p>
-                {!isStreaming && previewText && (
+              <div className="flex gap-1 mb-4 p-1 rounded-lg w-fit" style={{ background: "var(--bg-elevated)" }}>
+                {([
+                  { id: "whatsapp" as Channel, icon: <MessageCircle className="h-3.5 w-3.5" />, label: "WhatsApp", sent: sentWa,   active: "bg-green-600" },
+                  { id: "email"    as Channel, icon: <Mail          className="h-3.5 w-3.5" />, label: "Email",    sent: sentEmail, active: "bg-blue-600"  },
+                ] as { id: Channel; icon: React.ReactNode; label: string; sent: boolean; active: string }[]).map(({ id, icon, label, sent, active }) => (
                   <button
-                    onClick={copyActive}
-                    className="absolute top-3 right-3 text-zinc-500 hover:text-zinc-300 transition-colors"
+                    key={id}
+                    onClick={() => setChannel(id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      channel === id ? `${active} text-white` : "hover:opacity-70"
+                    }`}
+                    style={channel !== id ? { color: "var(--text-3)" } : {}}
                   >
-                    {copied ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
+                    {icon} {label}
+                    {sent && <Check className="h-3 w-3" />}
                   </button>
-                )}
+                ))}
               </div>
             )}
 
-            {/* No opener yet */}
+            {/* Subject line — editable input */}
+            {channel === "email" && (emailSubject || isStreaming) && (
+              <input
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                placeholder="Subject line…"
+                disabled={isStreaming}
+                className="w-full mb-3 rounded-md border px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
+                style={{
+                  background: "var(--bg-elevated)",
+                  borderColor: "var(--border)",
+                  color: "var(--text-1)",
+                }}
+              />
+            )}
+
+            {/* Message body */}
+            {isStreaming ? (
+              <div
+                className="rounded-lg border p-4 mb-4"
+                style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}
+              >
+                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text-1)" }}>
+                  {liveRaw}
+                  <span className="inline-block w-0.5 h-4 ml-0.5 animate-pulse" style={{ background: "var(--text-2)" }} />
+                </p>
+              </div>
+            ) : activeOpener ? (
+              <div className="relative mb-4">
+                <textarea
+                  value={activeOpener}
+                  onChange={(e) =>
+                    channel === "whatsapp" ? setWaOpener(e.target.value) : setEmailOpener(e.target.value)
+                  }
+                  rows={9}
+                  className="w-full rounded-lg border px-4 py-3 pr-10 text-sm leading-relaxed resize-y focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  style={{
+                    background: "var(--bg-elevated)",
+                    borderColor: "var(--border)",
+                    color: "var(--text-1)",
+                  }}
+                />
+                <button
+                  onClick={copyActive}
+                  className="absolute top-3 right-3 transition-colors"
+                  style={{ color: "var(--text-3)" }}
+                >
+                  {copied
+                    ? <Check className="h-3.5 w-3.5 text-green-500" />
+                    : <Copy className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+            ) : null}
+
+            {/* Generating placeholder */}
             {!hasOpeners && !isStreaming && (
-              <div className="text-center py-8 text-zinc-600">
+              <div className="text-center py-8" style={{ color: "var(--text-3)" }}>
                 <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-40 animate-pulse" />
-                <p className="text-sm">{generating ? "Writing personalised messages…" : "Generating messages for this business…"}</p>
+                <p className="text-sm">
+                  {generating ? "Writing personalised messages…" : "Generating messages for this business…"}
+                </p>
                 <p className="text-xs mt-1 opacity-60">Enriching first gives smarter, more specific copy</p>
               </div>
             )}
 
-            {/* Send button + contact warning */}
+            {/* Send button */}
             {hasOpeners && !isStreaming && (
               <div className="flex items-center gap-2 flex-wrap">
                 <Button
                   onClick={sendOutreach}
                   disabled={!canSend}
                   className={`${
-                    channel === "whatsapp"
-                      ? "bg-green-600 hover:bg-green-500"
-                      : "bg-blue-600 hover:bg-blue-500"
+                    channel === "whatsapp" ? "bg-green-600 hover:bg-green-500" : "bg-blue-600 hover:bg-blue-500"
                   } text-white`}
                 >
                   <Send className="h-3.5 w-3.5" />
                   {channel === "whatsapp" ? "Open in WhatsApp" : "Open in Mail"}
                 </Button>
-
                 {channel === "whatsapp" && !phone && (
-                  <p className="text-xs text-amber-400">No phone number — enrich first or add manually</p>
+                  <p className="text-xs text-amber-500">No phone number — enrich first or add manually</p>
                 )}
                 {channel === "email" && !email && (
-                  <p className="text-xs text-amber-400">No email found — enrich first or add manually</p>
+                  <p className="text-xs text-amber-500">No email found — enrich first or add manually</p>
                 )}
                 {canSend && (
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs" style={{ color: "var(--text-3)" }}>
                     {channel === "whatsapp"
                       ? "Opens WhatsApp with message pre-filled — you tap Send"
                       : "Opens Mail with subject & body — you tap Send"}
@@ -527,8 +1037,8 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
           </CardContent>
         </Card>
 
-        {/* Notes */}
-        <Card className="lg:col-span-3">
+        {/* ── Notes ────────────────────────────────────────────────────────── */}
+        <Card>
           <CardHeader><CardTitle>Notes</CardTitle></CardHeader>
           <CardContent>
             <textarea
@@ -536,7 +1046,12 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder="Call notes, follow-up reminders, context…"
-              className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+              className="w-full rounded-md border px-3 py-2 text-sm placeholder:opacity-40 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+              style={{
+                background: "var(--bg-elevated)",
+                borderColor: "var(--border)",
+                color: "var(--text-1)",
+              }}
             />
             <Button variant="outline" size="sm" onClick={saveNotes} loading={saving} className="mt-2">
               Save
@@ -544,15 +1059,23 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
           </CardContent>
         </Card>
 
-        {/* Outcome feedback */}
+        {/* ── Outcome feedback ──────────────────────────────────────────────── */}
         <LeadFeedbackPanel
           leadId={lead.id as string}
           contactedAt={contactedAt}
           existingOutcome={lastOutcome}
           onSaved={(outcome) => setLastOutcome(outcome)}
         />
-
       </div>
+
+      {/* ── Right: Business Intelligence (xl+ only) ────────────────────────── */}
+      <div
+        className="hidden xl:block w-80 shrink-0 sticky top-0 h-screen overflow-y-auto"
+        style={{ borderLeft: "1px solid var(--border)", background: "var(--bg-surface)" }}
+      >
+        <IntelPanel lead={liveLead} onEnrich={doEnrich} enriching={enriching} />
+      </div>
+
     </div>
   );
 }
