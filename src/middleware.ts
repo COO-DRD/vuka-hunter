@@ -141,6 +141,7 @@ function addSecurityHeaders(res: NextResponse): NextResponse {
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://maps.googleapis.com https://accounts.google.com https://api.stripe.com https://hooks.stripe.com https://*.clerk.accounts.dev https://*.4unter.dullugroup.co.ke https://clerk.io",
       "font-src 'self' https://fonts.gstatic.com",
       "frame-src https://js.stripe.com https://hooks.stripe.com https://*.clerk.accounts.dev https://*.4unter.dullugroup.co.ke https://challenges.cloudflare.com",
+      "worker-src blob: 'self'",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
