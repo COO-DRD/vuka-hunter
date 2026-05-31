@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 export function Card({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("rounded-xl border border-zinc-800 bg-zinc-900", className)} {...props}>
+    <div className={cn("rounded-xl border border-[var(--border)] bg-[var(--bg-surface)]", className)} {...props}>
       {children}
     </div>
   );
@@ -13,7 +13,7 @@ export function CardHeader({ className, children }: React.HTMLAttributes<HTMLDiv
 }
 
 export function CardTitle({ className, children }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn("text-sm font-semibold text-zinc-100", className)}>{children}</h3>;
+  return <h3 className={cn("text-sm font-semibold text-[var(--text-1)]", className)}>{children}</h3>;
 }
 
 export function CardContent({ className, children }: React.HTMLAttributes<HTMLDivElement>) {

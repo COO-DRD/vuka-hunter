@@ -126,12 +126,12 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
   const targetPlaceholder = TARGET_PLACEHOLDER[useCase]      ?? TARGET_PLACEHOLDER.other;
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center px-4 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ background: "var(--background)" }}>
       <div className="w-full max-w-xl">
 
         {/* Logo */}
         <div className="flex justify-center mb-10">
-          <HunterWordmark size="sm" />
+          <HunterWordmark size="sm" onLight />
         </div>
 
         {/* Progress dots */}
@@ -143,7 +143,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                 "rounded-full transition-all",
                 s === step   ? "h-2 w-6 bg-amber-500" :
                 s < step     ? "h-2 w-2 bg-amber-600"  :
-                               "h-2 w-2 bg-zinc-700"
+                               "h-2 w-2 bg-stone-300"
               )}
             />
           ))}
@@ -152,10 +152,10 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
         {/* ── Step 1: Role ── */}
         {step === 1 && (
           <div>
-            <h1 className="text-xl font-bold text-zinc-100 mb-1">
+            <h1 className="text-xl font-bold text-stone-900 mb-1">
               {isEditing ? "Update your profile" : "Welcome to 4unter"}
             </h1>
-            <p className="text-sm text-zinc-400 mb-6">What best describes you?</p>
+            <p className="text-sm text-stone-500 mb-6">What best describes you?</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {ROLES.map((r) => (
@@ -166,12 +166,12 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                     "text-left rounded-xl border p-4 transition-all",
                     useCase === r.value
                       ? "border-amber-500 bg-amber-500/10 ring-1 ring-amber-500/30"
-                      : "border-zinc-800 bg-zinc-900/40 hover:border-zinc-600"
+                      : "border-stone-200 bg-white hover:border-stone-300"
                   )}
                 >
                   <div className="text-2xl mb-2">{r.icon}</div>
-                  <p className="text-sm font-semibold text-zinc-100 mb-0.5">{r.label}</p>
-                  <p className="text-xs text-zinc-500 leading-snug">{r.desc}</p>
+                  <p className="text-sm font-semibold text-stone-900 mb-0.5">{r.label}</p>
+                  <p className="text-xs text-stone-400 leading-snug">{r.desc}</p>
                 </button>
               ))}
             </div>
@@ -187,14 +187,14 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
         {/* ── Step 2: About your business ── */}
         {step === 2 && (
           <div>
-            <h1 className="text-xl font-bold text-zinc-100 mb-1">Tell us about your business</h1>
-            <p className="text-sm text-zinc-400 mb-6">
+            <h1 className="text-xl font-bold text-stone-900 mb-1">Tell us about your business</h1>
+            <p className="text-sm text-stone-500 mb-6">
               This shapes how 4unter qualifies and scores leads for you.
             </p>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Business / organisation name *</label>
+                <label className="block text-xs text-stone-500 mb-1.5">Business / organisation name *</label>
                 <Input
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
@@ -203,7 +203,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Your name (used in outreach messages) *</label>
+                <label className="block text-xs text-stone-500 mb-1.5">Your name (used in outreach messages) *</label>
                 <Input
                   value={senderName}
                   onChange={(e) => setSenderName(e.target.value)}
@@ -211,13 +211,13 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">What do you do? <span className="text-zinc-600">(optional but improves scoring)</span></label>
+                <label className="block text-xs text-stone-500 mb-1.5">What do you do? <span className="text-stone-400">(optional but improves scoring)</span></label>
                 <textarea
                   value={orgDescription}
                   onChange={(e) => setOrgDescription(e.target.value)}
                   placeholder={descPlaceholder}
                   rows={3}
-                  className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
+                  className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
                 />
               </div>
             </div>
@@ -236,26 +236,26 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
         {/* ── Step 3: Ideal lead ── */}
         {step === 3 && (
           <div>
-            <h1 className="text-xl font-bold text-zinc-100 mb-1">Describe your ideal lead</h1>
-            <p className="text-sm text-zinc-400 mb-6">
+            <h1 className="text-xl font-bold text-stone-900 mb-1">Describe your ideal lead</h1>
+            <p className="text-sm text-stone-500 mb-6">
               4unter&apos;s AI scores leads against this — be specific about what matters to you.
             </p>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">What type of business are you looking for? *</label>
+                <label className="block text-xs text-stone-500 mb-1.5">What type of business are you looking for? *</label>
                 <textarea
                   value={targetDesc}
                   onChange={(e) => setTargetDesc(e.target.value)}
                   placeholder={targetPlaceholder}
                   rows={4}
                   autoFocus
-                  className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
+                  className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs text-zinc-400 mb-2">How will you reach out to leads?</label>
+                <label className="block text-xs text-stone-500 mb-2">How will you reach out to leads?</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {CHANNELS.map((c) => (
                     <button
@@ -264,8 +264,8 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                       className={cn(
                         "rounded-lg border py-2.5 text-sm font-medium transition-all",
                         channel === c.value
-                          ? "border-amber-500 bg-amber-500/10 text-amber-300"
-                          : "border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300"
+                          ? "border-amber-500 bg-amber-500/10 text-amber-600"
+                          : "border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700"
                       )}
                     >
                       {c.label}
@@ -289,8 +289,8 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
         {/* ── Step 4: Priority signals ── */}
         {step === 4 && (
           <div>
-            <h1 className="text-xl font-bold text-zinc-100 mb-1">What matters most?</h1>
-            <p className="text-sm text-zinc-400 mb-6">
+            <h1 className="text-xl font-bold text-stone-900 mb-1">What matters most?</h1>
+            <p className="text-sm text-stone-500 mb-6">
               Pick up to 4 signals. 4unter weights the AI score around these.
             </p>
 
@@ -306,28 +306,28 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                     className={cn(
                       "w-full text-left rounded-xl border px-4 py-3 transition-all flex items-start gap-3",
                       selected  ? "border-amber-500 bg-amber-500/10"
-                                : disabled ? "border-zinc-800/50 opacity-40 cursor-not-allowed"
-                                : "border-zinc-800 hover:border-zinc-600"
+                                : disabled ? "border-stone-200/50 opacity-40 cursor-not-allowed"
+                                : "border-stone-200 hover:border-stone-300"
                     )}
                   >
                     <div className={cn(
                       "mt-0.5 h-4 w-4 shrink-0 rounded border flex items-center justify-center",
-                      selected ? "border-amber-500 bg-amber-500" : "border-zinc-600"
+                      selected ? "border-amber-500 bg-amber-500" : "border-stone-300"
                     )}>
                       {selected && <Check className="h-2.5 w-2.5 text-white" />}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-zinc-200">{s.label}</p>
-                      <p className="text-xs text-zinc-500 mt-0.5">{s.desc}</p>
+                      <p className="text-sm font-medium text-stone-800">{s.label}</p>
+                      <p className="text-xs text-stone-400 mt-0.5">{s.desc}</p>
                     </div>
                   </button>
                 );
               })}
             </div>
 
-            <p className="text-xs text-zinc-600 mt-3">{signals.length}/4 selected</p>
+            <p className="text-xs text-stone-400 mt-3">{signals.length}/4 selected</p>
 
-            {error && <p className="text-xs text-red-400 mt-3">{error}</p>}
+            {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
 
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setStep(3)} className="gap-2">

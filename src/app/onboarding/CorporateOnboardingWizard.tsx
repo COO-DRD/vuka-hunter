@@ -9,7 +9,6 @@ import {
 import { cn } from "@/lib/utils";
 import { HunterWordmark } from "@/components/HunterLogo";
 
-// ── Reuse the same role/signal/channel constants ──────────────────────────────
 const ROLES = [
   { value: "agency",       label: "Agency / Consultant",     desc: "I sell services, software, or expertise to other businesses",          icon: "🏢" },
   { value: "manufacturer", label: "Manufacturer / Producer",  desc: "I make products and need buyers, retailers, or distributors",          icon: "🏭" },
@@ -71,7 +70,6 @@ export default function CorporateOnboardingWizard({
   const TOTAL_STEPS = 5;
   const [step, setStep]       = useState(1);
 
-  // Profile state
   const [useCase, setUseCase]               = useState(existing?.use_case ?? "");
   const [businessName, setBusinessName]     = useState(existing?.business_name ?? existing?.company_name ?? "");
   const [senderName, setSenderName]         = useState(existing?.sender_name ?? "");
@@ -80,16 +78,15 @@ export default function CorporateOnboardingWizard({
   const [channel, setChannel]               = useState(existing?.outreach_channel ?? "whatsapp");
   const [signals, setSignals]               = useState<string[]>(existing?.priority_signals ?? []);
 
-  // Invite state
-  const [inviteEmails, setInviteEmails] = useState<string[]>([""]);
-  const [inviting, setInviting]         = useState(false);
+  const [inviteEmails, setInviteEmails]   = useState<string[]>([""]);
+  const [inviting, setInviting]           = useState(false);
   const [inviteResults, setInviteResults] = useState<Array<{ email: string; status: string }>>([]);
 
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
 
   const seatLimit  = existing?.seat_limit ?? 5;
-  const maxInvites = Math.max(0, seatLimit - 1); // admin occupies 1 seat
+  const maxInvites = Math.max(0, seatLimit - 1);
 
   function toggleSignal(val: string) {
     setSignals((prev) =>
@@ -100,9 +97,7 @@ export default function CorporateOnboardingWizard({
   }
 
   function addInviteRow() {
-    if (inviteEmails.length < maxInvites) {
-      setInviteEmails((prev) => [...prev, ""]);
-    }
+    if (inviteEmails.length < maxInvites) setInviteEmails((prev) => [...prev, ""]);
   }
 
   function removeInviteRow(i: number) {
@@ -157,10 +152,9 @@ export default function CorporateOnboardingWizard({
         });
         const json = await res.json();
         if (res.ok) setInviteResults(json.results ?? []);
-      } catch { /* non-fatal — continue to dashboard */ }
+      } catch { /* non-fatal */ }
     }
 
-    // Redirect after a short moment so user sees results
     setTimeout(() => { window.location.assign("/dashboard"); }, 1500);
     setInviting(false);
   }
@@ -173,14 +167,17 @@ export default function CorporateOnboardingWizard({
   const descPlaceholder   = ORG_DESC_PLACEHOLDER[useCase]    ?? ORG_DESC_PLACEHOLDER.other;
   const targetPlaceholder = TARGET_PLACEHOLDER[useCase]      ?? TARGET_PLACEHOLDER.other;
 
+  // suppress unused variable warning — orgId kept in props for future API calls
+  void orgId;
+
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center px-4 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ background: "var(--background)" }}>
       <div className="w-full max-w-xl">
 
         {/* Logo + corporate badge */}
         <div className="flex items-center gap-3 justify-center mb-8">
-          <HunterWordmark size="sm" />
-          <span className="flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400">
+          <HunterWordmark size="sm" onLight />
+          <span className="flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-600">
             <Building2 className="h-3 w-3" /> Corporate
           </span>
         </div>
@@ -191,8 +188,8 @@ export default function CorporateOnboardingWizard({
             <div key={s} className={cn(
               "rounded-full transition-all",
               s === step  ? "h-2 w-6 bg-amber-500" :
-              s < step    ? "h-2 w-2 bg-amber-700"  :
-                            "h-2 w-2 bg-zinc-700"
+              s < step    ? "h-2 w-2 bg-amber-600"  :
+                            "h-2 w-2 bg-stone-300"
             )} />
           ))}
         </div>
@@ -200,25 +197,25 @@ export default function CorporateOnboardingWizard({
         {/* ── Step 1: Role ── */}
         {step === 1 && (
           <div>
-            <h1 className="text-xl font-bold text-zinc-100 mb-1">Welcome to 4unter</h1>
-            <p className="text-sm text-zinc-400 mb-6">What best describes your organisation?</p>
+            <h1 className="text-xl font-bold text-stone-900 mb-1">Welcome to 4unter</h1>
+            <p className="text-sm text-stone-500 mb-6">What best describes your organisation?</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {ROLES.map((r) => (
                 <button key={r.value} onClick={() => setUseCase(r.value)}
                   className={cn(
                     "text-left rounded-xl border p-4 transition-all",
                     useCase === r.value
-                      ? "border-amber-500 bg-amber-950/20 ring-1 ring-amber-500/40"
-                      : "border-zinc-800 bg-zinc-900/40 hover:border-zinc-600"
+                      ? "border-amber-500 bg-amber-500/10 ring-1 ring-amber-500/30"
+                      : "border-stone-200 bg-white hover:border-stone-300"
                   )}>
                   <div className="text-2xl mb-2">{r.icon}</div>
-                  <p className="text-sm font-semibold text-zinc-100 mb-0.5">{r.label}</p>
-                  <p className="text-xs text-zinc-500 leading-snug">{r.desc}</p>
+                  <p className="text-sm font-semibold text-stone-900 mb-0.5">{r.label}</p>
+                  <p className="text-xs text-stone-400 leading-snug">{r.desc}</p>
                 </button>
               ))}
             </div>
             <div className="mt-6 flex justify-end">
-              <Button onClick={() => setStep(2)} disabled={!canProceed1} className="gap-2 bg-amber-600 hover:bg-amber-700">
+              <Button onClick={() => setStep(2)} disabled={!canProceed1} className="gap-2">
                 Continue <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -228,29 +225,29 @@ export default function CorporateOnboardingWizard({
         {/* ── Step 2: Business details ── */}
         {step === 2 && (
           <div>
-            <h1 className="text-xl font-bold text-zinc-100 mb-1">Your organisation</h1>
-            <p className="text-sm text-zinc-400 mb-6">This shapes how 4unter qualifies and scores leads.</p>
+            <h1 className="text-xl font-bold text-stone-900 mb-1">Your organisation</h1>
+            <p className="text-sm text-stone-500 mb-6">This shapes how 4unter qualifies and scores leads.</p>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Organisation / company name *</label>
+                <label className="block text-xs text-stone-500 mb-1.5">Organisation / company name *</label>
                 <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)}
                   placeholder="e.g. Acme Kenya Ltd." autoFocus />
               </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Your name (team lead / admin) *</label>
+                <label className="block text-xs text-stone-500 mb-1.5">Your name (team lead / admin) *</label>
                 <Input value={senderName} onChange={(e) => setSenderName(e.target.value)}
                   placeholder="e.g. Jane Wanjiku" />
               </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">What does your organisation do? <span className="text-zinc-600">(optional)</span></label>
+                <label className="block text-xs text-stone-500 mb-1.5">What does your organisation do? <span className="text-stone-400">(optional)</span></label>
                 <textarea value={orgDescription} onChange={(e) => setOrgDescription(e.target.value)}
                   placeholder={descPlaceholder} rows={3}
-                  className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none" />
+                  className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none" />
               </div>
             </div>
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setStep(1)} className="gap-2"><ChevronLeft className="h-4 w-4" /> Back</Button>
-              <Button onClick={() => setStep(3)} disabled={!canProceed2} className="gap-2 bg-amber-600 hover:bg-amber-700">
+              <Button onClick={() => setStep(3)} disabled={!canProceed2} className="gap-2">
                 Continue <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -260,25 +257,25 @@ export default function CorporateOnboardingWizard({
         {/* ── Step 3: Ideal lead ── */}
         {step === 3 && (
           <div>
-            <h1 className="text-xl font-bold text-zinc-100 mb-1">Describe your ideal lead</h1>
-            <p className="text-sm text-zinc-400 mb-6">4unter&apos;s AI scores leads against this. Be specific.</p>
+            <h1 className="text-xl font-bold text-stone-900 mb-1">Describe your ideal lead</h1>
+            <p className="text-sm text-stone-500 mb-6">4unter&apos;s AI scores leads against this. Be specific.</p>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">What type of business are you looking for? *</label>
+                <label className="block text-xs text-stone-500 mb-1.5">What type of business are you looking for? *</label>
                 <textarea value={targetDesc} onChange={(e) => setTargetDesc(e.target.value)}
                   placeholder={targetPlaceholder} rows={4} autoFocus
-                  className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none" />
+                  className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none" />
               </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-2">How will your team reach out to leads?</label>
+                <label className="block text-xs text-stone-500 mb-2">How will your team reach out to leads?</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {CHANNELS.map((c) => (
                     <button key={c.value} onClick={() => setChannel(c.value)}
                       className={cn(
                         "rounded-lg border py-2.5 text-sm font-medium transition-all",
                         channel === c.value
-                          ? "border-amber-500 bg-amber-950/20 text-amber-300"
-                          : "border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300"
+                          ? "border-amber-500 bg-amber-500/10 text-amber-600"
+                          : "border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700"
                       )}>
                       {c.label}
                     </button>
@@ -288,7 +285,7 @@ export default function CorporateOnboardingWizard({
             </div>
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setStep(2)} className="gap-2"><ChevronLeft className="h-4 w-4" /> Back</Button>
-              <Button onClick={() => setStep(4)} disabled={!canProceed3} className="gap-2 bg-amber-600 hover:bg-amber-700">
+              <Button onClick={() => setStep(4)} disabled={!canProceed3} className="gap-2">
                 Continue <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -298,8 +295,8 @@ export default function CorporateOnboardingWizard({
         {/* ── Step 4: Priority signals ── */}
         {step === 4 && (
           <div>
-            <h1 className="text-xl font-bold text-zinc-100 mb-1">What matters most?</h1>
-            <p className="text-sm text-zinc-400 mb-6">Pick up to 4 signals. 4unter weights the AI score around these.</p>
+            <h1 className="text-xl font-bold text-stone-900 mb-1">What matters most?</h1>
+            <p className="text-sm text-stone-500 mb-6">Pick up to 4 signals. 4unter weights the AI score around these.</p>
             <div className="space-y-2">
               {SIGNALS.map((s) => {
                 const selected = signals.includes(s.value);
@@ -308,26 +305,26 @@ export default function CorporateOnboardingWizard({
                   <button key={s.value} onClick={() => toggleSignal(s.value)} disabled={disabled}
                     className={cn(
                       "w-full text-left rounded-xl border px-4 py-3 transition-all flex items-start gap-3",
-                      selected  ? "border-amber-500 bg-amber-950/20"
-                                : disabled ? "border-zinc-800/50 opacity-40 cursor-not-allowed"
-                                : "border-zinc-800 hover:border-zinc-600"
+                      selected  ? "border-amber-500 bg-amber-500/10"
+                                : disabled ? "border-stone-200/50 opacity-40 cursor-not-allowed"
+                                : "border-stone-200 hover:border-stone-300"
                     )}>
                     <div className={cn(
                       "mt-0.5 h-4 w-4 shrink-0 rounded border flex items-center justify-center",
-                      selected ? "border-amber-500 bg-amber-500" : "border-zinc-600"
+                      selected ? "border-amber-500 bg-amber-500" : "border-stone-300"
                     )}>
                       {selected && <Check className="h-2.5 w-2.5 text-white" />}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-zinc-200">{s.label}</p>
-                      <p className="text-xs text-zinc-500 mt-0.5">{s.desc}</p>
+                      <p className="text-sm font-medium text-stone-800">{s.label}</p>
+                      <p className="text-xs text-stone-400 mt-0.5">{s.desc}</p>
                     </div>
                   </button>
                 );
               })}
             </div>
-            <p className="text-xs text-zinc-600 mt-3">{signals.length}/4 selected</p>
-            {error && <p className="text-xs text-red-400 mt-3">{error}</p>}
+            <p className="text-xs text-stone-400 mt-3">{signals.length}/4 selected</p>
+            {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setStep(3)} className="gap-2"><ChevronLeft className="h-4 w-4" /> Back</Button>
               <Button
@@ -337,36 +334,35 @@ export default function CorporateOnboardingWizard({
                 }}
                 disabled={!canProceed4}
                 loading={loading}
-                className="gap-2 bg-amber-600 hover:bg-amber-700">
+                className="gap-2">
                 Continue <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
         )}
 
-        {/* ── Step 5: Team invites (corporate-only) ── */}
+        {/* ── Step 5: Team invites ── */}
         {step === 5 && (
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Users className="h-5 w-5 text-amber-400" />
-              <h1 className="text-xl font-bold text-zinc-100">Set up your team</h1>
+              <Users className="h-5 w-5 text-amber-500" />
+              <h1 className="text-xl font-bold text-stone-900">Set up your team</h1>
             </div>
-            <p className="text-sm text-zinc-400 mb-1">
-              Invite up to <span className="text-amber-400 font-medium">{maxInvites} team members</span> to your corporate workspace.
+            <p className="text-sm text-stone-500 mb-1">
+              Invite up to <span className="text-amber-600 font-medium">{maxInvites} team members</span> to your corporate workspace.
             </p>
-            <p className="text-xs text-zinc-600 mb-6">
+            <p className="text-xs text-stone-400 mb-6">
               Each invited member receives an email to set their password and join your account.
               You can skip this and invite from Settings later.
             </p>
 
-            {/* Seat indicator */}
-            <div className="rounded-lg border border-amber-900/40 bg-amber-950/10 px-4 py-3 mb-5 flex items-center gap-3">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 mb-5 flex items-center gap-3">
               <Shield className="h-4 w-4 text-amber-500 shrink-0" />
               <div>
-                <p className="text-xs font-medium text-amber-300">
+                <p className="text-xs font-medium text-amber-700">
                   {seatLimit} seat{seatLimit !== 1 ? "s" : ""} on your plan
                 </p>
-                <p className="text-xs text-zinc-500">1 used (you) · {maxInvites} available to invite</p>
+                <p className="text-xs text-stone-500">1 used (you) · {maxInvites} available to invite</p>
               </div>
             </div>
 
@@ -374,18 +370,18 @@ export default function CorporateOnboardingWizard({
               {inviteEmails.map((email, i) => (
                 <div key={i} className="flex gap-2 items-center">
                   <div className="relative flex-1">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400 pointer-events-none" />
                     <Input
                       type="email"
                       value={email}
                       onChange={(e) => updateInviteEmail(i, e.target.value)}
-                      placeholder={`team@company.com`}
+                      placeholder="team@company.com"
                       className="pl-9"
                     />
                   </div>
                   {inviteEmails.length > 1 && (
                     <button onClick={() => removeInviteRow(i)}
-                      className="text-zinc-600 hover:text-zinc-300 transition-colors p-1" type="button">
+                      className="text-stone-400 hover:text-stone-700 transition-colors p-1" type="button">
                       <X className="h-4 w-4" />
                     </button>
                   )}
@@ -395,20 +391,19 @@ export default function CorporateOnboardingWizard({
 
             {inviteEmails.length < maxInvites && (
               <button onClick={addInviteRow} type="button"
-                className="flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 transition-colors mb-5">
+                className="flex items-center gap-1.5 text-xs text-amber-600 hover:text-amber-700 transition-colors mb-5">
                 <UserPlus className="h-3.5 w-3.5" /> Add another member
               </button>
             )}
 
-            {/* Invite results */}
             {inviteResults.length > 0 && (
-              <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 mb-4 space-y-1">
+              <div className="rounded-lg border border-stone-200 bg-stone-50 p-3 mb-4 space-y-1">
                 {inviteResults.map((r) => (
                   <div key={r.email} className="flex items-center gap-2 text-xs">
                     {r.status === "invited"
-                      ? <Check className="h-3.5 w-3.5 text-green-400 shrink-0" />
-                      : <X className="h-3.5 w-3.5 text-zinc-500 shrink-0" />}
-                    <span className={r.status === "invited" ? "text-zinc-300" : "text-zinc-500"}>
+                      ? <Check className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                      : <X className="h-3.5 w-3.5 text-stone-400 shrink-0" />}
+                    <span className={r.status === "invited" ? "text-stone-700" : "text-stone-400"}>
                       {r.email} — {r.status === "invited" ? "invite sent" : r.status}
                     </span>
                   </div>
@@ -416,19 +411,17 @@ export default function CorporateOnboardingWizard({
               </div>
             )}
 
-            {error && <p className="text-xs text-red-400 mb-3">{error}</p>}
+            {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
 
             <div className="mt-4 flex justify-between">
               <Button variant="outline" onClick={() => setStep(4)} className="gap-2">
                 <ChevronLeft className="h-4 w-4" /> Back
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => window.location.assign("/dashboard")}
-                  className="border-zinc-700 text-zinc-400 hover:text-zinc-200">
+                <Button variant="outline" onClick={() => window.location.assign("/dashboard")}>
                   Skip for now
                 </Button>
-                <Button onClick={handleInviteAndFinish} loading={inviting}
-                  className="gap-2 bg-amber-600 hover:bg-amber-700">
+                <Button onClick={handleInviteAndFinish} loading={inviting} className="gap-2">
                   {inviteEmails.some((e) => e.trim()) ? "Send invites & continue" : "Continue"}
                   <ChevronRight className="h-4 w-4" />
                 </Button>

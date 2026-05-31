@@ -86,10 +86,44 @@ export async function POST(req: NextRequest) {
     case "email.created":
       break;
 
-    // ── Organization events ───────────────────────────────────────────
-    // We use a custom org system, not Clerk Orgs. Acknowledge and move on.
-    default:
+    // ── Organization events + Clerk Billing ─────────────────────────
+    // We use a custom org system, not Clerk Orgs. Billing events are handled
+    // here via string comparison because the SDK union type may lag behind
+    // Clerk's event catalogue.
+    default: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const evtType = (evt as any).type as string;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data    = (evt as any).data ?? {};
+
+      if (
+        evtType === "billing.subscription.created" ||
+        evtType === "billing.subscription.updated" ||
+        evtType === "subscription.created" ||
+        evtType === "subscription.updated"
+      ) {
+        const clerkUserId: string = data.subscriber_id ?? data.user_id ?? "";
+        if (clerkUserId) {
+          const planSlug: string = (data.plan?.slug ?? data.plan?.name ?? "").toLowerCase();
+          const isTeam = planSlug === "team" || planSlug.includes("team");
+          await db.from("hunter_orgs").update({
+            subscription_status: data.status ?? "active",
+            subscribed_plan:     planSlug || (isTeam ? "team" : "solo"),
+            account_type:        isTeam ? "corporate" : "individual",
+            seat_limit:          isTeam ? 10 : 1,
+          }).eq("clerk_id", clerkUserId);
+        }
+      } else if (
+        evtType === "billing.subscription.deleted" ||
+        evtType === "subscription.deleted"
+      ) {
+        const clerkUserId: string = data.subscriber_id ?? data.user_id ?? "";
+        if (clerkUserId) {
+          await db.from("hunter_orgs").update({ subscription_status: "cancelled" }).eq("clerk_id", clerkUserId);
+        }
+      }
       break;
+    }
   }
 
   return new Response("OK", { status: 200 });

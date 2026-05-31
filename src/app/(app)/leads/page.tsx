@@ -202,7 +202,7 @@ export default function LeadsPage() {
           </div>
           <button
             onClick={fetchLeads}
-            className="flex items-center justify-center h-8 w-8 rounded-md border transition-colors hover:bg-white/5"
+            className="flex items-center justify-center h-8 w-8 rounded-md border transition-colors hover:bg-stone-100"
             style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
           >
             <RefreshCw className="h-3.5 w-3.5" />
@@ -313,7 +313,7 @@ export default function LeadsPage() {
                   key={lead.id}
                   className={cn(
                     "transition-colors cursor-pointer",
-                    selected.has(lead.id) ? "bg-amber-500/5" : "hover:bg-white/[0.025]"
+                    selected.has(lead.id) ? "bg-amber-500/8" : "hover:bg-stone-50"
                   )}
                   style={{ borderBottom: "1px solid var(--border)" }}
                   onClick={() => toggleOne(lead.id)}

@@ -6,11 +6,11 @@ type Variant = "default" | "ghost" | "outline" | "destructive" | "link";
 type Size = "sm" | "md" | "lg" | "icon";
 
 const variants: Record<Variant, string> = {
-  default:     "bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-500 text-white shadow-sm shadow-amber-900/30",
-  ghost:       "hover:bg-zinc-800 text-zinc-300 hover:text-zinc-100",
-  outline:     "border border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600 text-zinc-300",
-  destructive: "bg-red-900 hover:bg-red-800 text-red-100",
-  link:        "underline-offset-4 hover:underline text-zinc-400 hover:text-zinc-100 p-0",
+  default:     "bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-500 text-white shadow-sm shadow-amber-900/20",
+  ghost:       "hover:bg-stone-100 text-stone-500 hover:text-stone-900",
+  outline:     "border border-stone-300 hover:bg-stone-100 hover:border-stone-400 text-stone-600",
+  destructive: "bg-red-600 hover:bg-red-500 text-white",
+  link:        "underline-offset-4 hover:underline text-stone-500 hover:text-stone-900 p-0",
 };
 
 const sizes: Record<Size, string> = {
@@ -32,7 +32,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center gap-2 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-950 disabled:opacity-50 disabled:pointer-events-none",
+        "inline-flex items-center justify-center gap-2 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--background)] disabled:opacity-50 disabled:pointer-events-none",
         variants[variant],
         sizes[size],
         className

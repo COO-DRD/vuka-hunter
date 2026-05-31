@@ -47,7 +47,7 @@ function NavItem({ href, icon: Icon, label, active }: {
         "border-l-2",
         active
           ? "border-amber-500 bg-amber-500/8 text-amber-300"
-          : "border-transparent text-[--text-3] hover:text-[--text-1] hover:bg-white/5"
+          : "border-transparent text-[--text-3] hover:text-[--text-1] hover:bg-stone-100"
       )}
     >
       <Icon className={cn("h-[15px] w-[15px] shrink-0", active ? "text-amber-400" : "")} />
@@ -69,7 +69,7 @@ export function Sidebar({ email }: { email: string | null }) {
     >
       {/* Logo */}
       <div className="flex items-center px-4 py-[18px]" style={{ borderBottom: "1px solid var(--border)" }}>
-        <HunterWordmark size="sm" />
+        <HunterWordmark size="sm" onLight />
       </div>
 
       {/* Nav sections */}
@@ -121,7 +121,7 @@ export function Sidebar({ email }: { email: string | null }) {
         </div>
         <button
           onClick={() => signOut(() => router.push("/sign-in"))}
-          className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors hover:bg-white/5"
+          className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors hover:bg-stone-100"
           style={{ color: "var(--text-3)" }}
         >
           <LogOut className="h-3.5 w-3.5 shrink-0" />

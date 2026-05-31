@@ -65,7 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
           <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
         </head>
-        <body className="min-h-full bg-zinc-950 text-zinc-100 antialiased">
+        <body className="min-h-full antialiased" style={{ background: "var(--background)", color: "var(--text-1)" }}>
           {children}
           <Toaster theme="dark" richColors position="top-center" />
           <Analytics />

@@ -112,11 +112,14 @@ export async function resolveOrgId(clerkUserId: string): Promise<string> {
     .maybeSingle();
   if (member) return member.org_id;
 
-  // Webhook may not have fired yet — create the org row now
+  // Webhook may not have fired yet — create the org row now.
+  // name is NOT NULL with no default; use clerkUserId as placeholder
+  // (onboarding will overwrite it with the real business name).
   const orgId = crypto.randomUUID();
   await db.from("hunter_orgs").insert({
     id:               orgId,
     clerk_id:         clerkUserId,
+    name:             clerkUserId,
     trial_started_at: new Date().toISOString(),
     trial_ends_at:    new Date(Date.now() + 7 * 86400000).toISOString(),
   });

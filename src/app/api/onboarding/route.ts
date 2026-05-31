@@ -1,5 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser, resolveOrgId } from "@/lib/auth";
+import { getUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -20,10 +20,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Business name, your name, and role are required." }, { status: 400 });
   }
 
-  const orgId = await resolveOrgId(user.id);
   const db = createSupabaseServiceClient();
-  await db.from("hunter_orgs").upsert({
-    id:                  orgId,
+
+  // Look up org by clerk_id — bypasses resolveOrgId so clerk_id is always set on the row
+  const { data: existingOrg } = await db
+    .from("hunter_orgs")
+    .select("id")
+    .eq("clerk_id", user.id)
+    .maybeSingle();
+
+  const profileFields = {
     name:                businessName.trim(),
     business_name:       businessName.trim(),
     sender_name:         senderName.trim(),
@@ -33,8 +39,20 @@ export async function POST(req: NextRequest) {
     priority_signals:    prioritySignals ?? [],
     outreach_channel:    outreachChannel ?? "whatsapp",
     onboarding_complete: true,
-    // Never overwrite plan/trial fields set during signup
-  }, { onConflict: "id" });
+  };
+
+  if (existingOrg) {
+    await db.from("hunter_orgs").update(profileFields).eq("id", existingOrg.id);
+  } else {
+    // Webhook hasn't fired yet — create the row with the full profile now
+    await db.from("hunter_orgs").insert({
+      id:               crypto.randomUUID(),
+      clerk_id:         user.id,
+      trial_started_at: new Date().toISOString(),
+      trial_ends_at:    new Date(Date.now() + 7 * 86400000).toISOString(),
+      ...profileFields,
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

@@ -57,12 +57,12 @@ export default function PipelinePage() {
   return (
     <div className="p-6 h-full">
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-zinc-100">Pipeline</h1>
-        <p className="text-sm text-zinc-400 mt-0.5">Drag and drop leads between stages</p>
+        <h1 className="text-xl font-bold text-stone-900">Pipeline</h1>
+        <p className="text-sm text-stone-500 mt-0.5">Drag and drop leads between stages</p>
       </div>
 
       {loading ? (
-        <div className="text-sm text-zinc-500 py-12 text-center">Loading…</div>
+        <div className="text-sm text-stone-400 py-12 text-center">Loading…</div>
       ) : (
         <div className="flex gap-4 overflow-x-auto pb-4 h-full">
           {STAGES.map((stage) => {
@@ -77,8 +77,8 @@ export default function PipelinePage() {
                 {/* Column header */}
                 <div className="flex items-center gap-2 mb-3 px-1">
                   <span className={`h-2.5 w-2.5 rounded-full ${stage.color}`} />
-                  <span className="text-sm font-medium text-zinc-300">{stage.label}</span>
-                  <span className="ml-auto text-xs text-zinc-500 bg-zinc-800 rounded-full px-2 py-0.5">
+                  <span className="text-sm font-medium text-stone-700">{stage.label}</span>
+                  <span className="ml-auto text-xs text-stone-400 bg-stone-100 rounded-full px-2 py-0.5">
                     {stageLeads.length}
                   </span>
                 </div>
@@ -90,34 +90,34 @@ export default function PipelinePage() {
                       key={lead.id}
                       draggable
                       onDragStart={(e) => handleDragStart(e, lead.id)}
-                      className={`rounded-lg border border-zinc-800 bg-zinc-900 p-3 cursor-grab active:cursor-grabbing hover:border-zinc-700 transition-all ${dragging === lead.id ? "opacity-50" : ""}`}
+                      className={`rounded-lg border border-stone-200 bg-white p-3 cursor-grab active:cursor-grabbing hover:border-stone-300 shadow-sm transition-all ${dragging === lead.id ? "opacity-50" : ""}`}
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <Link href={`/leads/${lead.id}`} className="text-sm font-medium text-zinc-200 hover:text-zinc-100 line-clamp-2 flex-1">
+                        <Link href={`/leads/${lead.id}`} className="text-sm font-medium text-stone-800 hover:text-stone-950 line-clamp-2 flex-1">
                           {lead.name}
                         </Link>
                         {lead.score !== null && (
                           <span className={`text-xs font-bold ml-2 shrink-0 ${
-                            lead.score >= 70 ? "text-green-400" :
-                            lead.score >= 40 ? "text-yellow-400" : "text-red-400"
+                            lead.score >= 70 ? "text-green-600" :
+                            lead.score >= 40 ? "text-yellow-600" : "text-stone-400"
                           }`}>{lead.score}</span>
                         )}
                       </div>
-                      <p className="text-xs text-zinc-500 mb-2">{lead.vertical} · {lead.city}</p>
+                      <p className="text-xs text-stone-400 mb-2">{lead.vertical} · {lead.city}</p>
                       <div className="flex items-center gap-2">
                         {lead.google_rating && (
-                          <span className="flex items-center gap-0.5 text-xs text-zinc-500">
-                            <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                          <span className="flex items-center gap-0.5 text-xs text-stone-400">
+                            <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
                             {lead.google_rating}
                           </span>
                         )}
-                        {lead.phone && <Phone className="h-3 w-3 text-zinc-600" />}
-                        {lead.website && <Globe className="h-3 w-3 text-zinc-600" />}
+                        {lead.phone && <Phone className="h-3 w-3 text-stone-300" />}
+                        {lead.website && <Globe className="h-3 w-3 text-stone-300" />}
                       </div>
                     </div>
                   ))}
                   {stageLeads.length === 0 && (
-                    <div className="rounded-lg border border-dashed border-zinc-800 py-8 text-center text-xs text-zinc-600">
+                    <div className="rounded-lg border border-dashed border-stone-200 py-8 text-center text-xs text-stone-400">
                       Drop here
                     </div>
                   )}

@@ -44,15 +44,15 @@ export default async function SettingsPage() {
   const trialEnd      = org?.trial_ends_at ? new Date(org.trial_ends_at) : null;
   const trialDaysLeft = trialEnd ? Math.max(0, Math.ceil((trialEnd.getTime() - Date.now()) / 86400000)) : 0;
   const isTrialing    = org?.subscription_status === "trialing";
-  const planLabels: Record<string, string> = { trial: "Free Trial", starter: "Starter", growth: "Growth", enterprise: "Enterprise" };
+  const planLabels: Record<string, string> = { trial: "Free Trial", solo: "Solo", team: "Team", starter: "Starter", growth: "Growth", enterprise: "Enterprise" };
   const planLabel = planLabels[org?.subscribed_plan ?? "trial"] ?? "Free Trial";
 
   const statusColour: Record<string, string> = {
-    trialing: "text-amber-400 bg-amber-500/10 border-amber-500/20",
-    active:   "text-green-400 bg-green-500/10 border-green-500/20",
-    past_due: "text-red-400 bg-red-500/10 border-red-500/20",
-    cancelled:"text-zinc-400 bg-zinc-500/10 border-zinc-700",
-    unpaid:   "text-red-400 bg-red-500/10 border-red-500/20",
+    trialing: "text-amber-600 bg-amber-50 border-amber-200",
+    active:   "text-green-600 bg-green-50 border-green-200",
+    past_due: "text-red-600 bg-red-50 border-red-200",
+    cancelled:"text-stone-500 bg-stone-100 border-stone-200",
+    unpaid:   "text-red-600 bg-red-50 border-red-200",
   };
   const statusLabel: Record<string, string> = {
     trialing: "Trial", active: "Active", past_due: "Past due",
@@ -63,8 +63,8 @@ export default async function SettingsPage() {
   return (
     <div className="p-6 max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-zinc-100">Settings</h1>
-        <p className="text-sm text-zinc-400 mt-0.5">Account, compliance &amp; preferences</p>
+        <h1 className="text-xl font-bold text-stone-900">Settings</h1>
+        <p className="text-sm text-stone-500 mt-0.5">Account, compliance &amp; preferences</p>
       </div>
 
       <MobileSignOut />
@@ -73,7 +73,7 @@ export default async function SettingsPage() {
       <Card className="mb-4">
         <CardHeader><CardTitle>Enrichment Mode</CardTitle></CardHeader>
         <CardContent>
-          <p className="text-xs text-zinc-500 mb-4">
+          <p className="text-xs text-stone-400 mb-4">
             Pick your sales context. 4unter scores leads and writes outreach copy tuned for this use case.
           </p>
           <EnrichmentModeSelector current={org?.enrichment_mode ?? "general"} />
@@ -94,17 +94,17 @@ export default async function SettingsPage() {
         <CardContent>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-lg font-bold text-zinc-100">{planLabel}</p>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <p className="text-lg font-bold text-stone-900">{planLabel}</p>
+              <p className="text-xs text-stone-400 mt-0.5">
                 {isCorporate ? `${org?.seat_limit ?? 5} seats · ${org?.seats_used ?? 1} in use` : "Individual account"}
               </p>
             </div>
             {isTrialing && trialEnd && (
               <div className="text-right">
-                <p className={`text-sm font-semibold ${trialDaysLeft <= 2 ? "text-red-400" : "text-amber-400"}`}>
+                <p className={`text-sm font-semibold ${trialDaysLeft <= 2 ? "text-red-600" : "text-amber-600"}`}>
                   {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left
                 </p>
-                <p className="text-xs text-zinc-600 mt-0.5">
+                <p className="text-xs text-stone-400 mt-0.5">
                   Trial ends {trialEnd.toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
                 </p>
               </div>
@@ -112,13 +112,13 @@ export default async function SettingsPage() {
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-3 text-sm">
-              <Infinity className="h-4 w-4 text-zinc-500 shrink-0" />
-              <span className="text-zinc-400 w-28 shrink-0">Credits</span>
-              <span className="text-zinc-200">Unlimited · {creditsUsed.toLocaleString()} used</span>
+              <Infinity className="h-4 w-4 text-stone-400 shrink-0" />
+              <span className="text-stone-500 w-28 shrink-0">Credits</span>
+              <span className="text-stone-800">Unlimited · {creditsUsed.toLocaleString()} used</span>
             </div>
           </div>
           {isTrialing && (
-            <div className="mt-4 rounded-lg border border-amber-900/40 bg-amber-950/10 px-4 py-3 text-xs text-amber-400">
+            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
               After your trial, plans start at <span className="font-semibold">KES 5,000/month</span> for corporate
               or <span className="font-semibold">KES 2,500/month</span> for individual.
               Upgrade any time — contact <span className="font-medium">billing@dullugroup.co.ke</span>
@@ -132,12 +132,12 @@ export default async function SettingsPage() {
         <CardHeader><CardTitle>Account</CardTitle></CardHeader>
         <CardContent>
           <div className="flex items-center gap-4 mb-5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-600/20 border border-red-600/30 text-lg font-bold text-red-400">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-500/10 border border-amber-200 text-lg font-bold text-amber-600">
               {initial}
             </div>
             <div>
-              <p className="text-sm font-semibold text-zinc-100">{user.email}</p>
-              <p className="text-xs text-zinc-500 mt-0.5 capitalize">
+              <p className="text-sm font-semibold text-stone-900">{user.email}</p>
+              <p className="text-xs text-stone-400 mt-0.5 capitalize">
                 {isCorporate ? "Corporate admin" : "Individual"} · {org?.name}
               </p>
             </div>
@@ -151,15 +151,15 @@ export default async function SettingsPage() {
             </SettingRow>
             <SettingRow icon={BadgeCheck} label="Email verified">
               {org?.email_verified_at
-                ? <span className="text-green-400">Verified {new Date(org.email_verified_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</span>
-                : <span className="text-green-400">Verified</span>
+                ? <span className="text-green-600">Verified {new Date(org.email_verified_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</span>
+                : <span className="text-green-600">Verified</span>
               }
             </SettingRow>
             {org?.operating_county && (
               <SettingRow icon={MapPin} label="County">{org.operating_county}{org.operating_address ? ` · ${org.operating_address}` : ""}</SettingRow>
             )}
             <SettingRow icon={Hash} label="User ID">
-              <span className="font-mono text-xs text-zinc-500">{user.id}</span>
+              <span className="font-mono text-xs text-stone-400">{user.id}</span>
             </SettingRow>
           </div>
         </CardContent>
@@ -170,7 +170,7 @@ export default async function SettingsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Business Profile</CardTitle>
-            <Link href="/onboarding" className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors">
+            <Link href="/onboarding" className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-700 transition-colors">
               <Pencil className="h-3 w-3" /> Edit
             </Link>
           </div>
@@ -181,19 +181,19 @@ export default async function SettingsPage() {
             <SettingRow icon={Mail} label="Sender name">{org?.sender_name || "—"}</SettingRow>
             {org?.org_description && (
               <SettingRow icon={Zap} label="What you do">
-                <span className="text-zinc-400 leading-relaxed">{org.org_description}</span>
+                <span className="text-stone-500 leading-relaxed">{org.org_description}</span>
               </SettingRow>
             )}
             {org?.priority_signals?.length > 0 && (
               <SettingRow icon={ShieldCheck} label="Signals">
-                <span className="text-zinc-400">{(org.priority_signals as string[]).join(", ")}</span>
+                <span className="text-stone-500">{(org.priority_signals as string[]).join(", ")}</span>
               </SettingRow>
             )}
           </div>
           {!org?.use_case && (
-            <div className="mt-4 rounded-lg border border-zinc-700 bg-zinc-900/40 px-4 py-3 text-xs text-zinc-500">
+            <div className="mt-4 rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-xs text-stone-500">
               Profile not set up yet.{" "}
-              <Link href="/onboarding" className="text-amber-400 hover:text-amber-300">Complete setup →</Link>
+              <Link href="/onboarding" className="text-amber-600 hover:text-amber-500">Complete setup →</Link>
             </div>
           )}
         </CardContent>
@@ -205,7 +205,7 @@ export default async function SettingsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Team</CardTitle>
-              <Link href="/upgrade" className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 transition-colors">
+              <Link href="/upgrade" className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-500 transition-colors">
                 <Users className="h-3 w-3" /> Upgrade seats
               </Link>
             </div>
@@ -221,12 +221,12 @@ export default async function SettingsPage() {
         </Card>
       )}
 
-      {/* ── Compliance (KRA PIN + company reg — post-signup) ── */}
+      {/* ── Compliance ── */}
       {isCorporate && (
         <Card className="mb-4">
           <CardHeader><CardTitle>Billing &amp; Compliance</CardTitle></CardHeader>
           <CardContent>
-            <p className="text-xs text-zinc-500 mb-4">
+            <p className="text-xs text-stone-400 mb-4">
               Required for tax-compliant invoicing. KRA PIN appears on all receipts issued to your organisation.
               Company registration number is used for enterprise contract verification.
             </p>
@@ -243,17 +243,17 @@ export default async function SettingsPage() {
       <Card className="mb-4">
         <CardHeader><CardTitle>Data &amp; Privacy</CardTitle></CardHeader>
         <CardContent>
-          <p className="text-xs text-zinc-500 mb-4 leading-relaxed">
+          <p className="text-xs text-stone-400 mb-4 leading-relaxed">
             Your data is processed by Dullu Digital under the{" "}
-            <span className="text-zinc-300">Kenya Data Protection Act 2019</span>.
+            <span className="text-stone-700">Kenya Data Protection Act 2019</span>.
             To exercise your rights (access, correction, erasure, portability), contact{" "}
-            <a href="mailto:privacy@dullugroup.co.ke" className="text-amber-400 hover:text-amber-300">
+            <a href="mailto:privacy@dullugroup.co.ke" className="text-amber-600 hover:text-amber-500">
               privacy@dullugroup.co.ke
             </a>.
           </p>
           {consents && consents.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-zinc-400 mb-2">Consent record</p>
+              <p className="text-xs font-medium text-stone-500 mb-2">Consent record</p>
               {consents.map((c) => {
                 const labels: Record<string, string> = {
                   terms_of_service:                "Terms of Service",
@@ -264,10 +264,10 @@ export default async function SettingsPage() {
                   marketing_communications:        "Marketing communications",
                 };
                 return (
-                  <div key={`${c.consent_type}-${c.accepted_at}`} className="flex items-center gap-3 text-xs text-zinc-500">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                  <div key={`${c.consent_type}-${c.accepted_at}`} className="flex items-center gap-3 text-xs text-stone-400">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
                     <span className="flex-1">{labels[c.consent_type] ?? c.consent_type}</span>
-                    <span className="text-zinc-700 shrink-0">
+                    <span className="text-stone-300 shrink-0">
                       {new Date(c.accepted_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
                     </span>
                   </div>
@@ -283,7 +283,7 @@ export default async function SettingsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Usage Policy</CardTitle>
-            <Link href="/terms" target="_blank" className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+            <Link href="/terms" target="_blank" className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 transition-colors">
               Full terms <ExternalLink className="h-3 w-3 ml-1" />
             </Link>
           </div>
@@ -291,7 +291,7 @@ export default async function SettingsPage() {
         <CardContent>
           <div className="space-y-4">
             <div>
-              <p className="text-xs font-semibold text-green-400 mb-2 flex items-center gap-1.5">
+              <p className="text-xs font-semibold text-green-600 mb-2 flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5" /> Permitted
               </p>
               <div className="space-y-1.5">
@@ -300,14 +300,14 @@ export default async function SettingsPage() {
                   "Market research and competitive intelligence",
                   "Importing and managing your own lead lists",
                 ].map((item) => (
-                  <div key={item} className="flex items-start gap-2 text-xs text-zinc-400">
-                    <CheckCircle2 className="h-3 w-3 text-green-600 shrink-0 mt-0.5" />{item}
+                  <div key={item} className="flex items-start gap-2 text-xs text-stone-500">
+                    <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0 mt-0.5" />{item}
                   </div>
                 ))}
               </div>
             </div>
-            <div className="border-t border-zinc-800 pt-4">
-              <p className="text-xs font-semibold text-red-400 mb-2 flex items-center gap-1.5">
+            <div className="border-t border-stone-200 pt-4">
+              <p className="text-xs font-semibold text-red-500 mb-2 flex items-center gap-1.5">
                 <XCircle className="h-3.5 w-3.5" /> Not Permitted
               </p>
               <div className="space-y-1.5">
@@ -317,15 +317,15 @@ export default async function SettingsPage() {
                   "Targeting private individuals — B2B entities only",
                   "Creating multiple accounts to circumvent limits",
                 ].map((item) => (
-                  <div key={item} className="flex items-start gap-2 text-xs text-zinc-400">
-                    <XCircle className="h-3 w-3 text-red-700 shrink-0 mt-0.5" />{item}
+                  <div key={item} className="flex items-start gap-2 text-xs text-stone-500">
+                    <XCircle className="h-3 w-3 text-red-400 shrink-0 mt-0.5" />{item}
                   </div>
                 ))}
               </div>
             </div>
           </div>
           {org?.terms_accepted_at && (
-            <p className="mt-4 text-xs text-zinc-600">
+            <p className="mt-4 text-xs text-stone-400">
               <FileText className="h-3 w-3 inline mr-1" />
               Terms accepted{" "}
               {new Date(org.terms_accepted_at).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
@@ -346,21 +346,21 @@ export default async function SettingsPage() {
       <Card className="mb-4">
         <CardHeader><CardTitle>API Access</CardTitle></CardHeader>
         <CardContent>
-          <p className="text-sm text-zinc-500 mb-3">REST API for integrating 4unter with your own tools.</p>
-          <div className="rounded-md border border-zinc-700 bg-zinc-950 px-4 py-3 font-mono text-xs text-zinc-500">
+          <p className="text-sm text-stone-400 mb-3">REST API for integrating 4unter with your own tools.</p>
+          <div className="rounded-md border border-stone-200 bg-stone-50 px-4 py-3 font-mono text-xs text-stone-400">
             Available in full release
           </div>
         </CardContent>
       </Card>
 
       {/* ── Danger zone ── */}
-      <Card className="border-red-900/50">
-        <CardHeader><CardTitle className="text-red-400">Danger Zone</CardTitle></CardHeader>
+      <Card className="border-red-200">
+        <CardHeader><CardTitle className="text-red-500">Danger Zone</CardTitle></CardHeader>
         <CardContent>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-zinc-300">Reset all leads</p>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <p className="text-sm font-medium text-stone-700">Reset all leads</p>
+              <p className="text-xs text-stone-400 mt-0.5">
                 Delete every lead, scrape job, and reset your credit counter.
               </p>
             </div>
@@ -381,9 +381,9 @@ function SettingRow({
 }) {
   return (
     <div className="flex items-start gap-3 text-sm">
-      <Icon className="h-4 w-4 text-zinc-500 shrink-0 mt-0.5" />
-      <span className="text-zinc-400 w-28 shrink-0">{label}</span>
-      <span className="text-zinc-200">{children}</span>
+      <Icon className="h-4 w-4 text-stone-400 shrink-0 mt-0.5" />
+      <span className="text-stone-500 w-28 shrink-0">{label}</span>
+      <span className="text-stone-800">{children}</span>
     </div>
   );
 }

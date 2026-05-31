@@ -30,8 +30,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex md:h-screen md:overflow-hidden">
       <Sidebar email={user?.email ?? null} />
       <main
-        className="flex-1 md:overflow-y-auto bg-zinc-950"
-        style={{ paddingBottom: "calc(3.5rem + env(safe-area-inset-bottom))" }}
+        className="flex-1 md:overflow-y-auto"
+        style={{ background: "var(--background)", paddingBottom: "calc(3.5rem + env(safe-area-inset-bottom))" }}
       >
         {children}
       </main>

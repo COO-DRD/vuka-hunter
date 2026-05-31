@@ -18,7 +18,7 @@ export function BottomNav() {
     <nav
       className="md:hidden fixed bottom-0 inset-x-0 z-50 backdrop-blur-md"
       style={{
-        background: "rgba(22, 27, 34, 0.97)",
+        background: "rgba(248, 247, 244, 0.97)",
         borderTop: "1px solid var(--border)",
         paddingBottom: "max(env(safe-area-inset-bottom), 4px)",
       }}
