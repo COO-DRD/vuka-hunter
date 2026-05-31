@@ -2,7 +2,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { EnterpriseBanner } from "@/components/EnterpriseBanner";
-import { getUser } from "@/lib/auth";
+import { getUser, resolveOrgId } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -10,20 +10,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const user = await getUser();
 
   if (user) {
-    // Gate 1: email must be verified before any app access
-    if (!user.email_confirmed_at) {
-      const emailParam = user.email ? `?email=${encodeURIComponent(user.email)}` : "";
-      redirect(`/auth/verify-email${emailParam}`);
-    }
-
+    // Clerk gates unverified users before they reach any app page — no email_confirmed_at check needed.
+    const orgId = await resolveOrgId(user.id);
     const db = createSupabaseServiceClient();
     const { data: org } = await db
       .from("hunter_orgs")
       .select("onboarding_complete, account_type")
-      .eq("id", user.id)
+      .eq("id", orgId)
       .maybeSingle();
 
-    // Gate 2: onboarding must be complete
+    // Gate: onboarding must be complete
     if (!org?.onboarding_complete) redirect("/onboarding");
   }
 

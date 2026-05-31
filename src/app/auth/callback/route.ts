@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -7,151 +7,52 @@ function sanitize(raw: unknown, maxLen = 200): string {
   return raw.replace(/<[^>]*>/g, "").replace(/\0/g, "").trim().slice(0, maxLen);
 }
 
+// Handles post-sign-in invite acceptance.
+// Clerk manages its own OAuth flow — this route only processes hunter_org_invites.
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
-  const code        = searchParams.get("code");
   const next        = searchParams.get("next") ?? "/dashboard";
   const inviteToken = sanitize(searchParams.get("invite_token"), 200);
   const inviteOrg   = sanitize(searchParams.get("invite_org"),   200);
 
   const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
 
-  if (!code) {
-    return NextResponse.redirect(new URL("/sign-in?error=link_expired", req.url));
+  if (!inviteOrg || !inviteToken) {
+    return NextResponse.redirect(new URL(safeNext, req.url));
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-  if (error || !data.user) {
-    return NextResponse.redirect(new URL("/sign-in?error=link_expired", req.url));
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
-  const user = data.user;
-  const db   = createSupabaseServiceClient();
+  const db = createSupabaseServiceClient();
 
-  // ── Corporate invite: accept via atomic seat-guarded function ─────────────
-  if (inviteOrg && inviteToken) {
-    const displayName = sanitize(user.user_metadata?.full_name ?? user.email, 100);
-    const { data: result } = await db.rpc("fn_accept_invite_safe", {
-      p_token:        inviteToken,
-      p_user_id:      user.id,
-      p_display_name: displayName,
-    });
-
-    switch (result) {
-      case "ok":
-        return NextResponse.redirect(new URL("/dashboard", req.url));
-      case "full":
-        return NextResponse.redirect(new URL("/sign-in?error=org_seats_full", req.url));
-      case "expired":
-        return NextResponse.redirect(new URL("/sign-in?error=invite_expired", req.url));
-      default:
-        // invalid_token or unknown: fall through to standard flow (creates own org)
-        console.warn("[auth/callback] invite result:", result, "token:", inviteToken.slice(0, 8));
-        return NextResponse.redirect(new URL("/sign-in?error=invite_invalid", req.url));
-    }
-  }
-
-  // ── Standard flow: create org on first confirmed sign-in ─────────────────
-  const meta     = user.user_metadata ?? {};
-  const provider = sanitize(user.app_metadata?.provider ?? "email", 50) || "email";
-  const rawName  = meta.full_name ?? meta.name ?? "";
-  const name     = sanitize(rawName, 100) || sanitize(user.email, 100) || "User";
-
-  const { data: existingOrg } = await db
-    .from("hunter_orgs")
-    .select("id")
-    .eq("id", user.id)
+  // Fetch the invitee's display name from their Clerk profile via the org member record,
+  // falling back to the invite email stored in the invite row.
+  const { data: invite } = await db
+    .from("hunter_org_invites")
+    .select("invited_email")
+    .eq("token", inviteToken)
     .maybeSingle();
 
-  if (!existingOrg) {
-    if (meta.account_type) {
-      // Email signup path — create full org from metadata stored at signUp time.
-      // hunter_orgs and legal consents are only written here, after email confirmation.
-      const isCorp    = meta.account_type === "corporate";
-      const trialDays = Number(meta.trial_days ?? (isCorp ? 14 : 7));
-      const trialEnds = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000);
-      const termsAt   = meta.terms_accepted_at ? new Date(meta.terms_accepted_at) : new Date();
+  const displayName = sanitize(invite?.invited_email ?? "", 100) || "Team member";
 
-      await db.from("hunter_orgs").insert({
-        id:                  user.id,
-        name,
-        credits_used:        0,
-        auth_provider:       "email",
-        terms_accepted_at:   termsAt.toISOString(),
-        email_verified_at:   user.email_confirmed_at ?? new Date().toISOString(),
-        account_type:        meta.account_type,
-        trial_started_at:    new Date().toISOString(),
-        trial_ends_at:       trialEnds.toISOString(),
-        subscription_status: "trialing",
-        subscribed_plan:     "trial",
-        seat_limit:          isCorp ? 5 : 1,
-        operating_county:    sanitize(meta.operating_county,  50)  || null,
-        operating_address:   sanitize(meta.operating_address, 300) || null,
-        ...(isCorp && {
-          company_name:  sanitize(meta.company_name,  200),
-          company_size:  sanitize(meta.company_size,   50),
-          billing_email: sanitize(meta.billing_email, 200),
-        }),
-      });
+  const { data: result } = await db.rpc("fn_accept_invite_safe", {
+    p_token:        inviteToken,
+    p_user_id:      userId,
+    p_display_name: displayName,
+  });
 
-      // Legal consents — immutable audit trail (Kenya DPA 2019 s.30).
-      // IP + UA captured at signup time and stored in metadata for attribution.
-      const consents: Array<{ consent_type: string; accepted: boolean }> = [
-        { consent_type: "terms_of_service",                  accepted: true },
-        { consent_type: "kenya_dpa_data_collection",         accepted: Boolean(meta.dpa_accepted) },
-        { consent_type: "kenya_dpa_third_party_enrichment",  accepted: Boolean(meta.dpa_accepted) },
-      ];
-      if (isCorp) {
-        consents.push({ consent_type: "data_processing_agreement", accepted: true });
-      }
-
-      await db.from("hunter_legal_consents").insert(
-        consents.map((c) => ({
-          ...c,
-          org_id:     user.id,
-          version:    "1.0",
-          ip_address: sanitize(meta.signup_ip, 100) || null,
-          user_agent: sanitize(meta.signup_ua, 300) || null,
-        }))
-      );
-    } else {
-      // Google OAuth or other provider — minimal org creation.
-      await db.from("hunter_orgs").insert({
-        id:                  user.id,
-        name,
-        credits_used:        0,
-        auth_provider:       provider,
-        account_type:        "individual",
-        subscription_status: "trialing",
-        subscribed_plan:     "trial",
-        seat_limit:          1,
-        trial_started_at:    new Date().toISOString(),
-        trial_ends_at:       new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        email_verified_at:   user.email_confirmed_at ?? null,
-      });
-    }
-  } else if (user.email_confirmed_at) {
-    // Org already exists — stamp the verified timestamp if not yet set.
-    await db
-      .from("hunter_orgs")
-      .update({ email_verified_at: user.email_confirmed_at })
-      .eq("id", user.id)
-      .is("email_verified_at", null);
+  switch (result) {
+    case "ok":
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    case "full":
+      return NextResponse.redirect(new URL("/sign-in?error=org_seats_full", req.url));
+    case "expired":
+      return NextResponse.redirect(new URL("/sign-in?error=invite_expired", req.url));
+    default:
+      console.warn("[auth/callback] invite result:", result, "token:", inviteToken.slice(0, 8));
+      return NextResponse.redirect(new URL("/sign-in?error=invite_invalid", req.url));
   }
-
-  // ── Domain auto-join: check if new user's email domain matches a corporate org ─
-  const emailDomain = user.email?.split("@")[1]?.toLowerCase();
-  if (emailDomain) {
-    const { data: joinedOrgId } = await db.rpc("fn_domain_auto_join", {
-      p_user_id:     user.id,
-      p_email_domain: emailDomain,
-    });
-    if (joinedOrgId) {
-      console.log(`[auth/callback] auto-joined user ${user.id} to org ${joinedOrgId} via domain ${emailDomain}`);
-    }
-  }
-
-  return NextResponse.redirect(new URL(safeNext, req.url));
 }
