@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
+import { useUser } from "@clerk/nextjs";
 import { motion, useScroll, useTransform, useInView, useSpring, Variants } from "framer-motion";
 import {
   ArrowRight, Search, CheckCircle2, XCircle, Star, Zap, Mail,
-  MessageSquare, Building2, MapPin, TrendingUp, Globe,
+  MessageSquare, Building2, MapPin, TrendingUp, Globe, Check,
 } from "lucide-react";
 import { HunterWordmark } from "@/components/HunterLogo";
 
@@ -35,14 +36,10 @@ function InView({
   children,
   variants = fadeUp,
   className = "",
-  delay = 0,
-  once = true,
 }: {
   children: React.ReactNode;
   variants?: Variants;
   className?: string;
-  delay?: number;
-  once?: boolean;
 }) {
   return (
     <motion.div
@@ -50,8 +47,7 @@ function InView({
       variants={variants}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once, margin: "-80px" }}
-      transition={{ delay }}
+      viewport={{ once: true, margin: "-80px" }}
     >
       {children}
     </motion.div>
@@ -142,12 +138,12 @@ function FloatCard({ children, delay = 0 }: { children: React.ReactNode; delay?:
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 const MOCK_LEADS = [
-  { id: 1, name: "Pearl Dental Clinic",     vertical: "Dental",      city: "Westlands",  rating: 4.8, score: 87, stage: "new"      },
-  { id: 2, name: "Kilimani Physio Centre",  vertical: "Physio",      city: "Kilimani",   rating: 4.3, score: 72, stage: "contacted" },
-  { id: 3, name: "Akili Real Estate",       vertical: "Real Estate", city: "Karen",      rating: 4.6, score: 65, stage: "replied"   },
-  { id: 4, name: "The Grand Hotel Nairobi", vertical: "Hotel",       city: "Upperhill",  rating: 4.7, score: 91, stage: "qualified" },
-  { id: 5, name: "Nairobi Eye Specialists", vertical: "Ophtho",      city: "CBD",        rating: 4.5, score: 78, stage: "new"       },
-  { id: 6, name: "Urban Brew Coffee",       vertical: "Café",        city: "Lavington",  rating: 4.4, score: 54, stage: "new"       },
+  { id: 1, name: "Pearl Dental Clinic",     city: "Westlands",  rating: 4.8, score: 87, stage: "new"      },
+  { id: 2, name: "Kilimani Physio Centre",  city: "Kilimani",   rating: 4.3, score: 72, stage: "contacted" },
+  { id: 3, name: "Akili Real Estate",       city: "Karen",      rating: 4.6, score: 65, stage: "replied"   },
+  { id: 4, name: "The Grand Hotel Nairobi", city: "Upperhill",  rating: 4.7, score: 91, stage: "qualified" },
+  { id: 5, name: "Nairobi Eye Specialists", city: "CBD",        rating: 4.5, score: 78, stage: "new"       },
+  { id: 6, name: "Urban Brew Coffee",       city: "Lavington",  rating: 4.4, score: 54, stage: "new"       },
 ];
 
 const STAGE_COLORS: Record<string, string> = {
@@ -399,21 +395,14 @@ function OutreachScreenshot() {
   );
 }
 
-// ── Discover mockup ───────────────────────────────────────────────────────────
+// ── Discover mockup — static completed state ──────────────────────────────────
 function DiscoverScreenshot() {
-  const [progress, setProgress] = useState(0);
-  const [found, setFound] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-50px" });
-
-  useEffect(() => {
-    if (!inView) return;
-    const iv = setInterval(() => {
-      setProgress((p) => { if (p >= 100) { clearInterval(iv); return 100; } return p + 1; });
-      setFound((f) => Math.min(f + 2, 214));
-    }, 40);
-    return () => clearInterval(iv);
-  }, [inView]);
+  const rowVariants: Variants = {
+    hidden:  { opacity: 0, x: -8 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.35, ease } },
+  };
 
   return (
     <BrowserFrame url="4unter.dullugroup.co.ke/discover">
@@ -431,44 +420,52 @@ function DiscoverScreenshot() {
             </div>
           ))}
         </div>
-        <div className="rounded-lg bg-stone-50 border border-stone-100 px-4 py-3 space-y-2">
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="flex items-center gap-1.5 text-stone-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-              Scanning multiple data sources
-            </span>
-            <span className="font-bold text-green-600 font-mono">{found} found</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-stone-200 overflow-hidden">
-            <motion.div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400"
-              animate={{ width: `${progress}%` }} transition={{ duration: 0.05, ease: "linear" }} />
-          </div>
-          <p className="text-[10px] text-stone-400">{progress}% · Protocol filter active · Low-rated businesses blocked</p>
+        <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 flex items-center justify-between">
+          <span className="flex items-center gap-1.5 text-[11px] text-green-700 font-medium">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+            Discovery complete
+          </span>
+          <span className="font-bold text-green-700 font-mono text-sm">214 leads</span>
         </div>
-        <div className="space-y-1.5">
-          {MOCK_LEADS.slice(0, 3).map((lead, i) => (
+        <motion.div
+          className="space-y-1.5"
+          variants={stagger(0.07)}
+          initial="hidden"
+          animate={inView ? "visible" : "hidden"}
+        >
+          {MOCK_LEADS.slice(0, 4).map((lead) => (
             <motion.div key={lead.id}
-              initial={{ opacity: 0, x: -8 }}
-              animate={inView && progress > (i + 1) * 20 ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
-              transition={{ duration: 0.3 }}
+              variants={rowVariants}
               className="flex items-center gap-2.5 rounded-lg bg-stone-50 border border-stone-100 px-3 py-2">
               <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
               <span className="text-[11px] text-stone-800 flex-1 truncate font-medium">{lead.name}</span>
               <span className="text-[10px] text-stone-500">{lead.city}</span>
-              <span className="flex items-center gap-0.5 text-[10px] text-stone-500">
+              <span className="flex items-center gap-0.5 text-[10px] font-bold font-mono
+                ${lead.score >= 70 ? 'text-green-600' : 'text-yellow-600'}">
                 <Star className="h-2.5 w-2.5 text-yellow-500 fill-yellow-400" />{lead.rating}
               </span>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </BrowserFrame>
   );
 }
 
 // ── CTA input ─────────────────────────────────────────────────────────────────
-function HeroSignup({ dark = false }: { dark?: boolean }) {
+function HeroSignup({ dark = false, signedIn = false }: { dark?: boolean; signedIn?: boolean }) {
   const [email, setEmail] = useState("");
+  if (signedIn) {
+    return (
+      <Link
+        href="/dashboard"
+        className={`inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 transition-colors
+          px-8 py-3 text-sm font-bold text-black ${dark ? "" : ""}`}
+      >
+        Go to dashboard <ArrowRight className="h-4 w-4" />
+      </Link>
+    );
+  }
   return (
     <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full max-w-md mx-auto">
       <input
@@ -492,6 +489,11 @@ function HeroSignup({ dark = false }: { dark?: boolean }) {
   );
 }
 
+// ── Scroll-to helper ──────────────────────────────────────────────────────────
+function scrollTo(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 // ── Scroll-parallax hook ──────────────────────────────────────────────────────
 function useParallax(factor = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
@@ -503,6 +505,7 @@ function useParallax(factor = 0.15) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
+  const { isSignedIn } = useUser();
   const { ref: heroParallaxRef, y: heroScreenshotY } = useParallax(0.08);
 
   useEffect(() => {
@@ -510,6 +513,9 @@ export default function LandingPage() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const navCta = isSignedIn ? "/dashboard" : "/sign-up";
+  const loginHref = isSignedIn ? "/dashboard" : "/sign-in";
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#F8F7F4] text-stone-900">
@@ -526,18 +532,18 @@ export default function LandingPage() {
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <HunterWordmark size="sm" onLight />
           <nav className="hidden md:flex items-center gap-6 text-sm">
-            {["Features", "Pricing", "Use Cases"].map((item) => (
-              <span key={item} className="text-stone-500 hover:text-stone-900 transition-colors cursor-pointer">{item}</span>
-            ))}
+            <button onClick={() => scrollTo("features")} className="text-stone-500 hover:text-stone-900 transition-colors">Features</button>
+            <button onClick={() => scrollTo("pricing")}  className="text-stone-500 hover:text-stone-900 transition-colors">Pricing</button>
+            <button onClick={() => scrollTo("use-cases")} className="text-stone-500 hover:text-stone-900 transition-colors">Use Cases</button>
           </nav>
           <div className="flex items-center gap-2.5">
-            <Link href="/sign-in"
+            <Link href={loginHref}
               className="hidden sm:block text-sm text-stone-500 hover:text-stone-900 transition-colors px-3 py-1.5">
-              Log in
+              {isSignedIn ? "Dashboard" : "Log in"}
             </Link>
-            <Link href="/sign-up"
+            <Link href={navCta}
               className="flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 transition-colors px-4 py-2 text-sm font-bold text-black">
-              Get started <ArrowRight className="h-3.5 w-3.5" />
+              {isSignedIn ? "Dashboard" : "Get started"} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>
@@ -545,31 +551,18 @@ export default function LandingPage() {
 
       {/* ── Hero ── */}
       <section className="relative pt-28 pb-10 px-4 sm:px-6 text-center overflow-hidden">
-        {/* Ambient orbs */}
         <Orb className="w-96 h-96 bg-amber-400/20 -top-24 -left-32" />
         <Orb className="w-72 h-72 bg-amber-300/15 top-20 -right-20" />
         <Orb className="w-56 h-56 bg-orange-300/10 bottom-0 left-1/3" />
 
-        {/* Subtle top accent line */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-28 bg-gradient-to-b from-amber-500/60 to-transparent pointer-events-none" />
 
         <div className="relative z-10 mx-auto max-w-4xl">
-          {/* Pill badge */}
-          <motion.div
-            className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-50 px-3 py-1 mb-6"
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, ease }}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-            <span className="text-xs font-semibold text-amber-700">Built for East Africa</span>
-          </motion.div>
-
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight text-stone-950">
             <SplitWords text="The AI lead platform" staggerDelay={0.07} childDelay={0.1} />
             <br />
             <span className="text-brand-gradient">
-              <SplitWords text="built for East Africa." staggerDelay={0.07} childDelay={0.5} />
+              <SplitWords text="built for Kenya." staggerDelay={0.07} childDelay={0.5} />
             </span>
           </h1>
 
@@ -589,7 +582,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.1, duration: 0.55, ease }}
           >
-            <HeroSignup />
+            <HeroSignup signedIn={!!isSignedIn} />
           </motion.div>
 
           <motion.p
@@ -602,7 +595,6 @@ export default function LandingPage() {
           </motion.p>
         </div>
 
-        {/* Hero product screenshot with parallax */}
         <div ref={heroParallaxRef} className="relative z-10 mx-auto mt-14 max-w-5xl">
           <div className="absolute -bottom-1 inset-x-0 h-28 z-10 pointer-events-none"
             style={{ background: "linear-gradient(to bottom, transparent, #F8F7F4)" }} />
@@ -630,10 +622,10 @@ export default function LandingPage() {
             viewport={{ once: true, margin: "-60px" }}
           >
             {[
-              { value: 200,  suffix: "+",      label: "Leads per run",        prefix: "" },
-              { value: 4,    suffix: " min",   label: "Discovery to opener",  prefix: "< " },
-              { value: 36,   suffix: "",       label: "Verticals covered",    prefix: "" },
-              { value: 10,   suffix: "×",      label: "Faster than manual",   prefix: "" },
+              { value: 200,  suffix: "+",    label: "Leads per run",       prefix: "" },
+              { value: 4,    suffix: " min", label: "Discovery to opener", prefix: "< " },
+              { value: 36,   suffix: "",     label: "Verticals covered",   prefix: "" },
+              { value: 10,   suffix: "×",    label: "Faster than manual",  prefix: "" },
             ].map(({ value, suffix, label, prefix }) => (
               <motion.div key={label} variants={fadeUp}>
                 <div className="text-3xl font-black text-amber-500 tracking-tight">
@@ -646,64 +638,21 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Feature 1: Discover ── */}
-      <section className="mx-auto max-w-6xl px-4 sm:px-6 py-20 lg:py-28">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <InView variants={fadeLeft}>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-500 mb-4">01 · Discover</p>
-            <h2 className="text-3xl sm:text-4xl font-black leading-tight text-stone-950">
-              200 pre-qualified leads<br />in under two minutes.
-            </h2>
-            <p className="mt-4 text-base leading-relaxed text-stone-600">
-              4unter pulls from multiple business data sources simultaneously.
-              A strict protocol filter removes low-rated, unreviewed, and off-vertical
-              results — so every lead on your list is already worth your time.
-            </p>
-            <motion.ul
-              className="mt-6 space-y-3"
-              variants={stagger(0.08)}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-60px" }}
-            >
-              {[
-                "Real-time scan across multiple data sources",
-                "Rating, review count, and name filters enforced automatically",
-                "Runs in the background — check back when it's done",
-              ].map((item) => (
-                <motion.li key={item} variants={fadeUp} className="flex items-start gap-2.5 text-sm text-stone-600">
-                  <CheckCircle2 className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
-                  {item}
-                </motion.li>
-              ))}
-            </motion.ul>
-          </InView>
-          <InView variants={fadeRight}>
-            <FloatCard delay={1}>
-              <DiscoverScreenshot />
-            </FloatCard>
-          </InView>
-        </div>
-      </section>
+      {/* ── Features ── */}
+      <div id="features" style={{ scrollMarginTop: "4rem" }}>
 
-      {/* ── Feature 2: Enrich & Score ── */}
-      <section className="border-y border-stone-200 bg-stone-100">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 lg:py-28">
+        {/* Feature 1: Discover */}
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-20 lg:py-28">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <InView variants={fadeLeft}>
-              <FloatCard delay={1.5}>
-                <ScoreScreenshot />
-              </FloatCard>
-            </InView>
-            <InView variants={fadeRight}>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-500 mb-4">02 · Enrich & Score</p>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-500 mb-4">01 · Discover</p>
               <h2 className="text-3xl sm:text-4xl font-black leading-tight text-stone-950">
-                Know who to call<br />before you dial.
+                200 pre-qualified leads<br />in under two minutes.
               </h2>
               <p className="mt-4 text-base leading-relaxed text-stone-600">
-                4unter crawls each lead&apos;s website for emails, booking systems, live chat, and
-                social signals. AI scores them 0–100 and names the exact pain point —
-                so you open with their real gap, not a generic pitch.
+                4unter pulls from multiple business data sources simultaneously.
+                A strict protocol filter removes low-rated, unreviewed, and off-vertical
+                results — so every lead on your list is already worth your time.
               </p>
               <motion.ul
                 className="mt-6 space-y-3"
@@ -713,9 +662,9 @@ export default function LandingPage() {
                 viewport={{ once: true, margin: "-60px" }}
               >
                 {[
-                  "Email addresses, phone numbers, and decision-maker contacts extracted",
-                  "AI identifies missing booking systems, dead social, and poor follow-up",
-                  "Score tells you who is hot — so you work the right list first",
+                  "Real-time scan across multiple data sources",
+                  "Rating, review count, and name filters enforced automatically",
+                  "Runs in the background — check back when it's done",
                 ].map((item) => (
                   <motion.li key={item} variants={fadeUp} className="flex items-start gap-2.5 text-sm text-stone-600">
                     <CheckCircle2 className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
@@ -724,67 +673,116 @@ export default function LandingPage() {
                 ))}
               </motion.ul>
             </InView>
+            <InView variants={fadeRight}>
+              <FloatCard delay={1}>
+                <DiscoverScreenshot />
+              </FloatCard>
+            </InView>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── Feature 3: Outreach ── */}
-      <section className="mx-auto max-w-6xl px-4 sm:px-6 py-20 lg:py-28">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <InView variants={fadeLeft}>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-500 mb-4">03 · Outreach</p>
-            <h2 className="text-3xl sm:text-4xl font-black leading-tight text-stone-950">
-              One click. A message<br />they actually read.
-            </h2>
-            <p className="mt-4 text-base leading-relaxed text-stone-600">
-              The AI opener is written using that lead&apos;s actual data — their rating, their
-              gap, their city. No templates. No generic intros. Just a specific, credible
-              message that opens real conversations on WhatsApp or email.
-            </p>
-            <motion.ul
-              className="mt-6 space-y-3"
-              variants={stagger(0.08)}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-60px" }}
-            >
-              {[
-                "References the lead's real pain signal — not a copy-paste template",
-                "One-click to open WhatsApp or copy to email — no extra steps",
-                "Kenyan context baked in: KES, local references, appropriate tone",
-              ].map((item) => (
-                <motion.li key={item} variants={fadeUp} className="flex items-start gap-2.5 text-sm text-stone-600">
-                  <CheckCircle2 className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
-                  {item}
-                </motion.li>
-              ))}
-            </motion.ul>
-            <motion.div
-              className="mt-8"
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3, duration: 0.5, ease }}
-            >
-              <Link href="/sign-up"
-                className="inline-flex items-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 transition-colors px-6 py-3 text-sm font-bold text-black">
-                Try it free <ArrowRight className="h-4 w-4" />
-              </Link>
-            </motion.div>
-          </InView>
-          <InView variants={fadeRight}>
-            <FloatCard delay={2}>
-              <OutreachScreenshot />
-            </FloatCard>
-          </InView>
-        </div>
-      </section>
+        {/* Feature 2: Enrich & Score */}
+        <section className="border-y border-stone-200 bg-stone-100">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 lg:py-28">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <InView variants={fadeLeft}>
+                <FloatCard delay={1.5}>
+                  <ScoreScreenshot />
+                </FloatCard>
+              </InView>
+              <InView variants={fadeRight}>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-500 mb-4">02 · Enrich & Score</p>
+                <h2 className="text-3xl sm:text-4xl font-black leading-tight text-stone-950">
+                  Know who to call<br />before you dial.
+                </h2>
+                <p className="mt-4 text-base leading-relaxed text-stone-600">
+                  4unter crawls each lead&apos;s website for emails, booking systems, live chat, and
+                  social signals. AI scores them 0–100 and names the exact pain point —
+                  so you open with their real gap, not a generic pitch.
+                </p>
+                <motion.ul
+                  className="mt-6 space-y-3"
+                  variants={stagger(0.08)}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-60px" }}
+                >
+                  {[
+                    "Email addresses, phone numbers, and decision-maker contacts extracted",
+                    "AI identifies missing booking systems, dead social, and poor follow-up",
+                    "Score tells you who is hot — so you work the right list first",
+                  ].map((item) => (
+                    <motion.li key={item} variants={fadeUp} className="flex items-start gap-2.5 text-sm text-stone-600">
+                      <CheckCircle2 className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                      {item}
+                    </motion.li>
+                  ))}
+                </motion.ul>
+              </InView>
+            </div>
+          </div>
+        </section>
 
-      {/* ── Pain → Gain ── */}
-      <section className="border-y border-stone-200 bg-stone-100">
+        {/* Feature 3: Outreach */}
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-20 lg:py-28">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <InView variants={fadeLeft}>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-500 mb-4">03 · Outreach</p>
+              <h2 className="text-3xl sm:text-4xl font-black leading-tight text-stone-950">
+                One click. A message<br />they actually read.
+              </h2>
+              <p className="mt-4 text-base leading-relaxed text-stone-600">
+                The AI opener is written using that lead&apos;s actual data — their rating, their
+                gap, their city. No templates. No generic intros. Just a specific, credible
+                message that opens real conversations on WhatsApp or email.
+              </p>
+              <motion.ul
+                className="mt-6 space-y-3"
+                variants={stagger(0.08)}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-60px" }}
+              >
+                {[
+                  "References the lead's real pain signal — not a copy-paste template",
+                  "One-click to open WhatsApp or copy to email — no extra steps",
+                  "Kenyan context baked in: KES, local references, appropriate tone",
+                ].map((item) => (
+                  <motion.li key={item} variants={fadeUp} className="flex items-start gap-2.5 text-sm text-stone-600">
+                    <CheckCircle2 className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                    {item}
+                  </motion.li>
+                ))}
+              </motion.ul>
+              <motion.div
+                className="mt-8"
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.5, ease }}
+              >
+                <Link href={navCta}
+                  className="inline-flex items-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 transition-colors px-6 py-3 text-sm font-bold text-black">
+                  Try it free <ArrowRight className="h-4 w-4" />
+                </Link>
+              </motion.div>
+            </InView>
+            <InView variants={fadeRight}>
+              <FloatCard delay={2}>
+                <OutreachScreenshot />
+              </FloatCard>
+            </InView>
+          </div>
+        </section>
+
+      </div>{/* /#features */}
+
+      {/* ── Use Cases ── */}
+      <section id="use-cases" style={{ scrollMarginTop: "4rem" }} className="border-y border-stone-200 bg-stone-100">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 py-16">
           <InView>
-            <p className="text-center text-xs font-bold uppercase tracking-[0.18em] text-stone-400 mb-10">What changes</p>
+            <p className="text-center text-xs font-bold uppercase tracking-[0.18em] text-stone-400 mb-2">Use Cases</p>
+            <p className="text-center text-2xl font-black text-stone-950 mb-10">What changes when you use 4unter</p>
           </InView>
           <motion.div
             className="grid gap-5 md:grid-cols-3"
@@ -839,7 +837,6 @@ export default function LandingPage() {
       {/* ── Built for Kenya ── */}
       <section className="mx-auto max-w-5xl px-4 sm:px-6 py-16">
         <InView className="text-center mb-10">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-500 mb-3">Built different</p>
           <h2 className="text-2xl sm:text-3xl font-black text-stone-950">
             Made for the Kenyan market.<br />Not adapted from it.
           </h2>
@@ -852,10 +849,10 @@ export default function LandingPage() {
           viewport={{ once: true, margin: "-60px" }}
         >
           {[
-            { icon: MapPin,        title: "40+ Counties",      body: "Nairobi, Mombasa, Kisumu, Nakuru, Kilifi, and beyond. Not just CBD." },
-            { icon: Building2,     title: "36 Verticals",      body: "Dental, physio, hotel, real estate, pharmacy, solar, and more." },
-            { icon: MessageSquare, title: "WhatsApp First",    body: "Openers written for WhatsApp by default. Because that's how Kenya closes." },
-            { icon: TrendingUp,    title: "KES Context",       body: "AI references local pricing, terms, and pain points — not USD templates." },
+            { icon: MapPin,        title: "40+ Counties",    body: "Nairobi, Mombasa, Kisumu, Nakuru, Kilifi, and beyond. Not just CBD." },
+            { icon: Building2,     title: "36 Verticals",    body: "Dental, physio, hotel, real estate, pharmacy, solar, and more." },
+            { icon: MessageSquare, title: "WhatsApp First",  body: "Openers written for WhatsApp by default. Because that's how Kenya closes." },
+            { icon: TrendingUp,    title: "KES Context",     body: "AI references local pricing, terms, and pain points — not USD templates." },
           ].map(({ icon: Icon, title, body }) => (
             <motion.div
               key={title}
@@ -873,28 +870,66 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* ── Final CTA — dark strike ── */}
+      {/* ── Pricing ── */}
+      <section id="pricing" style={{ scrollMarginTop: "4rem" }} className="border-y border-stone-200 bg-stone-100">
+        <div className="mx-auto max-w-lg px-4 sm:px-6 py-20">
+          <InView className="text-center mb-10">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-500 mb-3">Pricing</p>
+            <h2 className="text-3xl font-black text-stone-950">One plan. No limits.</h2>
+            <p className="mt-2 text-stone-500 text-sm">Everything you need to run your full pipeline.</p>
+          </InView>
+          <InView>
+            <div className="rounded-2xl border-2 border-amber-500 bg-white ring-1 ring-amber-500/20 p-8 shadow-xl shadow-amber-100/40">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className="text-lg font-black text-stone-950">4unter Pro</p>
+                  <p className="text-xs text-stone-400 mt-0.5">7-day free trial included</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-4xl font-black text-amber-500">2,000</p>
+                  <p className="text-xs text-stone-400">KES / month</p>
+                </div>
+              </div>
+              <ul className="space-y-3 mb-8">
+                {[
+                  "Unlimited lead discovery",
+                  "AI scoring on every lead",
+                  "WhatsApp & email opener generation",
+                  "All 36 Kenyan B2B verticals",
+                  "Website enrichment — email, phone, tech stack, social",
+                  "Pipeline management (New → Won)",
+                  "CSV export",
+                  "No credit card for trial",
+                ].map((f) => (
+                  <li key={f} className="flex items-center gap-3 text-sm text-stone-700">
+                    <Check className="h-4 w-4 text-amber-500 shrink-0" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href={isSignedIn ? "/dashboard" : "/sign-up"}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 transition-colors px-6 py-3.5 font-bold text-black text-sm"
+              >
+                {isSignedIn ? "Go to dashboard" : "Start 7-day free trial"} <ArrowRight className="h-4 w-4" />
+              </Link>
+              <p className="text-center text-xs text-stone-400 mt-3">Cancel any time · billed monthly</p>
+            </div>
+          </InView>
+        </div>
+      </section>
+
+      {/* ── Final CTA ── */}
       <section className="bg-stone-950 border-t border-stone-800 relative overflow-hidden">
-        {/* Dark ambient orbs */}
         <Orb className="w-96 h-96 bg-amber-500/8 -top-32 -left-32" />
         <Orb className="w-72 h-72 bg-amber-400/6 -bottom-20 -right-20" />
-
         <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6 py-24 text-center">
-          <motion.p
-            className="text-xs font-bold uppercase tracking-[0.18em] text-amber-500 mb-5"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease }}
-          >
-            Get started today
-          </motion.p>
           <motion.h2
             className="text-4xl sm:text-5xl font-black leading-tight text-white"
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1, ease }}
+            transition={{ duration: 0.6, ease }}
           >
             Your competitor is still<br />on page 2 of Google.
           </motion.h2>
@@ -903,7 +938,7 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.25 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
           >
             You&apos;re already in their DMs.
           </motion.p>
@@ -912,36 +947,21 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.35, ease }}
+            transition={{ duration: 0.5, delay: 0.3, ease }}
           >
-            <HeroSignup dark />
+            <HeroSignup dark signedIn={!!isSignedIn} />
           </motion.div>
           <motion.p
             className="mt-4 text-xs text-stone-600"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.5 }}
+            transition={{ duration: 0.4, delay: 0.45 }}
           >
             7-day free trial · No credit card · Cancel any time
           </motion.p>
         </div>
       </section>
-
-      {/* ── Footer ── */}
-      <footer className="bg-stone-950 border-t border-stone-800/60">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <HunterWordmark size="sm" />
-            <div className="flex items-center gap-6 text-xs text-stone-600">
-              <Link href="/terms"    className="hover:text-stone-300 transition-colors">Terms</Link>
-              <Link href="/workshop" className="hover:text-stone-300 transition-colors">Workshop</Link>
-              <Link href="/sign-in"  className="hover:text-stone-300 transition-colors">Sign in</Link>
-              <span>© 2026 Dullu Digital</span>
-            </div>
-          </div>
-        </div>
-      </footer>
 
     </div>
   );
