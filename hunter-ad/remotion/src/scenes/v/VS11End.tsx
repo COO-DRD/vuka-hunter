@@ -62,7 +62,7 @@ export const VS11End: React.FC = () => {
         fontSize: 26, fontWeight: 400, color: C.z600,
         fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", Helvetica, sans-serif',
       }}>
-        hunter.dullugroup.co.ke
+        4unter.dullugroup.co.ke
       </div>
 
       {/* Dullu Digital credit */}

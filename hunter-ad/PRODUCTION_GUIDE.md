@@ -124,7 +124,7 @@ Key caption timings:
 00:22 - 04 CONTACTS — Reach decision makers
 00:25 - 05 OUTREACH — AI writes the opener
 00:28 - Start closing better deals. Today. Free.
-00:29 - hunter.dullugroup.co.ke
+00:29 - 4unter.dullugroup.co.ke
 ```
 
 ---

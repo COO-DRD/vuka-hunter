@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Provide at least one valid email address." }, { status: 400 });
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hunter.dullugroup.co.ke";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://4unter.dullugroup.co.ke";
   const results: Array<{ email: string; status: string }> = [];
 
   for (const email of emails) {

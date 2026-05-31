@@ -65,7 +65,7 @@ export const VS10CTA: React.FC = () => {
         fontSize: 22, fontWeight: 400, color: C.z600, textAlign: 'center',
         fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", Helvetica, sans-serif',
       }}>
-        hunter.dullugroup.co.ke
+        4unter.dullugroup.co.ke
       </div>
     </div>
   );
