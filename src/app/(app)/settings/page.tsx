@@ -191,7 +191,7 @@ export default async function SettingsPage() {
             )}
           </div>
           {!org?.use_case && (
-            <div className="mt-4 rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-xs text-stone-500">
+            <div className="mt-4 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 text-xs text-stone-500">
               Profile not set up yet.{" "}
               <Link href="/onboarding" className="text-amber-600 hover:text-amber-500">Complete setup →</Link>
             </div>
@@ -267,7 +267,7 @@ export default async function SettingsPage() {
                   <div key={`${c.consent_type}-${c.accepted_at}`} className="flex items-center gap-3 text-xs text-stone-400">
                     <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
                     <span className="flex-1">{labels[c.consent_type] ?? c.consent_type}</span>
-                    <span className="text-stone-300 shrink-0">
+                    <span className="text-stone-400 shrink-0">
                       {new Date(c.accepted_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
                     </span>
                   </div>
@@ -347,7 +347,7 @@ export default async function SettingsPage() {
         <CardHeader><CardTitle>API Access</CardTitle></CardHeader>
         <CardContent>
           <p className="text-sm text-stone-400 mb-3">REST API for integrating 4unter with your own tools.</p>
-          <div className="rounded-md border border-stone-200 bg-stone-50 px-4 py-3 font-mono text-xs text-stone-400">
+          <div className="rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 font-mono text-xs text-stone-400">
             Available in full release
           </div>
         </CardContent>

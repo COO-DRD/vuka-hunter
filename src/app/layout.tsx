@@ -19,21 +19,33 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "4unter — AI Lead Intelligence · Kenya",
-  description: "Scrape, enrich, score and write outreach for Kenyan businesses in seconds. Proprietary AI intelligence built for the Kenyan market.",
+  title: "4unter — AI Lead Intelligence for Kenya | Find B2B Leads Fast",
+  description: "4unter helps Kenyan sales teams discover 200 pre-qualified B2B leads in minutes. AI-scored, WhatsApp-ready outreach for businesses across Nairobi, Mombasa, Kisumu and East Africa.",
+  keywords: [
+    "lead generation Kenya", "B2B leads Nairobi", "Kenya sales intelligence",
+    "business prospecting Kenya", "WhatsApp outreach Kenya", "AI sales tool Kenya",
+    "Kenyan business database", "B2B prospecting Nairobi", "sales automation Kenya",
+    "lead scoring Kenya", "East Africa B2B leads", "Mombasa leads",
+  ],
   manifest: "/manifest.json",
+  robots: { index: true, follow: true },
+  alternates: { canonical: "https://4unter.dullugroup.co.ke" },
   openGraph: {
-    title: "4unter — AI Lead Intelligence · Kenya",
-    description: "Find your next 100 clients. Automatically.",
+    title: "4unter — AI Lead Intelligence for Kenyan Sales Teams",
+    description: "Find 200 pre-qualified Kenyan businesses, score every lead with AI, and have a WhatsApp opener written — before your competitor finishes their first Google search.",
     images: [{ url: "/hunter-og.svg", width: 1200, height: 630 }],
     siteName: "4unter",
     type: "website",
+    locale: "en_KE",
+    url: "https://4unter.dullugroup.co.ke",
   },
   twitter: {
     card: "summary_large_image",
-    title: "4unter — AI Lead Intelligence · Kenya",
-    description: "Find your next 100 clients. Automatically.",
+    title: "4unter — AI Lead Intelligence for Kenya",
+    description: "200 pre-qualified Kenyan B2B leads in under 2 minutes. AI-scored, WhatsApp-ready.",
     images: ["/hunter-og.svg"],
+    creator: "@iandullu",
+    site: "@iandullu",
   },
   appleWebApp: {
     capable: true,
@@ -58,7 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       signInFallbackRedirectUrl="/dashboard"
       signUpFallbackRedirectUrl="/onboarding"
     >
-      <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
+      <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} h-full`}>
         <head>
           <meta name="mobile-web-app-capable" content="yes" />
           <meta name="apple-touch-fullscreen" content="yes" />

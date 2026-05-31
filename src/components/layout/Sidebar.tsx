@@ -3,11 +3,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Search, Users, GitBranch,
-  Settings, Upload, LogOut, Shield, Zap,
+  Settings, Upload, LogOut, Shield, Zap, Moon, Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useClerk } from "@clerk/nextjs";
 import { HunterWordmark } from "@/components/HunterLogo";
+import { useTheme } from "@/components/ThemeProvider";
 
 const ADMIN_EMAILS = new Set(["ian.dullu@akamom.org", "dr.dullu@gmail.com"]);
 
@@ -60,6 +61,7 @@ export function Sidebar({ email }: { email: string | null }) {
   const path   = usePathname();
   const router = useRouter();
   const { signOut } = useClerk();
+  const { theme, toggle } = useTheme();
   const initial = email ? email[0].toUpperCase() : "?";
 
   return (
@@ -119,6 +121,16 @@ export function Sidebar({ email }: { email: string | null }) {
             {email ?? "—"}
           </span>
         </div>
+        <button
+          onClick={toggle}
+          className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors hover:bg-stone-100"
+          style={{ color: "var(--text-3)" }}
+        >
+          {theme === "dark"
+            ? <Sun className="h-3.5 w-3.5 shrink-0" />
+            : <Moon className="h-3.5 w-3.5 shrink-0" />}
+          {theme === "dark" ? "Light mode" : "Dark mode"}
+        </button>
         <button
           onClick={() => signOut(() => router.push("/sign-in"))}
           className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors hover:bg-stone-100"

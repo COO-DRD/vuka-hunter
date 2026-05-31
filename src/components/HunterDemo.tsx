@@ -11,11 +11,11 @@ const LEADS = [
 ];
 
 const ENRICHED = [
-  { label: "Website detected",       ok: true  },
-  { label: "2 emails extracted",     ok: true  },
-  { label: "Booking system",         ok: false },
-  { label: "WhatsApp CTA",           ok: false },
-  { label: "Pain signals found",     ok: true  },
+  { label: "Website detected",   ok: true  },
+  { label: "2 emails extracted", ok: true  },
+  { label: "Booking system",     ok: false },
+  { label: "WhatsApp CTA",       ok: false },
+  { label: "Pain signals found", ok: true  },
 ];
 
 const PHASES = ["discover", "enrich", "score", "outreach"] as const;
@@ -43,8 +43,8 @@ function DiscoverPhase({ active }: { active: boolean }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 mb-3">
-        <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
-        <span className="text-xs text-zinc-500 font-mono">Scanning Nairobi · dental clinic</span>
+        <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+        <span className="text-xs text-stone-500 font-mono">Scanning Nairobi · dental clinic</span>
       </div>
       {LEADS.map((lead, i) => (
         <motion.div
@@ -52,14 +52,14 @@ function DiscoverPhase({ active }: { active: boolean }) {
           initial={{ opacity: 0, x: -8 }}
           animate={i < shown ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center gap-2.5 rounded-md bg-zinc-800/50 px-3 py-2"
+          className="flex items-center gap-2.5 rounded-md bg-stone-50 border border-stone-100 px-3 py-2"
         >
           <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-          <span className="text-xs text-zinc-200 flex-1 truncate font-medium">{lead.name}</span>
+          <span className="text-xs text-stone-800 flex-1 truncate font-medium">{lead.name}</span>
           <div className="flex items-center gap-1 shrink-0">
-            <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-            <span className="text-xs text-zinc-400 font-mono">{lead.rating}</span>
-            <span className="text-xs text-zinc-600">· {lead.reviews}</span>
+            <Star className="h-3 w-3 text-yellow-500 fill-yellow-400" />
+            <span className="text-xs text-stone-500 font-mono">{lead.rating}</span>
+            <span className="text-xs text-stone-400">· {lead.reviews}</span>
           </div>
         </motion.div>
       ))}
@@ -67,8 +67,8 @@ function DiscoverPhase({ active }: { active: boolean }) {
         animate={shown >= LEADS.length ? { opacity: 1 } : { opacity: 0 }}
         className="flex items-center justify-between pt-1 px-1"
       >
-        <span className="text-xs text-zinc-600 font-mono">{LEADS.length} leads accepted</span>
-        <span className="text-xs font-semibold text-green-400">Protocol passed</span>
+        <span className="text-xs text-stone-500 font-mono">{LEADS.length} leads accepted</span>
+        <span className="text-xs font-semibold text-green-600">Protocol passed</span>
       </motion.div>
     </div>
   );
@@ -87,8 +87,8 @@ function EnrichPhase({ active }: { active: boolean }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 mb-3">
-        <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
-        <span className="text-xs text-zinc-500 font-mono">Crawling · Pearl Dental Clinic</span>
+        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+        <span className="text-xs text-stone-500 font-mono">Crawling · Pearl Dental Clinic</span>
       </div>
       {ENRICHED.map((item, i) => (
         <motion.div
@@ -96,14 +96,14 @@ function EnrichPhase({ active }: { active: boolean }) {
           initial={{ opacity: 0, x: -8 }}
           animate={i < shown ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
           transition={{ duration: 0.25 }}
-          className="flex items-center gap-2.5 rounded-md bg-zinc-800/50 px-3 py-2"
+          className="flex items-center gap-2.5 rounded-md bg-stone-50 border border-stone-100 px-3 py-2"
         >
           {item.ok
             ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-            : <XCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />}
-          <span className={`text-xs ${item.ok ? "text-zinc-300" : "text-zinc-500"}`}>{item.label}</span>
+            : <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />}
+          <span className={`text-xs ${item.ok ? "text-stone-700" : "text-stone-500"}`}>{item.label}</span>
           {!item.ok && (
-            <span className="ml-auto text-[10px] text-orange-400 font-semibold bg-orange-500/10 px-1.5 py-0.5 rounded">
+            <span className="ml-auto text-[10px] text-orange-600 font-semibold bg-orange-50 border border-orange-100 px-1.5 py-0.5 rounded">
               Pain signal
             </span>
           )}
@@ -137,16 +137,16 @@ function ScorePhase({ active }: { active: boolean }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 mb-1">
-        <Zap className="h-3.5 w-3.5 text-purple-400" />
-        <span className="text-xs text-zinc-500 font-mono">Hunter Intelligence · Scoring</span>
+        <Zap className="h-3.5 w-3.5 text-purple-500" />
+        <span className="text-xs text-stone-500 font-mono">Hunter Intelligence · Scoring</span>
       </div>
-      <div className="rounded-lg bg-zinc-800/50 px-4 py-4 text-center">
-        <p className="text-xs text-zinc-500 mb-1">Fit Score</p>
-        <p className={`text-5xl font-black tabular-nums ${score >= 70 ? "text-green-400" : "text-yellow-400"}`}>
+      <div className="rounded-lg bg-stone-50 border border-stone-100 px-4 py-4 text-center">
+        <p className="text-xs text-stone-500 mb-1">Fit Score</p>
+        <p className={`text-5xl font-black tabular-nums ${score >= 70 ? "text-green-600" : "text-yellow-600"}`}>
           {score}
         </p>
-        <p className="text-xs text-zinc-600 mt-0.5">/ 100</p>
-        <div className="mt-3 h-1.5 rounded-full bg-zinc-700 overflow-hidden">
+        <p className="text-xs text-stone-400 mt-0.5">/ 100</p>
+        <div className="mt-3 h-1.5 rounded-full bg-stone-200 overflow-hidden">
           <motion.div
             className={`h-full rounded-full bg-gradient-to-r ${color}`}
             animate={{ width: `${pct}%` }}
@@ -159,9 +159,9 @@ function ScorePhase({ active }: { active: boolean }) {
           <motion.div
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-lg border border-zinc-700/60 bg-zinc-900/60 px-3 py-2.5"
+            className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2.5"
           >
-            <p className="text-xs text-zinc-400 leading-relaxed italic">
+            <p className="text-xs text-stone-600 leading-relaxed italic">
               &ldquo;No booking system, 4.8★, 156 reviews — missed bookings after 5 PM every day.&rdquo;
             </p>
           </motion.div>
@@ -186,16 +186,16 @@ function OutreachPhase({ active }: { active: boolean }) {
     <div className="space-y-3">
       <div className="flex items-center gap-2 mb-1">
         <span className="h-1.5 w-1.5 rounded-full bg-yellow-400 animate-pulse" />
-        <span className="text-xs text-zinc-500 font-mono">Opener generated · Pearl Dental</span>
+        <span className="text-xs text-stone-500 font-mono">Opener generated · Pearl Dental</span>
       </div>
       <AnimatePresence>
         {step >= 1 && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl bg-green-600/10 border border-green-600/20 px-4 py-3"
+            className="rounded-xl bg-green-50 border border-green-200 px-4 py-3"
           >
-            <p className="text-xs text-zinc-300 leading-relaxed">{MSG}</p>
+            <p className="text-xs text-stone-700 leading-relaxed">{MSG}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -206,10 +206,10 @@ function OutreachPhase({ active }: { active: boolean }) {
             animate={{ opacity: 1, y: 0 }}
             className="flex gap-2"
           >
-            <button className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300">
+            <button className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs font-medium text-stone-600">
               <Mail className="h-3.5 w-3.5" /> Email
             </button>
-            <button className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-green-600/20 border border-green-600/30 px-3 py-2 text-xs font-medium text-green-400">
+            <button className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-xs font-medium text-green-700">
               <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
             </button>
           </motion.div>
@@ -240,22 +240,22 @@ export function HunterDemo() {
   }, [phase]);
 
   return (
-    <div className="w-full rounded-2xl border border-zinc-700/60 bg-zinc-900/80 overflow-hidden shadow-2xl shadow-black/50 backdrop-blur-sm">
+    <div className="w-full rounded-2xl border border-stone-200 bg-white overflow-hidden shadow-xl shadow-stone-200/60">
       {/* Header bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800/60 bg-zinc-900">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-red-500/70" />
-          <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/70" />
-          <span className="h-2.5 w-2.5 rounded-full bg-green-500/70" />
+          <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+          <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
+          <span className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
         </div>
-        <span className="text-xs font-mono text-zinc-500">{PHASE_LABELS[phase]}</span>
+        <span className="text-xs font-mono text-stone-500">{PHASE_LABELS[phase]}</span>
         <div className="flex gap-1">
           {PHASES.map((p) => (
             <button
               key={p}
               onClick={() => setPhase(p)}
               className={`h-1.5 rounded-full transition-all ${
-                p === phase ? "w-4 bg-red-500" : "w-1.5 bg-zinc-700 hover:bg-zinc-500"
+                p === phase ? "w-4 bg-amber-500" : "w-1.5 bg-stone-200 hover:bg-stone-400"
               }`}
             />
           ))}
@@ -281,9 +281,9 @@ export function HunterDemo() {
       </div>
 
       {/* Progress bar */}
-      <div className="h-0.5 bg-zinc-800">
+      <div className="h-0.5 bg-stone-100">
         <motion.div
-          className="h-full bg-gradient-to-r from-red-500 to-orange-500"
+          className="h-full bg-gradient-to-r from-amber-500 to-amber-400"
           style={{ width: `${progress}%` }}
         />
       </div>
