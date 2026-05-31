@@ -43,7 +43,7 @@ export async function sendTrialReminderEmail(to: string, daysLeft: number, name?
           Don't lose access to your leads.
         </p>
         <p style="margin:0 0 24px;color:#555;">
-          Upgrade to <strong>4unter Pro</strong> for KES 2,000/month — full pipeline, all verticals, unlimited discovery.
+          Upgrade to <strong>4unter Pro</strong> for KES 1,999/month — full pipeline, all verticals, unlimited discovery.
         </p>
         <a href="${SITE}/upgrade"
           style="display:inline-block;background:#f59e0b;color:#000;font-weight:700;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;">
@@ -100,7 +100,7 @@ export async function sendUpgradeConfirmationEmail(to: string, name?: string) {
           Your 4unter Pro account is now active. You have full access to the entire pipeline.
         </p>
         <p style="margin:0 0 24px;color:#555;">
-          <strong>Plan:</strong> 4unter Pro · KES 2,000/month<br/>
+          <strong>Plan:</strong> 4unter Pro · KES 1,999/month<br/>
           Billed monthly · cancel any time from Settings.
         </p>
         <a href="${SITE}/dashboard"

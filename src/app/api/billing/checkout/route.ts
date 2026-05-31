@@ -3,7 +3,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { requireUser, resolveOrgId } from "@/lib/auth";
 
 const PAYSTACK_BASE = "https://api.paystack.co";
-const PLAN_AMOUNT   = 200000; // KES 2,000 in kobo (Paystack uses smallest currency unit — KES uses kobo)
+const PLAN_AMOUNT   = 199900; // KES 1,999 in kobo (Paystack uses smallest currency unit — KES uses kobo)
 
 function getSecret() {
   const key = process.env.PAYSTACK_SECRET_KEY;

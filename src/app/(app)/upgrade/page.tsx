@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 const PLAN = {
   id:         "pro",
   label:      "4unter Pro",
-  price:      2000,
-  priceLabel: "KES 2,000",
+  price:      1999,
+  priceLabel: "KES 1,999",
   period:     "/ month",
   features: [
     "Unlimited lead discovery",
@@ -212,7 +212,7 @@ export default function UpgradePage() {
             {loading ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>
             ) : (
-              <><Zap className="h-4 w-4" /> Start Pro — KES 2,000/month <ArrowRight className="h-4 w-4" /></>
+              <><Zap className="h-4 w-4" /> Start Pro — KES 1,999/month <ArrowRight className="h-4 w-4" /></>
             )}
           </button>
         )}

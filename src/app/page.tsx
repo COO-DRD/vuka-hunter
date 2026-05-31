@@ -886,7 +886,7 @@ export default function LandingPage() {
                   <p className="text-xs text-stone-400 mt-0.5">7-day free trial included</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-4xl font-black text-amber-500">2,000</p>
+                  <p className="text-4xl font-black text-amber-500">1,999</p>
                   <p className="text-xs text-stone-400">KES / month</p>
                 </div>
               </div>
