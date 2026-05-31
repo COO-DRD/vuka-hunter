@@ -23,7 +23,7 @@ export function HunterMark({ className }: { className?: string }) {
   );
 }
 
-export function HunterWordmark({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
+export function HunterWordmark({ size = "md", onLight = false }: { size?: "sm" | "md" | "lg"; onLight?: boolean }) {
   const iconSize  = size === "lg" ? "h-7 w-7"  : size === "sm" ? "h-4 w-4"  : "h-5 w-5";
   const textClass = size === "lg" ? "text-xl"   : size === "sm" ? "text-sm"  : "text-base";
   const boxSize   = size === "lg" ? "h-11 w-11 rounded-xl" : size === "sm" ? "h-7 w-7 rounded-md" : "h-9 w-9 rounded-lg";
@@ -40,7 +40,7 @@ export function HunterWordmark({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
       </div>
       <span className={cn("font-black tracking-tighter", textClass)}>
         <span className="text-amber-400">4</span>
-        <span className="text-zinc-100">UNTER</span>
+        <span className={onLight ? "text-stone-950" : "text-zinc-100"}>UNTER</span>
       </span>
     </div>
   );

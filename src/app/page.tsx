@@ -368,7 +368,7 @@ export default function LandingPage() {
           scrolled ? "bg-[#F8F7F4]/95 backdrop-blur-sm border-b border-stone-200" : ""
         }`}>
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <HunterWordmark size="sm" />
+          <HunterWordmark size="sm" onLight />
           <nav className="hidden md:flex items-center gap-6 text-sm">
             {["Features", "Pricing", "Use Cases"].map((item) => (
               <span key={item} className="text-stone-500 hover:text-stone-900 transition-colors cursor-pointer">{item}</span>
