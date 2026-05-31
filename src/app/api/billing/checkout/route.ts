@@ -10,13 +10,12 @@ function getStripe() {
 }
 
 const PLAN_PRICES: Record<string, { priceId: string; amount: number }> = {
-  solo: { priceId: process.env.STRIPE_PRICE_SOLO ?? "", amount: 150000 }, // KES 1,500
-  team: { priceId: process.env.STRIPE_PRICE_TEAM ?? "", amount: 550000 }, // KES 5,500
+  pro: { priceId: process.env.STRIPE_PRICE_PRO ?? "", amount: 200000 }, // KES 2,000
 };
 
 export async function POST(req: NextRequest) {
-  if (!process.env.STRIPE_PRICE_SOLO || !process.env.STRIPE_PRICE_TEAM) {
-    console.error("[billing/checkout] STRIPE_PRICE_* env vars not configured");
+  if (!process.env.STRIPE_PRICE_PRO) {
+    console.error("[billing/checkout] STRIPE_PRICE_PRO not configured");
     return NextResponse.json({ error: "Payment system is not configured. Contact support." }, { status: 500 });
   }
 
@@ -34,7 +33,7 @@ export async function POST(req: NextRequest) {
   const { plan, idempotency_key } = body;
 
   if (!plan || !PLAN_PRICES[plan]) {
-    return NextResponse.json({ error: "Invalid plan. Choose solo or team." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid plan." }, { status: 400 });
   }
   if (!idempotency_key || idempotency_key.length < 16) {
     return NextResponse.json({ error: "idempotency_key required (UUID from client)" }, { status: 400 });

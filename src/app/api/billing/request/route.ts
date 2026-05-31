@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUser, resolveOrgId } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
-const VALID_PLANS = ["solo", "team"];
+const VALID_PLANS = ["pro"];
 
 function genRef(): string {
   const n = Math.floor(10000 + Math.random() * 90000);

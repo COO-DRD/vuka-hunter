@@ -107,7 +107,7 @@ export default async function SettingsPage() {
           </div>
           {isTrialing && (
             <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
-              After your trial, plans start at <span className="font-semibold">KES 1,500/month</span>.
+              After your trial, upgrade to Pro at <span className="font-semibold">KES 2,000/month</span>.
               Upgrade any time — contact <span className="font-medium">billing@dullugroup.co.ke</span>
             </div>
           )}
