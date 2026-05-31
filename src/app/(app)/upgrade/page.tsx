@@ -88,34 +88,34 @@ export default function UpgradePage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 px-4 py-16">
+    <div className="min-h-screen px-4 py-16" style={{ background: "var(--background)" }}>
       <div className="max-w-md mx-auto">
 
         {/* Header */}
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-black text-zinc-100 mb-3">Upgrade to Pro</h1>
-          <p className="text-zinc-400 text-sm">
+          <h1 className="text-3xl font-black text-stone-900 mb-3">Upgrade to Pro</h1>
+          <p className="text-stone-500 text-sm">
             Full access. One plan. No limits.
           </p>
         </div>
 
         {/* Single plan card */}
-        <div className="rounded-2xl border-2 border-amber-500 bg-amber-950/20 ring-1 ring-amber-500/30 p-8 mb-8">
+        <div className="rounded-2xl border-2 border-amber-500 bg-amber-50 ring-1 ring-amber-500/30 p-8 mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <p className="text-lg font-black text-zinc-100">{PLAN.label}</p>
-              <p className="text-xs text-zinc-500 mt-0.5">Cancel any time</p>
+              <p className="text-lg font-black text-stone-900">{PLAN.label}</p>
+              <p className="text-xs text-stone-500 mt-0.5">Cancel any time</p>
             </div>
             <div className="text-right">
-              <p className="text-3xl font-black text-amber-400">{PLAN.priceLabel}</p>
-              <p className="text-xs text-zinc-500">{PLAN.period}</p>
+              <p className="text-3xl font-black text-amber-500">{PLAN.priceLabel}</p>
+              <p className="text-xs text-stone-500">{PLAN.period}</p>
             </div>
           </div>
 
           <ul className="space-y-3">
             {PLAN.features.map((f) => (
-              <li key={f} className="flex items-start gap-3 text-sm text-zinc-300">
-                <Check className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+              <li key={f} className="flex items-start gap-3 text-sm text-stone-700">
+                <Check className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
                 {f}
               </li>
             ))}
@@ -123,45 +123,45 @@ export default function UpgradePage() {
         </div>
 
         {/* Security note */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 mb-6 flex items-start gap-3">
-          <Shield className="h-4 w-4 text-zinc-500 mt-0.5 shrink-0" />
-          <p className="text-xs text-zinc-500 leading-relaxed">
+        <div className="rounded-xl border border-stone-200 bg-white px-4 py-3 mb-6 flex items-start gap-3">
+          <Shield className="h-4 w-4 text-stone-400 mt-0.5 shrink-0" />
+          <p className="text-xs text-stone-500 leading-relaxed">
             Payments processed securely. 4unter never stores your card details.
           </p>
         </div>
 
         {/* Error */}
         {error && (
-          <div className="flex items-start gap-2 rounded-lg border border-red-800/50 bg-red-950/20 px-4 py-3 mb-4">
-            <AlertTriangle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-red-300">{error}</p>
+          <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 mb-4">
+            <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-red-600">{error}</p>
           </div>
         )}
 
         {/* CTA */}
         {stripeConfigured === false ? (
           reqDone ? (
-            <div className="rounded-xl border border-green-700/40 bg-green-950/20 px-6 py-6 text-center space-y-3">
-              <CheckCircle2 className="h-8 w-8 text-green-400 mx-auto" />
-              <p className="text-sm font-semibold text-zinc-100">
+            <div className="rounded-xl border border-green-200 bg-green-50 px-6 py-6 text-center space-y-3">
+              <CheckCircle2 className="h-8 w-8 text-green-500 mx-auto" />
+              <p className="text-sm font-semibold text-stone-900">
                 {reqDone.duplicate ? "You already have a pending request" : "Request received"}
               </p>
-              <p className="text-xs text-zinc-400">
-                Reference <span className="font-mono text-amber-400 font-semibold">{reqDone.ref}</span>. We will activate your Pro account within 1 hour — check your WhatsApp and email.
+              <p className="text-xs text-stone-500">
+                Reference <span className="font-mono text-amber-500 font-semibold">{reqDone.ref}</span>. We will activate your Pro account within 1 hour — check your WhatsApp and email.
               </p>
             </div>
           ) : (
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-6 py-5 space-y-4">
+            <div className="rounded-xl border border-stone-200 bg-white px-6 py-5 space-y-4">
               <div>
-                <p className="text-sm font-semibold text-zinc-100 mb-0.5">Request activation</p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-sm font-semibold text-stone-900 mb-0.5">Request activation</p>
+                <p className="text-xs text-stone-500">
                   Card payment is coming soon. Submit a request and we will activate your account within 1 hour and send you a payment link.
                 </p>
               </div>
 
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">
+                  <label className="block text-xs text-stone-500 mb-1.5">
                     <Phone className="inline h-3 w-3 mr-1" />
                     WhatsApp / phone number
                   </label>
@@ -174,31 +174,32 @@ export default function UpgradePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">
+                  <label className="block text-xs text-stone-500 mb-1.5">
                     <FileText className="inline h-3 w-3 mr-1" />
-                    Anything to add? <span className="text-zinc-600">(optional)</span>
+                    Anything to add? <span className="text-stone-400">(optional)</span>
                   </label>
                   <textarea
                     value={reqNote}
                     onChange={(e) => setReqNote(e.target.value)}
                     rows={2}
                     placeholder="e.g. paying by M-Pesa, need invoice..."
-                    className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-amber-600/50 resize-none"
+                    className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 resize-none"
+                    style={{ background: "var(--bg-surface)", color: "var(--text-1)", borderColor: "var(--border)" }}
                   />
                 </div>
               </div>
 
-              {reqError && <p className="text-xs text-red-400">{reqError}</p>}
+              {reqError && <p className="text-xs text-red-500">{reqError}</p>}
 
               <button
                 onClick={handleRequest}
                 disabled={reqLoading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-60 px-6 py-3 font-bold text-black text-sm transition-colors"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-60 px-6 py-3 font-bold text-black text-sm transition-colors"
               >
                 {reqLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                 {reqLoading ? "Submitting..." : "Request Pro activation"}
               </button>
-              <p className="text-[11px] text-zinc-600 text-center">
+              <p className="text-[11px] text-stone-400 text-center">
                 We will send a payment link to your email and confirm via WhatsApp.
               </p>
             </div>
@@ -207,7 +208,7 @@ export default function UpgradePage() {
           <button
             onClick={handleCheckout}
             disabled={loading || stripeConfigured === null}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-60 px-8 py-4 font-bold text-black text-sm transition-colors"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-60 px-8 py-4 font-bold text-black text-sm transition-colors"
           >
             {loading ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>
@@ -217,7 +218,7 @@ export default function UpgradePage() {
           </button>
         )}
 
-        <p className="text-center text-xs text-zinc-600 mt-4">
+        <p className="text-center text-xs text-stone-400 mt-4">
           7-day free trial included · billed monthly · cancel any time
         </p>
       </div>

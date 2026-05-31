@@ -31,8 +31,8 @@ body {
 /* ── Scrollbar ───────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #52525b; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
 
 /* ── Animations ──────────────────────────────────────────────────── */
 @keyframes fade-up {
@@ -104,6 +104,24 @@ body {
 /* Nav background var for light mode */
 :root { --nav-bg: rgba(248, 247, 244, 0.97); }
 
+/* ── Light mode — remap zinc (dark-hardcoded) utilities to theme vars ── */
+/* Applies to any element inside <ThemeProvider data-theme="light"> */
+[data-theme="light"] .bg-zinc-950,
+[data-theme="light"] .bg-zinc-900  { background-color: var(--bg-surface); }
+[data-theme="light"] .bg-zinc-800  { background-color: var(--bg-elevated); }
+[data-theme="light"] .text-zinc-50,
+[data-theme="light"] .text-zinc-100,
+[data-theme="light"] .text-zinc-200 { color: var(--text-1); }
+[data-theme="light"] .text-zinc-300,
+[data-theme="light"] .text-zinc-400 { color: var(--text-2); }
+[data-theme="light"] .text-zinc-500,
+[data-theme="light"] .text-zinc-600 { color: var(--text-3); }
+[data-theme="light"] .border-zinc-800,
+[data-theme="light"] .border-zinc-700,
+[data-theme="light"] .border-zinc-600 { border-color: var(--border); }
+[data-theme="light"] .hover\:text-zinc-400:hover { color: var(--text-3); }
+[data-theme="light"] .hover\:text-zinc-300:hover { color: var(--text-2); }
+
 /* ── Dark mode — override common Tailwind stone/white utilities ─── */
 /* Higher specificity than plain utility classes — no !important needed */
 [data-theme="dark"] .bg-white         { background-color: var(--bg-surface); }
@@ -130,6 +148,19 @@ body {
 [data-theme="dark"] .bg-amber-50      { background-color: var(--brand-dim); }
 [data-theme="dark"] .border-amber-200 { border-color: var(--brand-glow); }
 [data-theme="dark"] .text-amber-700   { color: #f59e0b; }
+/* Zinc overrides in dark mode — consistent with CSS vars */
+[data-theme="dark"] .bg-zinc-950    { background-color: var(--background); }
+[data-theme="dark"] .bg-zinc-900    { background-color: var(--bg-surface); }
+[data-theme="dark"] .bg-zinc-800    { background-color: var(--bg-elevated); }
+[data-theme="dark"] .text-zinc-50,
+[data-theme="dark"] .text-zinc-100,
+[data-theme="dark"] .text-zinc-200  { color: var(--text-1); }
+[data-theme="dark"] .text-zinc-300,
+[data-theme="dark"] .text-zinc-400  { color: var(--text-2); }
+[data-theme="dark"] .text-zinc-500,
+[data-theme="dark"] .text-zinc-600  { color: var(--text-3); }
+[data-theme="dark"] .border-zinc-800,
+[data-theme="dark"] .border-zinc-700 { border-color: var(--border); }
 /* Status/alert tints */
 [data-theme="dark"] .bg-blue-50       { background-color: rgba(59,130,246,0.08); }
 [data-theme="dark"] .border-blue-200  { border-color: rgba(59,130,246,0.20); }

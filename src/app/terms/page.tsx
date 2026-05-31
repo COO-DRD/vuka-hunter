@@ -30,25 +30,25 @@ export default function TermsPage() {
   const effectiveDate = "26 May 2026";
 
   return (
-    <div className="min-h-screen bg-zinc-950 py-16 px-4">
+    <div className="min-h-screen bg-[#F8F7F4] py-16 px-4">
       <div className="max-w-3xl mx-auto">
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-10">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-600">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-500">
             <Zap className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-zinc-100">Terms of Service &amp; Usage Policy</h1>
-            <p className="text-xs text-zinc-500 mt-0.5">Effective {effectiveDate} · 4unter by Dullu Digital</p>
+            <h1 className="text-2xl font-bold text-stone-900">Terms of Service &amp; Usage Policy</h1>
+            <p className="text-xs text-stone-500 mt-0.5">Effective {effectiveDate} · 4unter by Dullu Digital</p>
           </div>
         </div>
 
         {/* Intro */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-6 py-5 mb-8">
-          <p className="text-sm text-zinc-300 leading-relaxed">
+        <div className="rounded-xl border border-stone-200 bg-white px-6 py-5 mb-8">
+          <p className="text-sm text-stone-700 leading-relaxed">
             4unter is a B2B lead intelligence and AI outreach tool built and operated by{" "}
-            <strong className="text-zinc-100">Dullu Digital</strong> (trading as VUKA AI), registered in Kenya.
+            <strong className="text-stone-900">Dullu Digital</strong> (trading as VUKA AI), registered in Kenya.
             By creating an account or using the platform, you agree to these terms in full.
             If you do not agree, do not use 4unter.
           </p>
@@ -57,14 +57,14 @@ export default function TermsPage() {
         {/* Permitted Use */}
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4">
-            <CheckCircle2 className="h-5 w-5 text-green-400" />
-            <h2 className="text-base font-semibold text-zinc-100">What You May Do</h2>
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            <h2 className="text-base font-semibold text-stone-900">What You May Do</h2>
           </div>
           <div className="space-y-2">
             {ALLOWED.map((item) => (
-              <div key={item} className="flex items-start gap-3 rounded-lg border border-zinc-800/60 bg-zinc-900/20 px-4 py-3">
+              <div key={item} className="flex items-start gap-3 rounded-lg border border-stone-200 bg-white px-4 py-3">
                 <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                <p className="text-sm text-zinc-300">{item}</p>
+                <p className="text-sm text-stone-700">{item}</p>
               </div>
             ))}
           </div>
@@ -73,14 +73,14 @@ export default function TermsPage() {
         {/* Prohibited Use */}
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4">
-            <XCircle className="h-5 w-5 text-red-400" />
-            <h2 className="text-base font-semibold text-zinc-100">What You May Not Do</h2>
+            <XCircle className="h-5 w-5 text-red-500" />
+            <h2 className="text-base font-semibold text-stone-900">What You May Not Do</h2>
           </div>
           <div className="space-y-2">
             {PROHIBITED.map((item) => (
-              <div key={item} className="flex items-start gap-3 rounded-lg border border-red-900/30 bg-red-950/10 px-4 py-3">
+              <div key={item} className="flex items-start gap-3 rounded-lg border border-red-100 bg-red-50 px-4 py-3">
                 <XCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
-                <p className="text-sm text-zinc-300">{item}</p>
+                <p className="text-sm text-stone-700">{item}</p>
               </div>
             ))}
           </div>
@@ -89,36 +89,36 @@ export default function TermsPage() {
         {/* Data Handling */}
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4">
-            <ShieldCheck className="h-5 w-5 text-blue-400" />
-            <h2 className="text-base font-semibold text-zinc-100">Data &amp; Privacy</h2>
+            <ShieldCheck className="h-5 w-5 text-blue-500" />
+            <h2 className="text-base font-semibold text-stone-900">Data &amp; Privacy</h2>
           </div>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-6 py-5 space-y-4 text-sm text-zinc-400 leading-relaxed">
+          <div className="rounded-xl border border-stone-200 bg-white px-6 py-5 space-y-4 text-sm text-stone-600 leading-relaxed">
             <p>
-              <strong className="text-zinc-200">What 4unter collects about you:</strong> Your email address,
+              <strong className="text-stone-900">What 4unter collects about you:</strong> Your email address,
               account name, business profile information you provide during onboarding, and usage activity
-              (lead scrapes, enrichments, and scores). We do not collect payment data during the beta.
+              (lead scrapes, enrichments, and scores). We do not collect payment card data directly.
             </p>
             <p>
-              <strong className="text-zinc-200">What 4unter scrapes on your behalf:</strong> Business names,
+              <strong className="text-stone-900">What 4unter scrapes on your behalf:</strong> Business names,
               phone numbers, website URLs, addresses, and Google ratings from public sources (Google Maps,
               OpenStreetMap, public business websites). This is publicly available business information —
               not personal data of private individuals.
             </p>
             <p>
-              <strong className="text-zinc-200">How we use your data:</strong> To operate the platform,
+              <strong className="text-stone-900">How we use your data:</strong> To operate the platform,
               improve AI scoring accuracy, and contact you about product updates. We do not sell your
               account data or lead lists to third parties.
             </p>
             <p>
-              <strong className="text-zinc-200">Kenya Data Protection Act 2019:</strong> We process personal
+              <strong className="text-stone-900">Kenya Data Protection Act 2019:</strong> We process personal
               data in accordance with the DPA 2019. You may request access to, correction of, or deletion
               of your personal data by contacting us at{" "}
-              <a href="mailto:legal@dullugroup.co.ke" className="text-blue-400 hover:underline">
+              <a href="mailto:legal@dullugroup.co.ke" className="text-blue-600 hover:underline">
                 legal@dullugroup.co.ke
               </a>.
             </p>
             <p>
-              <strong className="text-zinc-200">Data retention:</strong> Your lead data is retained for the
+              <strong className="text-stone-900">Data retention:</strong> Your lead data is retained for the
               lifetime of your account. When you delete your account, all leads, scrape jobs, and profile
               data are permanently deleted within 30 days.
             </p>
@@ -128,53 +128,52 @@ export default function TermsPage() {
         {/* Account & Enforcement */}
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4">
-            <FileText className="h-5 w-5 text-zinc-400" />
-            <h2 className="text-base font-semibold text-zinc-100">Account Rules &amp; Enforcement</h2>
+            <FileText className="h-5 w-5 text-stone-500" />
+            <h2 className="text-base font-semibold text-stone-900">Account Rules &amp; Enforcement</h2>
           </div>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-6 py-5 space-y-4 text-sm text-zinc-400 leading-relaxed">
+          <div className="rounded-xl border border-stone-200 bg-white px-6 py-5 space-y-4 text-sm text-stone-600 leading-relaxed">
             <p>
-              <strong className="text-zinc-200">One account per person.</strong> Accounts are non-transferable.
+              <strong className="text-stone-900">One account per person.</strong> Accounts are non-transferable.
               You are responsible for all activity under your account.
             </p>
             <p>
-              <strong className="text-zinc-200">Termination.</strong> We reserve the right to suspend or
+              <strong className="text-stone-900">Termination.</strong> We reserve the right to suspend or
               permanently terminate any account that violates these terms, without notice. Credits and
               data are forfeited upon termination for cause.
             </p>
             <p>
-              <strong className="text-zinc-200">Beta terms.</strong> The platform is currently in beta.
-              Features, pricing, and usage limits may change. We will give at least 14 days notice before
-              introducing paid plans.
+              <strong className="text-stone-900">Pricing.</strong> Subscription pricing may change with at
+              least 14 days notice. Your rate is locked for the current billing period.
             </p>
             <p>
-              <strong className="text-zinc-200">Limitation of liability.</strong> 4unter is provided as-is.
+              <strong className="text-stone-900">Limitation of liability.</strong> 4unter is provided as-is.
               Dullu Digital is not liable for any indirect, incidental, or consequential damages arising
               from your use of the platform or the outreach you send using it.
             </p>
             <p>
-              <strong className="text-zinc-200">Governing law.</strong> These terms are governed by the
+              <strong className="text-stone-900">Governing law.</strong> These terms are governed by the
               laws of Kenya. Any disputes will be resolved in the courts of Nairobi, Kenya.
             </p>
           </div>
         </section>
 
         {/* Contact */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/20 px-6 py-5 text-sm text-zinc-400">
-          <p className="mb-1 font-medium text-zinc-200">Questions?</p>
+        <div className="rounded-xl border border-stone-200 bg-white px-6 py-5 text-sm text-stone-600">
+          <p className="mb-1 font-semibold text-stone-900">Questions?</p>
           <p>
             Email{" "}
-            <a href="mailto:legal@dullugroup.co.ke" className="text-red-400 hover:underline">
+            <a href="mailto:legal@dullugroup.co.ke" className="text-red-500 hover:underline">
               legal@dullugroup.co.ke
             </a>{" "}
             or visit{" "}
-            <a href="https://vuka-six.vercel.app" className="text-red-400 hover:underline" target="_blank" rel="noopener noreferrer">
+            <a href="https://dullugroup.co.ke" className="text-red-500 hover:underline" target="_blank" rel="noopener noreferrer">
               dullugroup.co.ke
             </a>.
           </p>
         </div>
 
         <div className="mt-10 text-center">
-          <Link href="/sign-in" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">
+          <Link href="/sign-in" className="text-xs text-stone-400 hover:text-stone-600 transition-colors">
             ← Back to sign in
           </Link>
         </div>

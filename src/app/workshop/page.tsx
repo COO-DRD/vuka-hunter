@@ -3,7 +3,7 @@ import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { HunterWordmark } from "@/components/HunterLogo";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Clock, MapPin, Users, CheckCircle2, Zap, Target, MessageSquare } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Users, CheckCircle2, Zap, Target, MessageSquare, ArrowRight } from "lucide-react";
 
 const WORKSHOP = {
   title: "AI Sales Automation for Kenyan SMBs",
@@ -36,7 +36,6 @@ export default function WorkshopPage() {
   async function submit(e: FormEvent) {
     e.preventDefault();
     setErrMsg("");
-    // Validate before any request
     const nameTrimmed = form.name.trim();
     if (!nameTrimmed)                                                          { setErrMsg("Enter your name."); return; }
     if (nameTrimmed.length < 2)                                               { setErrMsg("Name must be at least 2 characters."); return; }
@@ -58,14 +57,17 @@ export default function WorkshopPage() {
     }
   }
 
+  const inputCls = "w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500";
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-[#F8F7F4] text-stone-900">
       {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-zinc-800/50 bg-zinc-950/80 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-stone-200 bg-[#F8F7F4]/95 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <Link href="/"><HunterWordmark size="sm" /></Link>
-          <Link href="/sign-up">
-            <Button size="sm">Try 4unter free</Button>
+          <Link href="/"><HunterWordmark size="sm" onLight /></Link>
+          <Link href="/sign-up"
+            className="flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 transition-colors px-4 py-2 text-sm font-bold text-black">
+            Try 4unter free <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       </header>
@@ -75,16 +77,16 @@ export default function WorkshopPage() {
           {/* Left: workshop info */}
           <div className="space-y-8">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1">
-              <CalendarDays className="h-3.5 w-3.5 text-amber-400" />
-              <span className="text-xs font-medium text-amber-400">Free Workshop</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-50 px-3 py-1">
+              <CalendarDays className="h-3.5 w-3.5 text-amber-600" />
+              <span className="text-xs font-semibold text-amber-700">Free Workshop</span>
             </div>
 
             <div className="space-y-3">
-              <h1 className="text-3xl font-black leading-tight tracking-tight text-zinc-50 sm:text-4xl">
+              <h1 className="text-3xl font-black leading-tight tracking-tight text-stone-950 sm:text-4xl">
                 {WORKSHOP.title}
               </h1>
-              <p className="text-zinc-400 leading-relaxed">{WORKSHOP.subtitle}</p>
+              <p className="text-stone-600 leading-relaxed">{WORKSHOP.subtitle}</p>
             </div>
 
             {/* Meta */}
@@ -95,21 +97,21 @@ export default function WorkshopPage() {
                 { icon: MapPin,       label: WORKSHOP.format },
                 { icon: Users,        label: WORKSHOP.spots },
               ].map(({ icon: Icon, label }) => (
-                <div key={label} className="flex items-center gap-2.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2.5">
-                  <Icon className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
-                  <span className="text-xs text-zinc-300">{label}</span>
+                <div key={label} className="flex items-center gap-2.5 rounded-lg border border-stone-200 bg-white px-3 py-2.5">
+                  <Icon className="h-3.5 w-3.5 text-stone-400 shrink-0" />
+                  <span className="text-xs text-stone-700">{label}</span>
                 </div>
               ))}
             </div>
 
             {/* Agenda */}
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-zinc-600">Agenda</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">Agenda</p>
               <div className="space-y-2">
                 {AGENDA.map(({ time, item }) => (
                   <div key={time} className="flex items-start gap-3">
-                    <span className="text-xs font-mono text-zinc-600 shrink-0 pt-0.5 w-8">{time}</span>
-                    <span className="text-sm text-zinc-400">{item}</span>
+                    <span className="text-xs font-mono text-stone-400 shrink-0 pt-0.5 w-8">{time}</span>
+                    <span className="text-sm text-stone-600">{item}</span>
                   </div>
                 ))}
               </div>
@@ -117,10 +119,10 @@ export default function WorkshopPage() {
 
             {/* What you'll leave with */}
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-zinc-600">What you'll leave with</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">What you&apos;ll leave with</p>
               <ul className="space-y-2">
                 {OUTCOMES.map((o) => (
-                  <li key={o} className="flex items-start gap-2 text-sm text-zinc-400">
+                  <li key={o} className="flex items-start gap-2 text-sm text-stone-600">
                     <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
                     {o}
                   </li>
@@ -129,13 +131,13 @@ export default function WorkshopPage() {
             </div>
 
             {/* Who runs it */}
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 flex items-start gap-4">
+            <div className="rounded-xl border border-stone-200 bg-white p-4 flex items-start gap-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-600">
                 <Target className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-zinc-100">Dullu Digital</p>
-                <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">
+                <p className="text-sm font-semibold text-stone-900">Dullu Digital</p>
+                <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
                   We built 4unter to solve our own prospecting problem. Now we use it daily to generate pipeline for AI automation projects across Nairobi.
                 </p>
               </div>
@@ -145,88 +147,87 @@ export default function WorkshopPage() {
           {/* Right: registration form */}
           <div className="lg:sticky lg:top-24 h-fit">
             {status === "done" ? (
-              <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-8 text-center space-y-4">
+              <div className="rounded-2xl border border-green-200 bg-green-50 p-8 text-center space-y-4">
                 <div className="flex justify-center">
-                  <CheckCircle2 className="h-12 w-12 text-green-400" />
+                  <CheckCircle2 className="h-12 w-12 text-green-500" />
                 </div>
-                <h2 className="text-xl font-bold text-zinc-100">You&apos;re registered!</h2>
-                <p className="text-sm text-zinc-400">
+                <h2 className="text-xl font-bold text-stone-900">You&apos;re registered!</h2>
+                <p className="text-sm text-stone-600">
                   Check your email for the Zoom link. We&apos;ll send a reminder 24 hours before the session.
                 </p>
                 <div className="pt-2">
-                  <Link href="/sign-up">
-                    <Button className="w-full gap-2">
-                      <Zap className="h-4 w-4" />
-                      Start using 4unter free
-                    </Button>
+                  <Link href="/sign-up"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 transition-colors px-6 py-3 font-bold text-black text-sm">
+                    <Zap className="h-4 w-4" />
+                    Start using 4unter free
                   </Link>
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-zinc-700/60 bg-zinc-900/80 p-6 space-y-5">
+              <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm shadow-stone-200/60 space-y-5">
                 <div className="space-y-1">
-                  <h2 className="text-lg font-bold text-zinc-100">Reserve your seat</h2>
-                  <p className="text-xs text-zinc-500">Free · 25 seats per session</p>
+                  <h2 className="text-lg font-bold text-stone-900">Reserve your seat</h2>
+                  <p className="text-xs text-stone-500">Free · 25 seats per session</p>
                 </div>
 
                 <form onSubmit={submit} className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="text-xs text-zinc-400 font-medium">Full name *</label>
+                      <label className="text-xs text-stone-600 font-medium">Full name *</label>
                       <input
                         required
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                         placeholder="Jane Kamau"
-                        className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/40"
+                        className={inputCls}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs text-zinc-400 font-medium">WhatsApp / phone</label>
+                      <label className="text-xs text-stone-600 font-medium">WhatsApp / phone</label>
                       <input
                         value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         placeholder="+254 7xx xxx xxx"
-                        className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/40"
+                        className={inputCls}
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs text-zinc-400 font-medium">Email *</label>
+                    <label className="text-xs text-stone-600 font-medium">Email *</label>
                     <input
                       required
                       type="email"
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
                       placeholder="jane@company.co.ke"
-                      className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/40"
+                      className={inputCls}
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="text-xs text-zinc-400 font-medium">Company</label>
+                      <label className="text-xs text-stone-600 font-medium">Company</label>
                       <input
                         value={form.company}
                         onChange={(e) => setForm({ ...form, company: e.target.value })}
                         placeholder="Acme Ltd"
-                        className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/40"
+                        className={inputCls}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs text-zinc-400 font-medium">Your role</label>
+                      <label className="text-xs text-stone-600 font-medium">Your role</label>
                       <input
                         value={form.role}
                         onChange={(e) => setForm({ ...form, role: e.target.value })}
                         placeholder="Founder / Sales"
-                        className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/40"
+                        className={inputCls}
                       />
                     </div>
                   </div>
 
                   {status === "error" && (
-                    <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2">
+                    <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
                       {errMsg}
                     </p>
                   )}
@@ -242,7 +243,7 @@ export default function WorkshopPage() {
                   </Button>
                 </form>
 
-                <p className="text-xs text-zinc-600 text-center">
+                <p className="text-xs text-stone-400 text-center">
                   We&apos;ll send the Zoom link to your email. No spam.
                 </p>
               </div>
