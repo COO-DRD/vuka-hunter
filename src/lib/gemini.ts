@@ -1,7 +1,7 @@
 const GEMINI_STREAM_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse";
 const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
 // Each action has its own pool of up to 3 dedicated keys, with the global key as final fallback.
 // Set GEMINI_SCORE_KEY_1, GEMINI_SCORE_KEY_2, GEMINI_SCORE_KEY_3 etc. in env.
