@@ -40,6 +40,8 @@ const VERTICAL_PAIN: Record<string, string> = {
   electronics_shop:"Electronics shops in Kenya lose repeat buyers to Jumia and OLX because they don't have a channel to reach customers when they're ready to upgrade — WhatsApp catalogues change that.",
   tutoring:      "Parents choose tutoring centres based on word-of-mouth referrals and first impressions during intake season. The ones that fill up have structured parent communication year-round.",
   catering:      "Catering companies book their best events from clients they've already served — but most lose those relationships between events because there's no follow-up channel.",
+  mosque:        "Mosques organising Umra and Hajj trips lose members to agencies that got there first — a structured pipeline for group travel enquiries converts congregation interest into confirmed bookings before Ramadan rush.",
+  visa_agency:   "Visa agencies win repeat business from clients who feel looked after between applications — most lose referrals to competitors who followed up first with the next trip or renewal.",
 };
 
 export async function POST(req: NextRequest) {

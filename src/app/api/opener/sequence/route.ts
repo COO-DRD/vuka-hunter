@@ -22,6 +22,8 @@ const VERTICAL_PAIN: Record<string, string> = {
   it_company:    "IT firms lose clients to competitors who followed up first.",
   digital_agency:"Agencies are hired by whoever has the most visible proof of results at decision time.",
   auto_workshop: "Workshops that retain clients long-term have a proactive communication channel, not just skills.",
+  mosque:        "Mosques organising Umra and Hajj trips lose group bookings to agencies that reached congregation members first.",
+  visa_agency:   "Visa agencies lose referrals to competitors who followed up first with the next trip or renewal reminder.",
 };
 
 

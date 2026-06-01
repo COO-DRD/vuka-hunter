@@ -45,14 +45,21 @@ export const VERTICALS = [
   { value: "tutoring",        label: "Tutoring / Learning Centre" },
   { value: "catering",        label: "Catering Company" },
   { value: "construction",    label: "Construction Contractor" },
+  { value: "mosque",          label: "Mosque / Islamic Center" },
+  { value: "visa_agency",     label: "Visa Agency / Immigration" },
 ];
 
 export const CITIES = [
+  // Kenya
   "Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret",
   "Thika", "Nyeri", "Meru", "Machakos", "Kisii",
   "Kakamega", "Kitale", "Kericho", "Nanyuki",
   "Malindi", "Kilifi", "Lamu",
   "Garissa", "Isiolo",
+  // Uganda
+  "Kampala", "Entebbe", "Jinja",
+  // Tanzania
+  "Dar es Salaam", "Zanzibar", "Arusha", "Mwanza",
 ];
 
 export const STAGES = [

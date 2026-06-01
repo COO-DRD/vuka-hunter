@@ -417,6 +417,28 @@ export const PROTOCOL: Record<string, VerticalProtocol> = {
     placeQuery: "construction company building contractor",
     osmTags: ['["office"="construction"]', '["craft"="construction"]'],
   },
+  mosque: {
+    key: "mosque",
+    label: "Mosque / Islamic Center",
+    tier: "A",
+    minRating: 3.5,
+    minReviews: 5,
+    notes: "Mosques and Islamic centers. Organise group travel (Umra, Hajj, ziyarah) and have large congregation networks — high LTV for travel agencies, visa processors, and Islamic finance.",
+    nameBlocklist: ["government", "county", "national"],
+    placeQuery: "mosque masjid islamic center muslim",
+    osmTags: ['["amenity"="place_of_worship"]["religion"="muslim"]', '["amenity"="place_of_worship"]["name"~"mosque|masjid|islamic",i]'],
+  },
+  visa_agency: {
+    key: "visa_agency",
+    label: "Visa Agency / Immigration Consultant",
+    tier: "A",
+    minRating: 4.0,
+    minReviews: 10,
+    notes: "Visa processing and immigration consultancies. High-value transactions, repeat clients, referral-driven — need systematic lead generation and follow-up.",
+    nameBlocklist: ["government", "embassy", "consulate", "immigration department"],
+    placeQuery: "visa agency immigration consultant travel document",
+    osmTags: ['["office"="travel_agent"]', '["office"="visa"]'],
+  },
 };
 
 // Cities with enough premium business density to be worth scraping
@@ -442,8 +464,17 @@ export const PROTOCOL_CITIES = [
   { value: "Kilifi",   label: "Kilifi",   premium_areas: [] },
   { value: "Lamu",     label: "Lamu",     premium_areas: [] },
   // ── Emerging ──────────────────────────────────────────────────────────────
-  { value: "Garissa",  label: "Garissa",  premium_areas: [] },
-  { value: "Isiolo",   label: "Isiolo",   premium_areas: [] },
+  { value: "Garissa",       label: "Garissa",       premium_areas: [] },
+  { value: "Isiolo",        label: "Isiolo",        premium_areas: [] },
+  // ── Uganda ────────────────────────────────────────────────────────────────
+  { value: "Kampala",       label: "Kampala",       premium_areas: ["Kololo", "Nakasero", "Bugolobi", "Ntinda", "Muyenga", "Naguru"] },
+  { value: "Entebbe",       label: "Entebbe",       premium_areas: [] },
+  { value: "Jinja",         label: "Jinja",         premium_areas: [] },
+  // ── Tanzania ──────────────────────────────────────────────────────────────
+  { value: "Dar es Salaam", label: "Dar es Salaam", premium_areas: ["Masaki", "Oyster Bay", "Upanga", "Mikocheni", "Msasani"] },
+  { value: "Zanzibar",      label: "Zanzibar",      premium_areas: ["Stone Town", "Nungwi", "Kendwa"] },
+  { value: "Arusha",        label: "Arusha",        premium_areas: ["Njiro", "Sakina"] },
+  { value: "Mwanza",        label: "Mwanza",        premium_areas: [] },
 ];
 
 export const TIER_A_KEYS = Object.values(PROTOCOL).filter((v) => v.tier === "A").map((v) => v.key);
