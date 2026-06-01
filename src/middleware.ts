@@ -148,7 +148,8 @@ function addSecurityHeaders(res: NextResponse, allowIndex = false): NextResponse
       // img.clerk.com for Clerk user profile pictures; data: and https: for everything else
       "img-src 'self' data: blob: https://img.clerk.com https:",
       // api.clerk.com is Clerk's actual REST API — clerk.io was a wrong domain (different company)
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://maps.googleapis.com https://accounts.google.com https://api.stripe.com https://hooks.stripe.com https://*.clerk.accounts.dev https://api.clerk.com https://clerk.com https://*.4unter.dullugroup.co.ke",
+      // challenges.cloudflare.com is needed for Clerk's Turnstile bot protection token exchange
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://maps.googleapis.com https://accounts.google.com https://api.stripe.com https://hooks.stripe.com https://*.clerk.accounts.dev https://api.clerk.com https://clerk.com https://challenges.cloudflare.com https://*.4unter.dullugroup.co.ke",
       // fonts.gstatic.com for Next.js Google Fonts (Geist); fonts.googleapis.com for the manifest
       "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
       "frame-src https://js.stripe.com https://hooks.stripe.com https://*.clerk.accounts.dev https://*.4unter.dullugroup.co.ke https://challenges.cloudflare.com",
