@@ -117,7 +117,6 @@ export async function POST(req: NextRequest) {
         const geminiRes = await geminiStream(prompt, {
           temperature: 0.2,
           maxOutputTokens: 800,
-          thinkingBudget: 0, // structured output — thinking not needed
         });
 
         if (!geminiRes.ok) {
@@ -166,7 +165,7 @@ export async function POST(req: NextRequest) {
           score_reasoning: reasoning,
           pain_signals,
           scored_at: new Date().toISOString(),
-        }).eq("id", leadId);
+        }).eq("id", leadId).eq("org_id", orgId);
 
         logEvent(orgId, "score");
         send({ done: true, score, reasoning, pain_signals });

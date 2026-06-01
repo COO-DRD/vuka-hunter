@@ -690,6 +690,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
             setPainSignals((payload.pain_signals as string[]) ?? []);
             animateScore(payload.score as number);
             toast.success(`Scored ${payload.score}/100`);
+            router.refresh();
             resolve();
           },
           (msg) => { toast.error(msg); reject(new Error(msg)); },
@@ -784,6 +785,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
           certifications:          (e.certifications as string[])?.length > 0 ? e.certifications : null,
         }));
         toast.success("Lead enriched");
+        router.refresh(); // bust Next.js router cache so enrichment persists on re-navigation
       } else {
         setLiveLead((prev) => ({ ...prev, enrichment_status: "failed" }));
         toast.error((json as { error?: string }).error ?? "Enrichment failed");
