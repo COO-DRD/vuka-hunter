@@ -57,16 +57,20 @@ async function doFetch(url: string, body: string, apiKey: string, timeoutMs?: nu
 }
 
 // Rotate through the pool on 429/503. Stop immediately on any other status (including 400).
+// Starts from a random key each call so load is spread evenly across all keys, not just on failure.
 // If every key returns 429/503 on the first pass, wait 2 s and try once more.
 async function tryPool(url: string, body: string, pool: string[], timeoutMs?: number): Promise<Response> {
+  if (!pool.length) throw new Error("No Gemini API keys configured");
   let last: Response | null = null;
+  const start = Math.floor(Math.random() * pool.length); // random entry point
   for (let pass = 0; pass < 2; pass++) {
     if (pass > 0) await new Promise<void>(r => setTimeout(r, 2000));
-    for (const key of pool) {
+    for (let j = 0; j < pool.length; j++) {
+      const key = pool[(start + j) % pool.length];
       last = await doFetch(url, body, key, timeoutMs);
       if (last.ok) return last;
-      if (last.status !== 429 && last.status !== 503) return last; // non-rate-limit: stop rotating
-      // 429/503 on this key — rotate to next
+      if (last.status !== 429 && last.status !== 503) return last; // hard error — stop rotating
+      // 429/503 — try next key in the ring
     }
   }
   return last!;
