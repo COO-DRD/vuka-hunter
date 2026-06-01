@@ -1,8 +1,9 @@
 "use client";
 import { useState, useMemo } from "react";
-import { RotateCcw, ChevronLeft } from "lucide-react";
+import { RotateCcw, ChevronLeft, Phone, MessageCircle } from "lucide-react";
 
 type Stage = "call" | "qualify" | "pitch" | "close" | "objection" | "action" | "booked" | "exit";
+type GuideMode = "call" | "whatsapp";
 
 type Node = {
   stage: Stage;
@@ -10,7 +11,7 @@ type Node = {
   script?: string;
   tip?: string;
   steps?: string[];
-  options: Array<{ label: string; next: string; cls?: "green" | "red" | "amber" }>;
+  options: Array<{ label: string; next: string; cls?: "green" | "red" | "amber"; switchMode?: GuideMode }>;
 };
 
 const STAGE_COLORS: Record<Stage, { badge: string; scriptBorder: string }> = {
@@ -129,7 +130,10 @@ function buildNodes(lead: {
         "WhatsApp: 'Hi — I called about automating your business admin. Good way to reach you?'",
         "Log the attempt in 4unter with the date and time tried",
       ],
-      options: [{ label: "🔄 Restart", next: "open", cls: "green" }],
+      options: [
+        { label: "📱 Switch to WhatsApp Guide", next: "wa_open", cls: "green", switchMode: "whatsapp" },
+        { label: "🔄 Restart",                  next: "open" },
+      ],
     },
     log_callback: {
       stage: "action", title: "Log the Callback",
@@ -230,6 +234,177 @@ function buildNodes(lead: {
   };
 }
 
+function buildWhatsAppNodes(lead: {
+  vertical?: string;
+  dmName?: string;
+  rawGaps?: string[];
+}): Record<string, Node> {
+  const v    = lead.vertical ?? "business";
+  const gaps = lead.rawGaps ?? [];
+  const dmFirst = lead.dmName ? lead.dmName.split(" ")[0] : "there";
+
+  const noBooking = gaps.some(g => g.includes("booking"));
+  const noPayment = gaps.some(g => g.includes("payment"));
+  const noChat    = gaps.some(g => g.includes("chat"));
+
+  let painHook = "the admin work slowing your team down";
+  if (noBooking) painHook = "managing bookings manually";
+  else if (noPayment) painHook = "collecting payments";
+  else if (noChat) painHook = "following up with customers";
+
+  return {
+    wa_open: {
+      stage: "call", title: "Send the Opener",
+      script: `Copy the AI opener above and send it now. Address them as "${dmFirst}" if you know the name — otherwise use the business name.`,
+      tip: "Best times: 8–10am and 2–4pm Mon–Fri. Save the number to your contacts first so your name shows up.",
+      options: [
+        { label: "✅ Sent — waiting for reply", next: "wa_sent", cls: "green" },
+        { label: "📵 Number not on WhatsApp",   next: "wa_not_whatsapp", cls: "red" },
+      ],
+    },
+    wa_sent: {
+      stage: "qualify", title: "Reading the Room",
+      tip: "Give them 4–24 hours. Two blue ticks = seen. One grey tick = not delivered (check the number). Don't send a second message before 24 hours.",
+      options: [
+        { label: "💬 Positive / curious reply",  next: "wa_positive",  cls: "green" },
+        { label: "😐 Negative / dismissive",     next: "wa_negative",  cls: "red" },
+        { label: "❓ They asked a question",     next: "wa_question",  cls: "amber" },
+        { label: "⏰ No reply after 24h",        next: "wa_followup1" },
+      ],
+    },
+    wa_positive: {
+      stage: "pitch", title: "They're Interested",
+      script: `"When would you have 15 minutes for a quick call? I'll show you exactly what this looks like for a ${v} like yours — Tuesday or Wednesday?"`,
+      tip: "Name two specific days. Never 'when are you free?' — it hands them the decision and kills momentum.",
+      options: [
+        { label: "📅 They agree to a call",   next: "wa_booked",    cls: "green" },
+        { label: "📧 'Send more info first'", next: "wa_send_info", cls: "amber" },
+        { label: "💸 'What does it cost?'",   next: "wa_price" },
+        { label: "🤔 'Let me think'",         next: "wa_think" },
+      ],
+    },
+    wa_negative: {
+      stage: "objection", title: "Not Interested",
+      script: `"No problem. One last question before I go — what's your current process for ${painHook}? I'm always learning from business owners."`,
+      tip: "Reframe from sales to curiosity. Short questions get answers even from people who said no. Keep it one sentence.",
+      options: [
+        { label: "💡 They opened up", next: "wa_positive",  cls: "green" },
+        { label: "🔒 Hard no",        next: "wa_exit",      cls: "red" },
+      ],
+    },
+    wa_question: {
+      stage: "qualify", title: "They Asked a Question",
+      script: `"Great question — [answer in one sentence]. To give you the full picture, it's easier to show than explain in chat. Can you do 15 minutes this week?"`,
+      tip: "One sentence answer, then pivot to a call. Never fully solve it in chat — they'll lose urgency once the question is answered.",
+      options: [
+        { label: "📅 They agree to call", next: "wa_booked",   cls: "green" },
+        { label: "💬 More back and forth", next: "wa_positive", cls: "amber" },
+        { label: "😐 They went quiet",    next: "wa_followup1" },
+      ],
+    },
+    wa_followup1: {
+      stage: "action", title: "Day 3 Follow-Up",
+      script: `"Hi ${dmFirst} — just checking back in. One thing I noticed: [one specific observation about their ${v}]. Worth a quick chat?"`,
+      tip: "Lead with value — one specific insight they can use whether or not they reply. Never open with 'just following up' or 'did you see my message?'",
+      options: [
+        { label: "💬 They replied",            next: "wa_positive",  cls: "green" },
+        { label: "⏰ Still nothing after 3d",  next: "wa_followup2" },
+      ],
+    },
+    wa_followup2: {
+      stage: "action", title: "Day 7 Follow-Up (Last)",
+      script: `"Hi ${dmFirst} — last message from me. I get that timing isn't always right. When things change, happy to help. Good luck with the ${v}!"`,
+      tip: "Give them an easy out. 'No pressure' messages get more replies than persistent ones — and leave the door open for 60 days from now.",
+      options: [
+        { label: "💬 They finally replied", next: "wa_positive", cls: "green" },
+        { label: "🔒 Still nothing",        next: "wa_exit",     cls: "red" },
+      ],
+    },
+    wa_not_whatsapp: {
+      stage: "action", title: "Not on WhatsApp",
+      steps: [
+        "Try calling the number — it may still be a valid phone",
+        "If no answer twice, check if you found an email during enrichment",
+        "Log in 4unter: note 'no WhatsApp' and switch outreach to call",
+      ],
+      options: [
+        { label: "📞 Switch to Call Guide", next: "open", cls: "green", switchMode: "call" },
+      ],
+    },
+    wa_booked: {
+      stage: "booked", title: "🎉 Call Booked!",
+      steps: [
+        "Confirm the time right away in the same WhatsApp thread",
+        "Send a calendar invite or Google Meet link within 10 minutes",
+        "WhatsApp: 'Confirmed! Talk [day] at [time] ✓'",
+        "Log in 4unter: stage → Contacted, note their stated interest",
+      ],
+      options: [{ label: "🔄 Restart", next: "wa_open", cls: "green" }],
+    },
+    wa_send_info: {
+      stage: "objection", title: "Send More Info",
+      script: `"Sure — is it the cost, how it works, or seeing an example that matters most? I'll send exactly that."`,
+      tip: "Never send a generic PDF unasked. Diagnose what they want to see — targeted info closes 2x faster.",
+      options: [
+        { label: "💡 They said what they need", next: "wa_send_specific", cls: "green" },
+        { label: "📄 'Just general info'",       next: "wa_send_generic" },
+      ],
+    },
+    wa_send_specific: {
+      stage: "action", title: "Send Targeted Info",
+      steps: [
+        "Answer in ONE WhatsApp message (not a wall of text)",
+        "End with: 'Does that answer it, or easier to show on a quick call?'",
+        "Set a 2-day reminder to follow up if no reply",
+      ],
+      options: [
+        { label: "📅 They want to call now",     next: "wa_booked",    cls: "green" },
+        { label: "⏰ No response after 3 days",  next: "wa_followup2" },
+      ],
+    },
+    wa_send_generic: {
+      stage: "action", title: "Send General Info",
+      steps: [
+        "Send your shortest result summary — 3 bullet points max, pasted as text (not a PDF)",
+        "End with: 'Happy to show you this live — 15 min call this week?'",
+        "Follow up in 3 days if no reply",
+      ],
+      options: [
+        { label: "📅 They want to call", next: "wa_booked",    cls: "green" },
+        { label: "⏰ No reply in 3 days", next: "wa_followup2" },
+      ],
+    },
+    wa_price: {
+      stage: "objection", title: "They Asked the Price",
+      script: `"Entry package is KES 9,500/month — less than one day of staff salary and it saves 15+ hours/month. Worth 15 minutes to see if it makes sense for you?"`,
+      tip: "Give ONE number. Not a pricing table. Frame it against what they already spend — staff cost is the most relatable comparison.",
+      options: [
+        { label: "✅ Sounds reasonable",  next: "wa_booked", cls: "green" },
+        { label: "💸 'Too expensive'",    next: "wa_exit",   cls: "red" },
+      ],
+    },
+    wa_think: {
+      stage: "objection", title: "Let Me Think About It",
+      script: `"Of course — is it about cost, timing, or wanting to see it work first? Happy to answer whichever helps you decide."`,
+      tip: "'Let me think' = unanswered question. One diagnostic question closes it or reveals the real blocker. Don't chase — diagnose.",
+      options: [
+        { label: "💡 They named their concern", next: "wa_positive",  cls: "green" },
+        { label: "⏰ Radio silence for 3 days", next: "wa_followup2" },
+      ],
+    },
+    wa_exit: {
+      stage: "exit", title: "Graceful Exit",
+      script: `"No problem at all — if things ever change, you've got my number. Good luck with the ${v}!"`,
+      tip: "Leave the door open. Today's cold lead is next quarter's inbound if you didn't burn the bridge.",
+      steps: [
+        "Log in 4unter: stage → Cold",
+        "Tag for re-contact in 60–90 days",
+      ],
+      options: [{ label: "🔄 Restart", next: "wa_open", cls: "green" }],
+    },
+  };
+}
+
 function optionClass(cls?: "green" | "red" | "amber") {
   const base = "w-full text-left px-2.5 py-1.5 rounded-lg border text-[11px] font-medium transition-all flex items-center justify-between gap-2 group";
   if (cls === "green") return `${base} border-green-500/25 hover:border-green-500/50 hover:bg-green-500/5 text-green-600`;
@@ -247,40 +422,96 @@ export function CallGuide({
   dmName?: string;
   rawGaps?: string[];
 }) {
-  const [nodeKey, setNodeKey] = useState("open");
-  const [history, setHistory] = useState<string[]>([]);
+  const [mode, setMode] = useState<GuideMode>("call");
 
-  const nodes = useMemo(
+  // Call guide state
+  const [nodeKey,  setNodeKey]  = useState("open");
+  const [history,  setHistory]  = useState<string[]>([]);
+
+  // WhatsApp guide state
+  const [waNodeKey, setWaNodeKey] = useState("wa_open");
+  const [waHistory, setWaHistory] = useState<string[]>([]);
+
+  const callNodes = useMemo(
     () => buildNodes({ vertical, dmName, rawGaps }),
     [vertical, dmName, rawGaps],
   );
+  const waNodes = useMemo(
+    () => buildWhatsAppNodes({ vertical, dmName, rawGaps }),
+    [vertical, dmName, rawGaps],
+  );
 
-  const node  = nodes[nodeKey] ?? nodes["open"];
+  const activeNodes  = mode === "call" ? callNodes : waNodes;
+  const activeKey    = mode === "call" ? nodeKey   : waNodeKey;
+  const activeHist   = mode === "call" ? history   : waHistory;
+  const setActiveKey = mode === "call" ? setNodeKey  : setWaNodeKey;
+  const setActiveHist = mode === "call" ? setHistory : setWaHistory;
+
+  const node  = activeNodes[activeKey] ?? activeNodes[mode === "call" ? "open" : "wa_open"];
   const style = STAGE_COLORS[node.stage];
 
-  function go(next: string) {
-    setHistory(h => [...h, nodeKey]);
-    setNodeKey(next);
+  function go(next: string, switchMode?: GuideMode) {
+    if (switchMode && switchMode !== mode) {
+      setMode(switchMode);
+      // The "next" node belongs to the target mode — set it there
+      if (switchMode === "call") { setNodeKey(next); setHistory([]); }
+      else { setWaNodeKey(next); setWaHistory([]); }
+      return;
+    }
+    setActiveHist(h => [...h, activeKey]);
+    setActiveKey(next);
   }
 
   function goBack() {
-    setHistory(h => {
+    setActiveHist(h => {
       const prev = [...h];
       const last = prev.pop();
-      if (last) setNodeKey(last);
+      if (last) setActiveKey(last);
       return prev;
     });
   }
 
+  function restart() {
+    setActiveKey(mode === "call" ? "open" : "wa_open");
+    setActiveHist([]);
+  }
+
   return (
     <div className="space-y-2.5">
+      {/* Mode tabs */}
+      <div
+        className="flex rounded-lg p-0.5 gap-0.5"
+        style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)" }}
+      >
+        <button
+          onClick={() => setMode("call")}
+          className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-md text-[10px] font-semibold transition-all"
+          style={mode === "call"
+            ? { background: "var(--bg-surface)", color: "var(--text-1)", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }
+            : { color: "var(--text-3)" }
+          }
+        >
+          <Phone className="h-2.5 w-2.5" /> Call
+        </button>
+        <button
+          onClick={() => setMode("whatsapp")}
+          className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-md text-[10px] font-semibold transition-all"
+          style={mode === "whatsapp"
+            ? { background: "#25D366", color: "#fff", boxShadow: "0 1px 3px rgba(37,211,102,0.3)" }
+            : { color: "var(--text-3)" }
+          }
+        >
+          <MessageCircle className="h-2.5 w-2.5" /> WhatsApp
+        </button>
+      </div>
+
       {/* Stage badge + nav */}
       <div className="flex items-center justify-between">
         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${style.badge}`}>
           {node.stage}
         </span>
         <div className="flex items-center gap-0.5">
-          {history.length > 0 && (
+          {activeHist.length > 0 && (
             <button
               onClick={goBack}
               className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] transition-colors"
@@ -290,7 +521,7 @@ export function CallGuide({
             </button>
           )}
           <button
-            onClick={() => { setNodeKey("open"); setHistory([]); }}
+            onClick={restart}
             title="Restart"
             className="p-1 rounded transition-colors"
             style={{ color: "var(--text-3)" }}
@@ -358,8 +589,8 @@ export function CallGuide({
       <div className="space-y-1 pt-0.5">
         {node.options.map((opt) => (
           <button
-            key={opt.next}
-            onClick={() => go(opt.next)}
+            key={opt.next + (opt.switchMode ?? "")}
+            onClick={() => go(opt.next, opt.switchMode)}
             className={optionClass(opt.cls)}
             style={!opt.cls ? { borderColor: "var(--border)", color: "var(--text-2)" } : undefined}
           >

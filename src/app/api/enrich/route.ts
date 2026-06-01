@@ -93,39 +93,45 @@ export async function POST(req: NextRequest) {
       ...(painSignals.length > 0 && { pain_signals: painSignals }),
     }).eq("id", leadId).eq("org_id", orgId);
 
-    const vTitles = getDecisionTitles(vertical);
+    // Contact extraction is best-effort — Gemini failures must NOT overwrite the
+    // "done" status that was already saved above.
     if (process.env.GEMINI_API_KEY) {
-      const [aboutContacts, igContacts] = await Promise.all([
-        enriched.aboutPageHtml
-          ? extractContactsFromAboutPage(enriched.aboutPageHtml, mode, vTitles)
-          : Promise.resolve([]),
-        enriched.instagramBio
-          ? extractContactsFromInstagramBio(enriched.instagramBio, mode, vTitles)
-          : Promise.resolve([]),
-      ]);
-      const contacts = mergeContacts(aboutContacts, igContacts);
-      if (contacts.length > 0) {
-        await db.from("hunter_lead_contacts").delete().eq("lead_id", leadId).eq("org_id", orgId);
-        await db.from("hunter_lead_contacts").insert(
-          contacts.map((c) => ({
-            lead_id:     leadId,
-            org_id:      orgId,
-            name:        c.name,
-            title:       c.title || null,
-            source:      c.source,
-            confidence:  c.confidence,
-            email:       c.email || null,
-            phone:       c.phone || null,
-            raw_snippet: c.raw_snippet,
-          }))
-        );
-        const top = contacts.sort((a, b) => (b.confidence as unknown as number) - (a.confidence as unknown as number))[0];
-        if (top?.name) {
-          await db.from("hunter_leads").update({
-            decision_maker_name:  top.name,
-            decision_maker_title: top.title || null,
-          }).eq("id", leadId).eq("org_id", orgId);
+      try {
+        const vTitles = getDecisionTitles(vertical);
+        const [aboutContacts, igContacts] = await Promise.all([
+          enriched.aboutPageHtml
+            ? extractContactsFromAboutPage(enriched.aboutPageHtml, mode, vTitles)
+            : Promise.resolve([]),
+          enriched.instagramBio
+            ? extractContactsFromInstagramBio(enriched.instagramBio, mode, vTitles)
+            : Promise.resolve([]),
+        ]);
+        const contacts = mergeContacts(aboutContacts, igContacts);
+        if (contacts.length > 0) {
+          await db.from("hunter_lead_contacts").delete().eq("lead_id", leadId).eq("org_id", orgId);
+          await db.from("hunter_lead_contacts").insert(
+            contacts.map((c) => ({
+              lead_id:     leadId,
+              org_id:      orgId,
+              name:        c.name,
+              title:       c.title || null,
+              source:      c.source,
+              confidence:  c.confidence,
+              email:       c.email || null,
+              phone:       c.phone || null,
+              raw_snippet: c.raw_snippet,
+            }))
+          );
+          const top = contacts.sort((a, b) => (b.confidence as unknown as number) - (a.confidence as unknown as number))[0];
+          if (top?.name) {
+            await db.from("hunter_leads").update({
+              decision_maker_name:  top.name,
+              decision_maker_title: top.title || null,
+            }).eq("id", leadId).eq("org_id", orgId);
+          }
         }
+      } catch (contactErr) {
+        console.error("[enrich] contact extraction failed (non-fatal):", contactErr);
       }
     }
 

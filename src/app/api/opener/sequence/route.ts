@@ -1,7 +1,10 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser, resolveOrgId, checkOrgAccess, ACCESS_DENIED } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
+import { geminiComplete } from "@/lib/gemini";
 import { logEvent, logError } from "@/lib/logEvent";
+
+// Removed local callGemini — use geminiComplete from lib (gemini-2.5-flash, 3-attempt retry)
 
 const VERTICAL_PAIN: Record<string, string> = {
   dental:        "Dental clinics lose 20–30% of appointment slots to no-shows and manual scheduling.",
@@ -21,22 +24,6 @@ const VERTICAL_PAIN: Record<string, string> = {
   auto_workshop: "Workshops that retain clients long-term have a proactive communication channel, not just skills.",
 };
 
-async function callGemini(prompt: string): Promise<string> {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-    {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 1200 },
-      }),
-    }
-  );
-  if (!res.ok) throw new Error(`Gemini ${res.status}`);
-  const json = await res.json();
-  return json.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-}
 
 export async function POST(req: NextRequest) {
   const user = await getUser();
@@ -130,7 +117,7 @@ OUTPUT FORMAT — follow EXACTLY:
 [message]`;
 
   try {
-    const raw = await callGemini(prompt);
+    const raw = await geminiComplete(prompt, { temperature: 0.7, maxOutputTokens: 1200, thinkingBudget: 0 });
 
     const get = (tag: string, end: string) => {
       const m = raw.match(new RegExp(`---${tag}---\\s*([\\s\\S]*?)(?=---${end}---|$)`));
