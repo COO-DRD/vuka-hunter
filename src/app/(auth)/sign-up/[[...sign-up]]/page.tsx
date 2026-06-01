@@ -94,6 +94,12 @@ export default function SignUpPage() {
                 fontFamily:           "var(--font-geist-sans)",
                 fontSize:             "14px",
               },
+              elements: {
+                socialButtonsBlock:   { display: "none" },
+                socialButtonsIconButton: { display: "none" },
+                dividerRow:           { display: "none" },
+                dividerText:          { display: "none" },
+              },
             }}
           />
         </div>

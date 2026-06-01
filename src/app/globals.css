@@ -87,6 +87,32 @@ body {
 .cl-rootBox { width: 100% !important; }
 .cl-header  { display: none !important; }
 
+/* ── Force Clerk auth forms to light mode regardless of system preference ── */
+/* Prevents dark-mode OS setting from making inputs black on a light page    */
+.cl-formFieldInput {
+  background-color: #FFFFFF !important;
+  color: #0C0C0C !important;
+  border-color: #D1D5DB !important;
+}
+.cl-formFieldInput:focus {
+  border-color: #F59E0B !important;
+  box-shadow: 0 0 0 2px rgba(245,158,11,0.2) !important;
+}
+.cl-formFieldLabel {
+  color: #374151 !important;
+}
+.cl-formFieldHintText,
+.cl-formFieldSuccessText {
+  color: #6B7280 !important;
+}
+/* Hide OAuth social buttons and the "or" divider — email/password only */
+.cl-socialButtonsBlock,
+.cl-socialButtonsIconButton,
+.cl-dividerRow,
+.cl-dividerText {
+  display: none !important;
+}
+
 /* ── Dark theme CSS vars ─────────────────────────────────────────── */
 [data-theme="dark"] {
   --background:   #111113;
