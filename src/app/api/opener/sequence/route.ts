@@ -117,7 +117,7 @@ OUTPUT FORMAT — follow EXACTLY:
 [message]`;
 
   try {
-    const raw = await geminiComplete(prompt, { temperature: 0.7, maxOutputTokens: 1200, thinkingBudget: 0 });
+    const raw = await geminiComplete(prompt, { temperature: 0.7, maxOutputTokens: 1200, thinkingBudget: 0 }, "sequence");
 
     const get = (tag: string, end: string) => {
       const m = raw.match(new RegExp(`---${tag}---\\s*([\\s\\S]*?)(?=---${end}---|$)`));

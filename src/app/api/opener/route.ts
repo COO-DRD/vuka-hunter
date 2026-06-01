@@ -151,7 +151,7 @@ HARD RULES:
         controller.enqueue(enc.encode(`data: ${JSON.stringify(data)}\n\n`));
 
       try {
-        const geminiRes = await geminiStream(prompt, { temperature: 0.7, maxOutputTokens: 2000, thinkingBudget: 1024 });
+        const geminiRes = await geminiStream(prompt, { temperature: 0.7, maxOutputTokens: 2000, thinkingBudget: 1024 }, "opener");
 
         if (!geminiRes.ok) {
           console.error("[opener] Gemini error", geminiRes.status, await geminiRes.text().catch(() => ""));

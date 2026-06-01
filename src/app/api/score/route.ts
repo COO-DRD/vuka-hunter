@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
         const geminiRes = await geminiStream(prompt, {
           temperature: 0.2,
           maxOutputTokens: 800,
-        });
+        }, "score");
 
         if (!geminiRes.ok) {
           console.error("[score] Gemini error", geminiRes.status, await geminiRes.text().catch(() => ""));

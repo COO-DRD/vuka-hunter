@@ -1,4 +1,5 @@
 import type { ModeConfig } from "./enrichmentModes";
+import { geminiComplete } from "./gemini";
 
 export interface ContactCandidate {
   name:        string;
@@ -26,28 +27,8 @@ function htmlToText(html: string): string {
 }
 
 async function geminiExtract(prompt: string): Promise<unknown> {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return null;
   try {
-    const res = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-      {
-        method:  "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-        body:    JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature:       0,
-            maxOutputTokens:   512,
-            thinkingConfig:    { thinkingBudget: 0 },
-          },
-        }),
-        signal: AbortSignal.timeout(8000),
-      }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    const text = await geminiComplete(prompt, { temperature: 0, maxOutputTokens: 512, timeoutMs: 8000 }, "enrich");
     const match = text.match(/\[[\s\S]*?\]/);
     if (!match) return null;
     return JSON.parse(match[0]);

@@ -3,87 +3,91 @@ const GEMINI_STREAM_URL =
 const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
-interface GeminiConfig {
+// Each action has its own pool of up to 3 dedicated keys, with the global key as final fallback.
+// Set GEMINI_SCORE_KEY_1, GEMINI_SCORE_KEY_2, GEMINI_SCORE_KEY_3 etc. in env.
+// Any unset slots are skipped; GEMINI_API_KEY is always appended unless already present.
+export type GeminiAction = "score" | "opener" | "enrich" | "sequence";
+
+export interface GeminiConfig {
   temperature: number;
   maxOutputTokens: number;
-  // 0 = disable thinking (faster, cheaper, better for structured output)
-  // omit = model default (up to 8000 thinking tokens)
   thinkingBudget?: number;
+  timeoutMs?: number;
 }
 
-export async function geminiStream(
-  prompt: string,
-  config: GeminiConfig,
-): Promise<Response> {
-  const apiKey = process.env.GEMINI_API_KEY!;
-  const { thinkingBudget, ...genConfig } = config;
-  const body = JSON.stringify({
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: {
-      ...genConfig,
-      ...(thinkingBudget !== undefined && {
-        thinkingConfig: { thinkingBudget },
-      }),
-    },
-  });
-
-  const MAX_ATTEMPTS = 3;
-  let lastRes: Response | null = null;
-
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    if (attempt > 0) {
-      await new Promise((r) => setTimeout(r, 1_000 * 2 ** (attempt - 1)));
+export function getKeyPool(action?: GeminiAction): string[] {
+  const keys: string[] = [];
+  if (action) {
+    const prefix = `GEMINI_${action.toUpperCase()}_KEY_`;
+    for (let i = 1; i <= 3; i++) {
+      const k = process.env[`${prefix}${i}`];
+      if (k) keys.push(k);
     }
-    lastRes = await fetch(GEMINI_STREAM_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      body,
-    });
-    if (lastRes.ok || (lastRes.status !== 429 && lastRes.status !== 503)) break;
   }
-
-  return lastRes!;
+  const global = process.env.GEMINI_API_KEY;
+  if (global) keys.push(global);
+  return [...new Set(keys)]; // dedupe — same key registered in multiple slots tried only once
 }
 
-/** Non-streaming Gemini call — returns full text or throws on failure. */
-export async function geminiComplete(prompt: string, config: GeminiConfig): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY!;
-  const { thinkingBudget, ...genConfig } = config;
-  const body = JSON.stringify({
+function buildBody(prompt: string, config: GeminiConfig): string {
+  const { thinkingBudget, timeoutMs: _ignored, ...genConfig } = config;
+  return JSON.stringify({
     contents: [{ parts: [{ text: prompt }] }],
     generationConfig: {
       ...genConfig,
       ...(thinkingBudget !== undefined && { thinkingConfig: { thinkingBudget } }),
     },
   });
-
-  const MAX_ATTEMPTS = 3;
-  let lastRes: Response | null = null;
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    if (attempt > 0) await new Promise((r) => setTimeout(r, 1_000 * 2 ** (attempt - 1)));
-    lastRes = await fetch(GEMINI_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      body,
-    });
-    if (lastRes.ok || (lastRes.status !== 429 && lastRes.status !== 503)) break;
-  }
-
-  if (!lastRes?.ok) throw new Error(`Gemini ${lastRes?.status}`);
-  const json = await lastRes.json() as { candidates?: [{ content?: { parts?: { text?: string; thought?: boolean }[] } }] };
-  const parts = json.candidates?.[0]?.content?.parts ?? [];
-  return parts.filter((p) => !p.thought && p.text).map((p) => p.text!).join("");
 }
 
-// Extract only non-thought text tokens from a parsed Gemini SSE chunk.
-// Gemini 2.5 Flash streams thinking tokens first (part.thought === true);
-// filtering them ensures regexes only run on actual model output.
+async function doFetch(url: string, body: string, apiKey: string, timeoutMs?: number): Promise<Response> {
+  return fetch(url, {
+    method:  "POST",
+    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+    body,
+    ...(timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : {}),
+  });
+}
+
+// Rotate through the pool on 429/503. Stop immediately on any other status (including 400).
+// If every key returns 429/503 on the first pass, wait 2 s and try once more.
+async function tryPool(url: string, body: string, pool: string[], timeoutMs?: number): Promise<Response> {
+  let last: Response | null = null;
+  for (let pass = 0; pass < 2; pass++) {
+    if (pass > 0) await new Promise<void>(r => setTimeout(r, 2000));
+    for (const key of pool) {
+      last = await doFetch(url, body, key, timeoutMs);
+      if (last.ok) return last;
+      if (last.status !== 429 && last.status !== 503) return last; // non-rate-limit: stop rotating
+      // 429/503 on this key — rotate to next
+    }
+  }
+  return last!;
+}
+
+export async function geminiStream(
+  prompt: string,
+  config: GeminiConfig,
+  action?: GeminiAction,
+): Promise<Response> {
+  return tryPool(GEMINI_STREAM_URL, buildBody(prompt, config), getKeyPool(action), config.timeoutMs);
+}
+
+export async function geminiComplete(
+  prompt: string,
+  config: GeminiConfig,
+  action?: GeminiAction,
+): Promise<string> {
+  const res = await tryPool(GEMINI_URL, buildBody(prompt, config), getKeyPool(action), config.timeoutMs);
+  if (!res.ok) throw new Error(`Gemini ${res.status}`);
+  const json = await res.json() as { candidates?: [{ content?: { parts?: { text?: string; thought?: boolean }[] } }] };
+  const parts = json.candidates?.[0]?.content?.parts ?? [];
+  return parts.filter(p => !p.thought && p.text).map(p => p.text!).join("");
+}
+
 export function extractGeminiToken(json: unknown): string {
   const parts =
     (json as { candidates?: [{ content?: { parts?: { text?: string; thought?: boolean }[] } }] })
       ?.candidates?.[0]?.content?.parts ?? [];
-  return parts
-    .filter((p) => !p.thought && p.text)
-    .map((p) => p.text!)
-    .join("");
+  return parts.filter(p => !p.thought && p.text).map(p => p.text!).join("");
 }
