@@ -106,10 +106,16 @@ body {
   color: #6B7280 !important;
 }
 /* Hide OAuth social buttons and the "or" divider — email/password only */
+.cl-socialButtonsRoot,
 .cl-socialButtonsBlock,
+.cl-socialButtonsBlockButton,
 .cl-socialButtonsIconButton,
+.cl-socialButtonsProviderIcon,
 .cl-dividerRow,
-.cl-dividerText {
+.cl-dividerText,
+.cl-dividerLine,
+[data-localization-key="signIn.start.actionLink"],
+[data-localization-key="signUp.start.actionLink"] {
   display: none !important;
 }
 

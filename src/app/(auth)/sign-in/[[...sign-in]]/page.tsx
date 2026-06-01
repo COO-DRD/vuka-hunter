@@ -95,10 +95,14 @@ export default function SignInPage() {
                 fontSize:             "14px",
               },
               elements: {
-                socialButtonsBlock:      { display: "none" },
-                socialButtonsIconButton: { display: "none" },
-                dividerRow:              { display: "none" },
-                dividerText:             { display: "none" },
+                socialButtonsRoot:           { display: "none" },
+                socialButtonsBlock:          { display: "none" },
+                socialButtonsBlockButton:    { display: "none" },
+                socialButtonsIconButton:     { display: "none" },
+                socialButtonsProviderIcon:   { display: "none" },
+                dividerRow:                  { display: "none" },
+                dividerText:                 { display: "none" },
+                dividerLine:                 { display: "none" },
               },
             }}
           />
