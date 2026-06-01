@@ -79,6 +79,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
   const [targetDesc, setTargetDesc]         = useState(existing?.target_description ?? "");
   const [channel, setChannel]               = useState(existing?.outreach_channel ?? "whatsapp");
   const [signals, setSignals]               = useState<string[]>(existing?.priority_signals ?? []);
+  const [waNumber, setWaNumber]             = useState("");
   const [loading, setLoading]               = useState(false);
   const [error, setError]                   = useState("");
 
@@ -105,6 +106,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
           targetDescription: targetDesc,
           prioritySignals:   signals,
           outreachChannel:   channel,
+          whatsappNumber:    waNumber.trim() || null,
         }),
       });
       const json = await res.json();
@@ -136,7 +138,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
 
         {/* Progress dots */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          {[1, 2, 3, 4].map((s) => (
+          {[1, 2, 3, 4, 5].map((s) => (
             <div
               key={s}
               className={cn(
@@ -333,14 +335,56 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
               <Button variant="outline" onClick={() => setStep(3)} className="gap-2">
                 <ChevronLeft className="h-4 w-4" /> Back
               </Button>
+              {isEditing ? (
+                <Button onClick={handleSubmit} disabled={!canProceed4} loading={loading} className="gap-2">
+                  Save changes {!loading && <ChevronRight className="h-4 w-4" />}
+                </Button>
+              ) : (
+                <Button onClick={() => setStep(5)} disabled={!canProceed4} className="gap-2">
+                  Continue <ChevronRight className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 5: WhatsApp (optional) ── */}
+        {step === 5 && (
+          <div>
+            <h1 className="text-xl font-bold text-stone-900 mb-1">Get updates on WhatsApp</h1>
+            <p className="text-sm text-stone-500 mb-6">
+              We&apos;ll send you setup tips and lead alerts for your first week. Optional — takes 5 seconds.
+            </p>
+
+            <div>
+              <label className="block text-xs text-stone-500 mb-1.5">Your WhatsApp number</label>
+              <Input
+                value={waNumber}
+                onChange={(e) => setWaNumber(e.target.value)}
+                placeholder="+254 7XX XXX XXX"
+                type="tel"
+                autoFocus
+              />
+              <p className="text-xs text-stone-400 mt-1.5">Include country code, e.g. +254 for Kenya</p>
+            </div>
+
+            {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+
+            <div className="mt-6 flex justify-between items-center">
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="text-sm text-stone-400 hover:text-stone-600 transition-colors disabled:opacity-50"
+              >
+                Skip for now
+              </button>
               <Button
                 onClick={handleSubmit}
-                disabled={!canProceed4}
+                disabled={!waNumber.trim()}
                 loading={loading}
                 className="gap-2"
               >
-                {isEditing ? "Save changes" : "Get started"}
-                {!loading && <ChevronRight className="h-4 w-4" />}
+                Activate {!loading && <ChevronRight className="h-4 w-4" />}
               </Button>
             </div>
           </div>

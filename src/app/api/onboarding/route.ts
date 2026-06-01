@@ -1,6 +1,9 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth";
+import { sendWhatsAppTemplate } from "@/lib/whatsapp";
 import { NextRequest, NextResponse } from "next/server";
+
+const TEMPLATE_WELCOME = process.env.WHATSAPP_TEMPLATE_WELCOME ?? "hunter_welcome";
 
 export async function POST(req: NextRequest) {
   const user = await getUser();
@@ -14,6 +17,7 @@ export async function POST(req: NextRequest) {
     targetDescription,
     prioritySignals,
     outreachChannel,
+    whatsappNumber,
   } = await req.json();
 
   if (!businessName?.trim() || !senderName?.trim() || !useCase) {
@@ -29,7 +33,9 @@ export async function POST(req: NextRequest) {
     .eq("clerk_id", user.id)
     .maybeSingle();
 
-  const profileFields = {
+  const normalizedPhone = whatsappNumber?.replace(/\s+/g, "").trim() || null;
+
+  const profileFields: Record<string, unknown> = {
     name:                businessName.trim(),
     business_name:       businessName.trim(),
     sender_name:         senderName.trim(),
@@ -39,6 +45,8 @@ export async function POST(req: NextRequest) {
     priority_signals:    prioritySignals ?? [],
     outreach_channel:    outreachChannel ?? "whatsapp",
     onboarding_complete: true,
+    whatsapp_number:     normalizedPhone,
+    ...(normalizedPhone ? { whatsapp_onboarded_at: new Date().toISOString() } : {}),
   };
 
   if (existingOrg) {
@@ -52,6 +60,14 @@ export async function POST(req: NextRequest) {
       trial_ends_at:    new Date(Date.now() + 7 * 86400000).toISOString(),
       ...profileFields,
     });
+  }
+
+  // Fire Day 1 WhatsApp welcome — non-blocking, swallow errors
+  if (normalizedPhone) {
+    const firstName = senderName.trim().split(" ")[0];
+    void sendWhatsAppTemplate(normalizedPhone, TEMPLATE_WELCOME, [
+      { type: "body", parameters: [{ type: "text", text: firstName }] },
+    ]).catch((err) => console.error("[onboarding] whatsapp day1 failed:", err));
   }
 
   return NextResponse.json({ ok: true });
