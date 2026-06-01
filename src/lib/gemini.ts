@@ -19,14 +19,17 @@ export function getKeyPool(action?: GeminiAction): string[] {
   const keys: string[] = [];
   if (action) {
     const prefix = `GEMINI_${action.toUpperCase()}_KEY_`;
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= 4; i++) {
       const k = process.env[`${prefix}${i}`];
       if (k) keys.push(k);
     }
   }
-  const global = process.env.GEMINI_API_KEY;
-  if (global) keys.push(global);
-  return [...new Set(keys)]; // dedupe — same key registered in multiple slots tried only once
+  // Global pool: GEMINI_API_KEY, GEMINI_API_KEY_2, GEMINI_API_KEY_3, GEMINI_API_KEY_4
+  for (const name of ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4"]) {
+    const k = process.env[name];
+    if (k) keys.push(k);
+  }
+  return [...new Set(keys)]; // dedupe — same key in multiple slots tried only once
 }
 
 function buildBody(prompt: string, config: GeminiConfig): string {
