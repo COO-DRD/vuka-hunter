@@ -745,6 +745,9 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
       const json = await res.json();
       if (res.ok && json.enriched) {
         const e = json.enriched as Record<string, unknown>;
+        const vSignals    = (e.verticalSignals as string[]) ?? [];
+        const cSignals    = (e.customSignals   as string[]) ?? [];
+        const painComputed = [...vSignals.filter((s) => s.startsWith("gap:")), ...cSignals];
         setLiveLead((prev) => ({
           ...prev,
           enrichment_status:       "done",
@@ -761,14 +764,14 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
           digital_readiness_score: e.digitalReadinessScore,
           opportunity_score:       e.opportunityScore,
           phones_found:            (e.phones as string[])?.length > 0 ? e.phones : null,
-          vertical_signals:        (e.verticalSignals as string[])?.length > 0 ? e.verticalSignals : null,
+          vertical_signals:        vSignals.length > 0 ? vSignals : null,
+          pain_signals:            painComputed.length > 0 ? painComputed : null,
           year_established:        (e.yearEstablished as number | null) ?? null,
           location_count:          e.locationCount,
           staff_signal:            (e.staffSignal as string | null) ?? null,
           certifications:          (e.certifications as string[])?.length > 0 ? e.certifications : null,
         }));
         toast.success("Lead enriched");
-        router.refresh();
       } else {
         setLiveLead((prev) => ({ ...prev, enrichment_status: "failed" }));
         toast.error((json as { error?: string }).error ?? "Enrichment failed");
@@ -1005,6 +1008,15 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
               ) : (
                 <p className="text-xs" style={{ color: "var(--text-3)" }}>Not enriched yet</p>
               )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ── Business Intelligence (non-xl: sidebar is hidden, show inline) ─ */}
+        <div className="xl:hidden">
+          <Card>
+            <CardContent className="p-0">
+              <IntelPanel lead={liveLead} onEnrich={doEnrich} enriching={enriching} />
             </CardContent>
           </Card>
         </div>
