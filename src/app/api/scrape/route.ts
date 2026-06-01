@@ -3,7 +3,7 @@ import { getUser, resolveOrgId, checkOrgAccess, ACCESS_DENIED } from "@/lib/auth
 import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
 import { PROTOCOL, PROTOCOL_CITIES } from "@/lib/protocol";
-import { runScrapeJob } from "@/lib/scrapeJob";
+import { runScrapeJob, type OrgProfile } from "@/lib/scrapeJob";
 
 export const maxDuration = 300;
 
@@ -92,9 +92,23 @@ export async function POST(req: NextRequest) {
 
   if (error || !job) return NextResponse.json({ error: "Failed to create job" }, { status: 500 });
 
+  // Smart filter — fetch org profile for Pro/Agency/Beta accounts
+  let orgProfile: OrgProfile | undefined;
+  const smartFilterPlans = ["pro", "agency", "starter", "beta"];
+  if (smartFilterPlans.includes(access.plan)) {
+    const { data: profile } = await db
+      .from("hunter_orgs")
+      .select("org_description, target_description, priority_signals")
+      .eq("id", orgId)
+      .single();
+    if (profile?.org_description || profile?.target_description) {
+      orgProfile = profile as OrgProfile;
+    }
+  }
+
   after(async () => {
     await runScrapeJob(job.id, orgId, vertical, city, count, source, vp.placeQuery,
-      Object.keys(overrides).length ? overrides : undefined);
+      Object.keys(overrides).length ? overrides : undefined, orgProfile);
   });
 
   return NextResponse.json({ jobId: job.id });

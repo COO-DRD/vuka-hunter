@@ -467,14 +467,14 @@ export const PROTOCOL_CITIES = [
   { value: "Garissa",       label: "Garissa",       premium_areas: [] },
   { value: "Isiolo",        label: "Isiolo",        premium_areas: [] },
   // ── Uganda ────────────────────────────────────────────────────────────────
-  { value: "Kampala",       label: "Kampala",       premium_areas: ["Kololo", "Nakasero", "Bugolobi", "Ntinda", "Muyenga", "Naguru"] },
-  { value: "Entebbe",       label: "Entebbe",       premium_areas: [] },
-  { value: "Jinja",         label: "Jinja",         premium_areas: [] },
+  { value: "Kampala",       label: "Kampala",       country: "Uganda",   premium_areas: ["Kololo", "Nakasero", "Bugolobi", "Ntinda", "Muyenga", "Naguru"] },
+  { value: "Entebbe",       label: "Entebbe",       country: "Uganda",   premium_areas: [] },
+  { value: "Jinja",         label: "Jinja",         country: "Uganda",   premium_areas: [] },
   // ── Tanzania ──────────────────────────────────────────────────────────────
-  { value: "Dar es Salaam", label: "Dar es Salaam", premium_areas: ["Masaki", "Oyster Bay", "Upanga", "Mikocheni", "Msasani"] },
-  { value: "Zanzibar",      label: "Zanzibar",      premium_areas: ["Stone Town", "Nungwi", "Kendwa"] },
-  { value: "Arusha",        label: "Arusha",        premium_areas: ["Njiro", "Sakina"] },
-  { value: "Mwanza",        label: "Mwanza",        premium_areas: [] },
+  { value: "Dar es Salaam", label: "Dar es Salaam", country: "Tanzania", premium_areas: ["Masaki", "Oyster Bay", "Upanga", "Mikocheni", "Msasani"] },
+  { value: "Zanzibar",      label: "Zanzibar",      country: "Tanzania", premium_areas: ["Stone Town", "Nungwi", "Kendwa"] },
+  { value: "Arusha",        label: "Arusha",        country: "Tanzania", premium_areas: ["Njiro", "Sakina"] },
+  { value: "Mwanza",        label: "Mwanza",        country: "Tanzania", premium_areas: [] },
 ];
 
 export const TIER_A_KEYS = Object.values(PROTOCOL).filter((v) => v.tier === "A").map((v) => v.key);

@@ -1,5 +1,6 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { applyProtocol, type ProtocolOverrides } from "@/lib/protocol";
+import { applyProtocol, PROTOCOL_CITIES, type ProtocolOverrides } from "@/lib/protocol";
+import { geminiComplete } from "@/lib/gemini";
 import { logEvent, logError } from "@/lib/logEvent";
 
 export const PLACES_URL = "https://places.googleapis.com/v1/places:searchText";
@@ -46,9 +47,10 @@ export async function scrapeGooglePlaces(
   query: string,
   city: string,
   maxCount: number,
+  country = "Kenya",
 ): Promise<PlacesResult[]> {
   const apiKey = getPlacesApiKey();
-  const fullQuery = `${query} in ${city}, Kenya`;
+  const fullQuery = `${query} in ${city}, ${country}`;
   const results: PlacesResult[] = [];
   let pageToken: string | undefined;
 
@@ -230,6 +232,74 @@ export async function scrapeFoursquare(
 }
 
 const SCRAPE_TIMEOUT_MS = 250_000;
+const COMPAT_THRESHOLD  = 45;
+
+export interface OrgProfile {
+  org_description?:  string | null;
+  target_description?: string | null;
+  priority_signals?: string[] | null;
+}
+
+// Batch-scores all leads against the org profile in a single Gemini call.
+// Returns the set of indices that pass the compatibility threshold.
+// Fails open — if Gemini errors, all leads are kept.
+async function runCompatFilter(
+  leads: Array<PlacesResult & { vertical?: string; city?: string }>,
+  profile: OrgProfile,
+): Promise<Set<number>> {
+  const offer  = profile.org_description?.trim()    ?? "";
+  const target = profile.target_description?.trim() ?? "";
+  if (!offer && !target) return new Set(leads.map((_, i) => i));
+
+  const signalLine = (profile.priority_signals ?? []).length
+    ? `Priority signals: ${(profile.priority_signals as string[]).join(", ")}.`
+    : "";
+
+  const leadLines = leads
+    .map((l, i) =>
+      `${i}: ${l.name} — ${l.vertical ?? "business"}, ${l.city ?? ""}, ` +
+      `${l.google_rating ?? "?"}★, ${l.google_review_count ?? 0} reviews, ` +
+      `website: ${l.website ? "yes" : "no"}`
+    )
+    .join("\n");
+
+  const prompt = `You are a B2B lead qualification AI.
+
+SEARCHER PROFILE
+What they offer: ${offer}
+Who they are looking for: ${target}
+${signalLine}
+
+Score each business's compatibility with this searcher 0–100.
+0 = completely wrong target, 100 = perfect match.
+Base scores only on the data given — no assumptions.
+
+Return ONLY valid JSON, no markdown, no explanation:
+{"0": 82, "1": 14, "2": 67}
+
+LEADS (index: name, vertical, city, rating, reviews, website):
+${leadLines}`;
+
+  try {
+    const raw = await geminiComplete(
+      prompt,
+      { temperature: 0, maxOutputTokens: 1024, timeoutMs: 30000 },
+      "enrich",
+    );
+    const match = raw.match(/\{[\s\S]*?\}/);
+    if (!match) return new Set(leads.map((_, i) => i));
+
+    const scores = JSON.parse(match[0]) as Record<string, number>;
+    const passing = new Set<number>();
+    for (let i = 0; i < leads.length; i++) {
+      const s = scores[String(i)];
+      if (s === undefined || s >= COMPAT_THRESHOLD) passing.add(i); // missing = benefit of the doubt
+    }
+    return passing;
+  } catch {
+    return new Set(leads.map((_, i) => i)); // never block a scrape on filter failure
+  }
+}
 
 export async function runScrapeJob(
   jobId: string,
@@ -240,8 +310,11 @@ export async function runScrapeJob(
   source: string,
   placeQuery: string,
   overrides?: ProtocolOverrides,
+  orgProfile?: OrgProfile,
 ) {
-  const db = createSupabaseServiceClient();
+  const db      = createSupabaseServiceClient();
+  const country = PROTOCOL_CITIES.find((c) => c.value === city)?.country ?? "Kenya";
+
   await db
     .from("hunter_scrape_jobs")
     .update({ status: "running", started_at: new Date().toISOString() })
@@ -257,9 +330,9 @@ export async function runScrapeJob(
 
   try {
     const raw =
-      source === "osm"         ? await scrapeOSM(placeQuery, city, count)         :
-      source === "foursquare"  ? await scrapeFoursquare(placeQuery, city, count)  :
-      await scrapeGooglePlaces(placeQuery, city, count);
+      source === "osm"         ? await scrapeOSM(placeQuery, city, count)                    :
+      source === "foursquare"  ? await scrapeFoursquare(placeQuery, city, count)              :
+      await scrapeGooglePlaces(placeQuery, city, count, country);
 
     const withMeta = raw.filter((r) => r.name).map((r) => ({
       ...r,
@@ -278,15 +351,26 @@ export async function runScrapeJob(
       );
     }
 
+    // ── Smart Compatibility Filter (Pro) ────────────────────────────────────
+    let toInsert = accepted;
+    if (orgProfile && accepted.length > 0) {
+      const passing = await runCompatFilter(accepted, orgProfile);
+      toInsert = accepted.filter((_, i) => passing.has(i));
+      const dropped = accepted.length - toInsert.length;
+      if (dropped > 0) {
+        console.log(`[Hunter] Smart filter removed ${dropped}/${accepted.length} low-compat leads — job ${jobId}`);
+      }
+    }
+
     await db.from("hunter_scrape_jobs")
       .update({ progress: raw.length, total: count })
       .eq("id", jobId);
 
     let imported = 0;
-    for (let i = 0; i < accepted.length; i += 100) {
+    for (let i = 0; i < toInsert.length; i += 100) {
       const { data } = await db
         .from("hunter_leads")
-        .upsert(accepted.slice(i, i + 100), { onConflict: "org_id,name", ignoreDuplicates: true })
+        .upsert(toInsert.slice(i, i + 100), { onConflict: "org_id,name", ignoreDuplicates: true })
         .select("id");
       imported += data?.length ?? 0;
     }
