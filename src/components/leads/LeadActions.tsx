@@ -54,7 +54,19 @@ export default function LeadActions({ lead }: Props) {
   }
 
   async function copyOpener() {
-    await navigator.clipboard.writeText(opener);
+    try {
+      await navigator.clipboard.writeText(opener);
+    } catch {
+      // Fallback for browsers that block clipboard API
+      const el = document.createElement("textarea");
+      el.value = opener;
+      el.style.position = "fixed";
+      el.style.opacity = "0";
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }

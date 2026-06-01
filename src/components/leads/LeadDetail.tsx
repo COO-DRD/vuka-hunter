@@ -500,7 +500,13 @@ function SequenceDay({ day, label, wa, emailSubject, email }: {
   const content = tab === "whatsapp" ? wa : email;
 
   async function copy() {
-    await navigator.clipboard.writeText(content);
+    try {
+      await navigator.clipboard.writeText(content);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = content; el.style.position = "fixed"; el.style.opacity = "0";
+      document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -550,7 +556,13 @@ function ReferralCopyButton() {
   const url = (typeof window !== "undefined" ? window.location.origin : "https://4unter.dullugroup.co.ke") + "/sign-up";
 
   async function copy() {
-    await navigator.clipboard.writeText(url);
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = url; el.style.position = "fixed"; el.style.opacity = "0";
+      document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   }
@@ -832,7 +844,14 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
   }
 
   async function copyActive() {
-    await navigator.clipboard.writeText(channel === "whatsapp" ? waOpener : emailOpener);
+    const text = channel === "whatsapp" ? waOpener : emailOpener;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = text; el.style.position = "fixed"; el.style.opacity = "0";
+      document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }

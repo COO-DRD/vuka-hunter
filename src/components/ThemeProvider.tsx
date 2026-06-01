@@ -11,16 +11,24 @@ interface ThemeContextValue {
 
 const ThemeCtx = createContext<ThemeContextValue>({ theme: "light", toggle: () => {} });
 
+function safeGetStorage(key: string): string | null {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+
+function safeSetStorage(key: string, value: string): void {
+  try { localStorage.setItem(key, value); } catch { /* storage blocked */ }
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === "undefined") return "light";
-    return (localStorage.getItem("hunter-theme") as Theme) ?? "light";
+    return (safeGetStorage("hunter-theme") as Theme) ?? "light";
   });
 
   const toggle = () => {
     setTheme((t) => {
       const next = t === "light" ? "dark" : "light";
-      localStorage.setItem("hunter-theme", next);
+      safeSetStorage("hunter-theme", next);
       return next;
     });
   };

@@ -10,7 +10,7 @@ export function InstallPrompt() {
   const [dismissed, setDismissed] = useState(true); // start hidden; reveal after check
 
   useEffect(() => {
-    if (localStorage.getItem("pwa-install-dismissed")) return;
+    try { if (localStorage.getItem("pwa-install-dismissed")) return; } catch { return; }
 
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
@@ -37,7 +37,7 @@ export function InstallPrompt() {
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem("pwa-install-dismissed", "1");
+    try { localStorage.setItem("pwa-install-dismissed", "1"); } catch { /* storage blocked */ }
     setDismissed(true);
   };
 

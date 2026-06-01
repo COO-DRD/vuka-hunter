@@ -142,16 +142,20 @@ function addSecurityHeaders(res: NextResponse, allowIndex = false): NextResponse
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://js.stripe.com https://*.clerk.accounts.dev https://*.4unter.dullugroup.co.ke https://challenges.cloudflare.com",
+      // Clerk loads JS from its CDN subdomain; Stripe and Cloudflare for payments/CAPTCHA
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.clerk.accounts.dev https://npm.clerk.dev https://*.4unter.dullugroup.co.ke https://challenges.cloudflare.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https:",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://maps.googleapis.com https://accounts.google.com https://api.stripe.com https://hooks.stripe.com https://*.clerk.accounts.dev https://*.4unter.dullugroup.co.ke https://clerk.io",
-      "font-src 'self' https://fonts.gstatic.com",
+      // img.clerk.com for Clerk user profile pictures; data: and https: for everything else
+      "img-src 'self' data: blob: https://img.clerk.com https:",
+      // api.clerk.com is Clerk's actual REST API — clerk.io was a wrong domain (different company)
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://maps.googleapis.com https://accounts.google.com https://api.stripe.com https://hooks.stripe.com https://*.clerk.accounts.dev https://api.clerk.com https://clerk.com https://*.4unter.dullugroup.co.ke",
+      // fonts.gstatic.com for Next.js Google Fonts (Geist); fonts.googleapis.com for the manifest
+      "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
       "frame-src https://js.stripe.com https://hooks.stripe.com https://*.clerk.accounts.dev https://*.4unter.dullugroup.co.ke https://challenges.cloudflare.com",
       "worker-src blob: 'self'",
       "frame-ancestors 'none'",
       "base-uri 'self'",
-      "form-action 'self'",
+      "form-action 'self' https://*.clerk.accounts.dev",
     ].join("; ")
   );
   return res;
