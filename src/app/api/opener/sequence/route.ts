@@ -3,6 +3,7 @@ import { getUser, resolveOrgId, checkOrgAccess, ACCESS_DENIED } from "@/lib/auth
 import { NextRequest, NextResponse } from "next/server";
 import { geminiComplete } from "@/lib/gemini";
 import { logEvent, logError } from "@/lib/logEvent";
+import { checkAIHourlyCap } from "@/lib/aiGuard";
 
 // Removed local callGemini — use geminiComplete from lib (gemini-2.5-flash, 3-attempt retry)
 
@@ -38,6 +39,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: ACCESS_DENIED[access.reason!], reason: access.reason, upgradeUrl: "/upgrade" },
       { status: 402 }
+    );
+  }
+
+  const aiCap = await checkAIHourlyCap(orgId, access.plan);
+  if (!aiCap.allowed) {
+    return NextResponse.json(
+      { error: `Hourly AI limit reached (${aiCap.used}/${aiCap.cap} actions). Resets within the hour.` },
+      { status: 429 }
     );
   }
 

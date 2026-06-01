@@ -34,19 +34,24 @@ const BOT_UA = [
   "phantomjs", "selenium", "puppeteer", "playwright",
 ];
 
-const ipMap = new Map<string, number[]>();
-const WINDOW_MS    = 60_000;
-const MAX_API_RPM  = 60;
-const MAX_AUTH_RPM = 15;
+const ipMap     = new Map<string, number[]>();
+const aiUserMap = new Map<string, number[]>();
+
+const WINDOW_MS      = 60_000;
+const MAX_API_RPM    = 60;
+const MAX_AUTH_RPM   = 15;
+const MAX_AI_USER_RPM = 20; // per authenticated user on AI routes
 let lastEviction = Date.now();
+
+// Routes that call Gemini — rate-limited tighter per authenticated user
+const AI_ROUTE_PREFIXES = ["/api/score", "/api/opener", "/api/enrich"];
 
 function evictStale() {
   const now = Date.now();
   if (now - lastEviction < WINDOW_MS * 2) return;
   lastEviction = now;
-  for (const [ip, hits] of ipMap) {
-    if (hits.every((t) => now - t > WINDOW_MS)) ipMap.delete(ip);
-  }
+  for (const [k, hits] of ipMap)     if (hits.every((t) => now - t > WINDOW_MS)) ipMap.delete(k);
+  for (const [k, hits] of aiUserMap) if (hits.every((t) => now - t > WINDOW_MS)) aiUserMap.delete(k);
 }
 
 function rateLimit(ip: string, max: number): boolean {
@@ -56,6 +61,14 @@ function rateLimit(ip: string, max: number): boolean {
   hits.push(now);
   ipMap.set(ip, hits);
   return hits.length > max;
+}
+
+function rateLimitAIUser(userId: string): boolean {
+  const now  = Date.now();
+  const hits = (aiUserMap.get(userId) ?? []).filter((t) => now - t < WINDOW_MS);
+  hits.push(now);
+  aiUserMap.set(userId, hits);
+  return hits.length > MAX_AI_USER_RPM;
 }
 
 const CANONICAL_HOST = "4unter.dullugroup.co.ke";
@@ -79,7 +92,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  // Rate-limit API routes
+  // Rate-limit API routes (IP-level)
   if (pathname.startsWith("/api/")) {
     const limit = pathname.startsWith("/api/auth/") ? MAX_AUTH_RPM : MAX_API_RPM;
     if (rateLimit(ip, limit)) {
@@ -93,6 +106,17 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   // Protect non-public routes
   if (!isPublicRoute(req)) {
     await auth.protect();
+  }
+
+  // Per-user rate limit on AI routes (tighter than the IP limit)
+  if (AI_ROUTE_PREFIXES.some((p) => pathname.startsWith(p))) {
+    const { userId } = await auth();
+    if (userId && rateLimitAIUser(userId)) {
+      return NextResponse.json(
+        { error: "Too many AI requests. Please wait before retrying." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
   }
 
   // Corporate member role gate: members can't access admin-only paths
