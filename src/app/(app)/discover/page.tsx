@@ -5,7 +5,7 @@ import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PROTOCOL, PROTOCOL_CITIES } from "@/lib/protocol";
-import { Search, CheckCircle, XCircle, Clock, Loader2, ShieldCheck, Star, SlidersHorizontal, RotateCcw } from "lucide-react";
+import { Search, CheckCircle, XCircle, Clock, Loader2, ShieldCheck, Star, SlidersHorizontal, RotateCcw, Globe, Phone } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -32,8 +32,12 @@ export default function DiscoverPage() {
   const selectedVp = PROTOCOL[vertical];
 
   const [showThresholds, setShowThresholds] = useState(false);
-  const [minRating, setMinRating]   = useState(String(selectedVp?.minRating ?? 0));
-  const [minReviews, setMinReviews] = useState(String(selectedVp?.minReviews ?? 0));
+  const [minRating,      setMinRating]      = useState(String(selectedVp?.minRating ?? 0));
+  const [minReviews,     setMinReviews]     = useState(String(selectedVp?.minReviews ?? 0));
+  const [requireWebsite, setRequireWebsite] = useState(false);
+  const [requirePhone,   setRequirePhone]   = useState(false);
+  const [nameInclude,    setNameInclude]    = useState("");
+  const [nameExclude,    setNameExclude]    = useState("");
 
   useEffect(() => {
     const vp = PROTOCOL[vertical];
@@ -47,14 +51,19 @@ export default function DiscoverPage() {
   const defaultReviews = selectedVp?.minReviews ?? 0;
   const ratingChanged  = parseFloat(minRating)  !== defaultRating;
   const reviewsChanged = parseInt(minReviews)   !== defaultReviews;
+  const anyOverride    = ratingChanged || reviewsChanged || requireWebsite || requirePhone || !!nameInclude || !!nameExclude;
 
   async function startScrape() {
     setSubmitting(true);
     setJob(null);
     try {
       const body: Record<string, unknown> = { vertical, city, count: parseInt(count), source };
-      if (ratingChanged)  body.minRatingOverride  = parseFloat(minRating);
-      if (reviewsChanged) body.minReviewsOverride = parseInt(minReviews);
+      if (ratingChanged)   body.minRatingOverride  = parseFloat(minRating);
+      if (reviewsChanged)  body.minReviewsOverride = parseInt(minReviews);
+      if (requireWebsite)  body.requireWebsite      = true;
+      if (requirePhone)    body.requirePhone        = true;
+      if (nameInclude)     body.nameInclude         = nameInclude;
+      if (nameExclude)     body.nameExclude         = nameExclude;
       const res = await fetch("/api/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -160,12 +169,12 @@ export default function DiscoverPage() {
                   onClick={() => setShowThresholds((v) => !v)}
                   className={`ml-auto flex items-center gap-1 px-2 py-1 rounded transition-colors ${
                     showThresholds ? "bg-stone-200 text-stone-700" : "text-stone-400 hover:text-stone-700 hover:bg-stone-100"
-                  } ${(ratingChanged || reviewsChanged) ? "ring-1 ring-amber-500/50" : ""}`}
+                  } ${anyOverride ? "ring-1 ring-amber-500/50" : ""}`}
                   title="Adjust quality thresholds for this job"
                 >
                   <SlidersHorizontal className="h-3 w-3" />
                   <span>Adjust</span>
-                  {(ratingChanged || reviewsChanged) && (
+                  {anyOverride && (
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                   )}
                 </button>
@@ -192,26 +201,34 @@ export default function DiscoverPage() {
               {showThresholds && (
                 <div className="border-t border-stone-200 bg-stone-100/40 px-3 py-3 space-y-3">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-stone-600 font-medium">Thresholds for this job only</span>
-                    {(ratingChanged || reviewsChanged) && (
+                    <span className="text-stone-600 font-medium">Filters for this job only</span>
+                    {anyOverride && (
                       <button
                         type="button"
-                        onClick={() => { setMinRating(String(defaultRating)); setMinReviews(String(defaultReviews)); }}
+                        onClick={() => {
+                          setMinRating(String(defaultRating));
+                          setMinReviews(String(defaultReviews));
+                          setRequireWebsite(false);
+                          setRequirePhone(false);
+                          setNameInclude("");
+                          setNameExclude("");
+                        }}
                         className="flex items-center gap-1 text-stone-400 hover:text-stone-700 transition-colors"
                       >
                         <RotateCcw className="h-3 w-3" />
-                        Reset
+                        Reset all
                       </button>
                     )}
                   </div>
+
+                  {/* Rating + reviews */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-stone-500 mb-1.5">
                         Min rating <span className="text-stone-400">(0 – 5)</span>
                       </label>
                       <Input
-                        type="number"
-                        min="0" max="5" step="0.1"
+                        type="number" min="0" max="5" step="0.1"
                         value={minRating}
                         onChange={(e) => setMinRating(e.target.value)}
                         className="h-7 text-xs"
@@ -222,17 +239,68 @@ export default function DiscoverPage() {
                         Min reviews <span className="text-stone-400">(0 – 500)</span>
                       </label>
                       <Input
-                        type="number"
-                        min="0" max="500" step="1"
+                        type="number" min="0" max="500" step="1"
                         value={minReviews}
                         onChange={(e) => setMinReviews(e.target.value)}
                         className="h-7 text-xs"
                       />
                     </div>
                   </div>
+
+                  {/* Presence toggles */}
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setRequireWebsite((v) => !v)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                        requireWebsite
+                          ? "bg-amber-50 border-amber-300 text-amber-700"
+                          : "border-stone-200 text-stone-500 hover:border-stone-300"
+                      }`}
+                    >
+                      <Globe className="h-3 w-3" />
+                      Website required
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRequirePhone((v) => !v)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                        requirePhone
+                          ? "bg-amber-50 border-amber-300 text-amber-700"
+                          : "border-stone-200 text-stone-500 hover:border-stone-300"
+                      }`}
+                    >
+                      <Phone className="h-3 w-3" />
+                      Phone required
+                    </button>
+                  </div>
+
+                  {/* Name keyword filters */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-stone-500 mb-1.5">Name contains</label>
+                      <Input
+                        type="text" placeholder="e.g. dental, clinic…"
+                        value={nameInclude}
+                        onChange={(e) => setNameInclude(e.target.value)}
+                        className="h-7 text-xs"
+                        maxLength={60}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-stone-500 mb-1.5">Name excludes</label>
+                      <Input
+                        type="text" placeholder="e.g. government, ngo…"
+                        value={nameExclude}
+                        onChange={(e) => setNameExclude(e.target.value)}
+                        className="h-7 text-xs"
+                        maxLength={60}
+                      />
+                    </div>
+                  </div>
+
                   <p className="text-stone-400 leading-snug">
-                    Lower thresholds let in more leads; higher thresholds keep only the highest-quality businesses.
-                    Global defaults are preserved — this only affects the job you&apos;re about to run.
+                    These filters only affect this scrape job — protocol defaults are unchanged.
                   </p>
                 </div>
               )}

@@ -481,8 +481,12 @@ export const TIER_A_KEYS = Object.values(PROTOCOL).filter((v) => v.tier === "A")
 export const TIER_B_KEYS = Object.values(PROTOCOL).filter((v) => v.tier === "B").map((v) => v.key);
 
 export interface ProtocolOverrides {
-  minRating?: number;
-  minReviews?: number;
+  minRating?:      number;
+  minReviews?:     number;
+  requireWebsite?: boolean; // drop leads with no website
+  requirePhone?:   boolean; // drop leads with no phone number
+  nameInclude?:    string;  // only keep leads whose name contains this word/phrase
+  nameExclude?:    string;  // drop leads whose name contains this word/phrase (adds to vertical blocklist)
 }
 
 /**
@@ -495,6 +499,8 @@ export function passesProtocol(lead: {
   google_rating?: number | null;
   google_review_count?: number | null;
   vertical?: string | null;
+  website?: string | null;
+  phone?: string | null;
 }, overrides?: ProtocolOverrides): { pass: boolean; reason?: string } {
   const vp = PROTOCOL[lead.vertical ?? ""];
   if (!vp) return { pass: false, reason: `Vertical "${lead.vertical}" not in protocol` };
@@ -505,16 +511,26 @@ export function passesProtocol(lead: {
   const reviews    = lead.google_review_count ?? 0;
   const name       = lead.name.toLowerCase();
 
-  if (rating < minRating) {
-    return { pass: false, reason: `Rating ${rating} below minimum ${minRating} for ${vp.label}` };
-  }
-  if (reviews < minReviews) {
-    return { pass: false, reason: `${reviews} reviews below minimum ${minReviews} for ${vp.label}` };
-  }
+  if (rating < minRating)   return { pass: false, reason: `Rating ${rating} below minimum ${minRating} for ${vp.label}` };
+  if (reviews < minReviews) return { pass: false, reason: `${reviews} reviews below minimum ${minReviews} for ${vp.label}` };
+
   for (const blocked of vp.nameBlocklist) {
     if (name.includes(blocked.toLowerCase())) {
       return { pass: false, reason: `Name contains blocked term "${blocked}"` };
     }
+  }
+
+  if (overrides?.requireWebsite && !lead.website) {
+    return { pass: false, reason: "No website (required by filter)" };
+  }
+  if (overrides?.requirePhone && !lead.phone) {
+    return { pass: false, reason: "No phone number (required by filter)" };
+  }
+  if (overrides?.nameInclude && !name.includes(overrides.nameInclude.toLowerCase())) {
+    return { pass: false, reason: `Name doesn't contain "${overrides.nameInclude}"` };
+  }
+  if (overrides?.nameExclude && name.includes(overrides.nameExclude.toLowerCase())) {
+    return { pass: false, reason: `Name contains excluded term "${overrides.nameExclude}"` };
   }
 
   return { pass: true };

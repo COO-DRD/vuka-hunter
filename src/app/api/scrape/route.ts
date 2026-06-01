@@ -28,13 +28,17 @@ export async function POST(req: NextRequest) {
     source = "google_places",
     minRatingOverride,
     minReviewsOverride,
+    requireWebsite,
+    requirePhone,
+    nameInclude,
+    nameExclude,
   } = await req.json();
   if (!vertical || !city) return NextResponse.json({ error: "vertical and city required" }, { status: 400 });
 
   const vp = PROTOCOL[vertical];
   if (!vp) return NextResponse.json({ error: `"${vertical}" is not an approved vertical` }, { status: 400 });
 
-  const overrides: { minRating?: number; minReviews?: number } = {};
+  const overrides: import("@/lib/protocol").ProtocolOverrides = {};
   if (minRatingOverride !== undefined) {
     const r = parseFloat(minRatingOverride);
     if (isNaN(r) || r < 0 || r > 5) return NextResponse.json({ error: "minRatingOverride must be 0–5" }, { status: 400 });
@@ -45,6 +49,10 @@ export async function POST(req: NextRequest) {
     if (isNaN(n) || n < 0 || n > 500) return NextResponse.json({ error: "minReviewsOverride must be 0–500" }, { status: 400 });
     overrides.minReviews = n;
   }
+  if (requireWebsite === true)                              overrides.requireWebsite = true;
+  if (requirePhone   === true)                              overrides.requirePhone   = true;
+  if (typeof nameInclude === "string" && nameInclude.trim()) overrides.nameInclude   = nameInclude.trim().slice(0, 60);
+  if (typeof nameExclude === "string" && nameExclude.trim()) overrides.nameExclude   = nameExclude.trim().slice(0, 60);
 
   const approvedCity = PROTOCOL_CITIES.find((c) => c.value === city);
   if (!approvedCity) return NextResponse.json({ error: `"${city}" is not an approved city` }, { status: 400 });
