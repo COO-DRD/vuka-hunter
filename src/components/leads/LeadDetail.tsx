@@ -490,6 +490,82 @@ function IntelPanel({
   );
 }
 
+// ── Sequence day card ──────────────────────────────────────────────────────────
+function SequenceDay({ day, label, wa, emailSubject, email }: {
+  day: string; label: string; wa: string; emailSubject: string; email: string;
+}) {
+  const [tab,    setTab]    = useState<"whatsapp" | "email">("whatsapp");
+  const [copied, setCopied] = useState(false);
+
+  const content = tab === "whatsapp" ? wa : email;
+
+  async function copy() {
+    await navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="rounded-lg border" style={{ borderColor: "var(--border)" }}>
+      <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: "var(--border)" }}>
+        <div>
+          <span className="text-xs font-bold" style={{ color: "var(--text-1)" }}>{day}</span>
+          <span className="text-xs ml-2" style={{ color: "var(--text-3)" }}>{label}</span>
+        </div>
+        <div className="flex gap-1 p-0.5 rounded-md" style={{ background: "var(--bg-elevated)" }}>
+          {(["whatsapp", "email"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors ${tab === t ? "bg-amber-500 text-black" : ""}`}
+              style={tab !== t ? { color: "var(--text-3)" } : {}}
+            >
+              {t === "whatsapp" ? "WA" : "Email"}
+            </button>
+          ))}
+        </div>
+      </div>
+      {tab === "email" && emailSubject && (
+        <div className="px-3 py-2 border-b text-xs font-medium" style={{ borderColor: "var(--border)", color: "var(--text-3)" }}>
+          Subject: <span style={{ color: "var(--text-1)" }}>{emailSubject}</span>
+        </div>
+      )}
+      <div className="relative px-3 py-2.5">
+        <p className="text-xs leading-relaxed whitespace-pre-wrap pr-7" style={{ color: "var(--text-2)" }}>
+          {content || <span style={{ color: "var(--text-3)" }}>Not generated</span>}
+        </p>
+        {content && (
+          <button onClick={copy} className="absolute top-2.5 right-2.5 transition-colors" style={{ color: "var(--text-3)" }}>
+            {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Referral copy button ───────────────────────────────────────────────────────
+function ReferralCopyButton() {
+  const [copied, setCopied] = useState(false);
+  const url = (typeof window !== "undefined" ? window.location.origin : "https://4unter.dullugroup.co.ke") + "/sign-up";
+
+  async function copy() {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  }
+
+  return (
+    <button
+      onClick={copy}
+      className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors bg-amber-500 hover:bg-amber-400 text-black"
+    >
+      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      {copied ? "Copied!" : "Copy referral link"}
+    </button>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function LeadDetail({ lead }: { lead: Lead }) {
   const router = useRouter();
@@ -517,8 +593,25 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
   const [lastOutcome, setLastOutcome] = useState<string | null>((lead.last_outcome as string) ?? null);
 
   // ── Other ──────────────────────────────────────────────────────────────────
-  const [enriching, setEnriching] = useState(false);
-  const [liveLead,  setLiveLead]  = useState<Lead>(lead);
+  const [enriching,      setEnriching]      = useState(false);
+  const [liveLead,       setLiveLead]       = useState<Lead>(lead);
+
+  // ── Follow-up sequence ─────────────────────────────────────────────────────
+  type Sequence = { day3wa: string; day3subject: string; day3email: string; day7wa: string; day7subject: string; day7email: string };
+  const [sequence,       setSequence]       = useState<Sequence | null>(() => {
+    const d3wa = lead.followup_day3_whatsapp      as string | null;
+    const d3es = lead.followup_day3_email_subject as string | null;
+    const d3em = lead.followup_day3_email         as string | null;
+    const d7wa = lead.followup_day7_whatsapp      as string | null;
+    const d7es = lead.followup_day7_email_subject as string | null;
+    const d7em = lead.followup_day7_email         as string | null;
+    if (d3wa || d7wa) return { day3wa: d3wa ?? "", day3subject: d3es ?? "", day3email: d3em ?? "", day7wa: d7wa ?? "", day7subject: d7es ?? "", day7email: d7em ?? "" };
+    return null;
+  });
+  const [generatingSeq,  setGeneratingSeq]  = useState(false);
+
+  // ── Referral nudge ─────────────────────────────────────────────────────────
+  const [showReferral,   setShowReferral]   = useState(false);
   const [notes,     setNotes]     = useState<string>((lead.notes as string) ?? "");
   const [saving,    setSaving]    = useState(false);
 
@@ -621,6 +714,27 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
     finally { setGenerating(false); }
   }
 
+  async function doSequence() {
+    setGeneratingSeq(true);
+    try {
+      const res  = await fetch("/api/opener/sequence", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: lead.id }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setSequence(json);
+        toast.success("Follow-up sequence ready");
+      } else {
+        toast.error(json.error ?? "Sequence generation failed");
+      }
+    } catch {
+      toast.error("Connection error — please retry");
+    } finally {
+      setGeneratingSeq(false);
+    }
+  }
+
   async function doEnrich() {
     setEnriching(true);
     try {
@@ -702,9 +816,11 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
 
     window.location.href = actionUrl;
 
+    const isFirstSend = !sentWa && !sentEmail;
     if (channel === "whatsapp") { setSentWa(true); toast.success("WhatsApp opened — tap Send"); }
     else                        { setSentEmail(true); toast.success("Mail app opened — tap Send"); }
 
+    if (isFirstSend) setShowReferral(true);
     setContactedAt(new Date().toISOString());
     fetch("/api/outreach", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -1058,6 +1174,81 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
             </Button>
           </CardContent>
         </Card>
+
+        {/* ── Follow-up sequence ───────────────────────────────────────────── */}
+        {hasOpeners && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <CardTitle>Follow-up Sequence</CardTitle>
+                {!sequence && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={doSequence}
+                    loading={generatingSeq}
+                  >
+                    <Zap className="h-3.5 w-3.5" />
+                    {generatingSeq ? "Generating…" : "Generate Day 3 & 7"}
+                  </Button>
+                )}
+                {sequence && (
+                  <Button size="sm" variant="outline" onClick={doSequence} loading={generatingSeq}>
+                    <RefreshCw className="h-3.5 w-3.5" /> Regenerate
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {!sequence && !generatingSeq && (
+                <p className="text-xs" style={{ color: "var(--text-3)" }}>
+                  Hormozi says 3 touches minimum. Generate Day 3 (value-add) and Day 7 (final close) messages in one click.
+                </p>
+              )}
+              {generatingSeq && (
+                <div className="flex items-center gap-2 text-xs py-1" style={{ color: "var(--text-3)" }}>
+                  <Zap className="h-3.5 w-3.5 animate-pulse text-amber-500" /> Writing follow-ups…
+                </div>
+              )}
+              {sequence && (
+                <div className="space-y-4">
+                  {([
+                    { day: "Day 3", label: "Value-add follow-up", wa: sequence.day3wa, emailSubject: sequence.day3subject, email: sequence.day3email },
+                    { day: "Day 7", label: "Final close",          wa: sequence.day7wa, emailSubject: sequence.day7subject, email: sequence.day7email },
+                  ] as { day: string; label: string; wa: string; emailSubject: string; email: string }[]).map(({ day, label, wa, emailSubject, email: em }) => (
+                    <SequenceDay key={day} day={day} label={label} wa={wa} emailSubject={emailSubject} email={em} />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── Referral nudge (shown after first outreach) ───────────────────── */}
+        {showReferral && (
+          <div
+            className="rounded-xl border px-4 py-4 flex items-start gap-3"
+            style={{ background: "var(--brand-dim)", borderColor: "var(--brand-glow)" }}
+          >
+            <Zap className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold mb-0.5" style={{ color: "var(--text-1)" }}>
+                First message sent. Know someone else building pipeline?
+              </p>
+              <p className="text-xs mb-2" style={{ color: "var(--text-2)" }}>
+                Send them to 4unter — you get a free month when they subscribe.
+              </p>
+              <ReferralCopyButton />
+            </div>
+            <button
+              onClick={() => setShowReferral(false)}
+              className="text-xs shrink-0"
+              style={{ color: "var(--text-3)" }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* ── Outcome feedback ──────────────────────────────────────────────── */}
         <LeadFeedbackPanel

@@ -30,7 +30,8 @@ export default function StageSelector({ leadId, currentStage }: { leadId: string
       <button
         onClick={() => setOpen(!open)}
         disabled={saving}
-        className="flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors disabled:opacity-50"
+        className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm transition-colors disabled:opacity-50"
+        style={{ borderColor: "var(--border)", background: "var(--bg-surface)", color: "var(--text-2)" }}
       >
         <span className={`h-2 w-2 rounded-full ${current.color}`} />
         {current.label}
@@ -38,12 +39,21 @@ export default function StageSelector({ leadId, currentStage }: { leadId: string
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 min-w-36 rounded-lg border border-zinc-700 bg-zinc-900 shadow-xl py-1">
+        <div
+          className="absolute right-0 top-full mt-1 z-50 min-w-36 rounded-lg border shadow-xl py-1"
+          style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}
+        >
           {STAGES.map((s) => (
             <button
               key={s.value}
               onClick={() => changeStage(s.value)}
-              className={`flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-zinc-800 transition-colors ${s.value === stage ? "text-zinc-100" : "text-zinc-400"}`}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors"
+              style={{
+                color: s.value === stage ? "var(--text-1)" : "var(--text-3)",
+                background: "transparent",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-elevated)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
             >
               <span className={`h-2 w-2 rounded-full ${s.color}`} />
               {s.label}

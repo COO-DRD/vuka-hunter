@@ -1,6 +1,6 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
-export function logEvent(orgId: string, eventType: "scrape" | "enrich" | "score" | "opener") {
+export function logEvent(orgId: string, eventType: "scrape" | "enrich" | "score" | "opener" | "sequence") {
   const db = createSupabaseServiceClient();
   void Promise.resolve(
     db.from("hunter_events").insert({ org_id: orgId, event_type: eventType })

@@ -483,7 +483,7 @@ function HeroSignup({ dark = false, signedIn = false }: { dark?: boolean; signed
         href={email ? `/sign-up?email=${encodeURIComponent(email)}` : "/sign-up"}
         className="flex items-center justify-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 transition-colors
           px-6 py-3 text-sm font-bold text-black whitespace-nowrap">
-        Start for free <ArrowRight className="h-4 w-4" />
+        Get 20 leads free <ArrowRight className="h-4 w-4" />
       </Link>
     </div>
   );
@@ -790,7 +790,7 @@ export default function LandingPage() {
             </Link>
             <Link href={navCta}
               className="flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 transition-colors px-4 py-2 text-sm font-bold text-black">
-              {isSignedIn ? "Dashboard" : "Get started"} <ArrowRight className="h-3.5 w-3.5" />
+              {isSignedIn ? "Dashboard" : "Get 20 leads free"} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>
@@ -839,7 +839,7 @@ export default function LandingPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 1.3, duration: 0.4 }}
           >
-            Free 7-day trial · No credit card · Set up in under 2 minutes
+            No card required · Real leads in your city · Set up in 2 minutes
           </motion.p>
         </div>
 
@@ -1014,7 +1014,7 @@ export default function LandingPage() {
               >
                 <Link href={navCta}
                   className="inline-flex items-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 transition-colors px-6 py-3 text-sm font-bold text-black">
-                  Try it free <ArrowRight className="h-4 w-4" />
+                  Get 20 leads free <ArrowRight className="h-4 w-4" />
                 </Link>
               </motion.div>
             </InView>
@@ -1162,7 +1162,7 @@ export default function LandingPage() {
                 href={isSignedIn ? "/dashboard" : "/sign-up"}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 transition-colors px-6 py-3.5 font-bold text-black text-sm"
               >
-                {isSignedIn ? "Go to dashboard" : "Start 7-day free trial"} <ArrowRight className="h-4 w-4" />
+                {isSignedIn ? "Go to dashboard" : "Get 20 leads free"} <ArrowRight className="h-4 w-4" />
               </Link>
               <p className="text-center text-xs text-stone-400 mt-3">Cancel any time · billed monthly</p>
             </div>
@@ -1209,7 +1209,7 @@ export default function LandingPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.4, delay: 0.45 }}
           >
-            7-day free trial · No credit card · Cancel any time
+            No card required · 20 leads in 4 minutes · Cancel any time
           </motion.p>
         </div>
       </section>
