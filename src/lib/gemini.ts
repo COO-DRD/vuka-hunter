@@ -24,10 +24,14 @@ export function getKeyPool(action?: GeminiAction): string[] {
       if (k) keys.push(k);
     }
   }
-  // Global pool: GEMINI_API_KEY, GEMINI_API_KEY_2, GEMINI_API_KEY_3, GEMINI_API_KEY_4
-  for (const name of ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4"]) {
-    const k = process.env[name];
-    if (k) keys.push(k);
+  // Global pool: GEMINI_API_KEY, then GEMINI_API_KEY2..8 and GEMINI_API_KEY_2..8 (both styles)
+  const global0 = process.env.GEMINI_API_KEY;
+  if (global0) keys.push(global0);
+  for (let i = 2; i <= 8; i++) {
+    const a = process.env[`GEMINI_API_KEY${i}`];   // no-underscore: GEMINI_API_KEY2
+    const b = process.env[`GEMINI_API_KEY_${i}`];  // underscored:   GEMINI_API_KEY_2
+    if (a) keys.push(a);
+    if (b) keys.push(b);
   }
   return [...new Set(keys)]; // dedupe — same key in multiple slots tried only once
 }
