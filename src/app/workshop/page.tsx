@@ -64,7 +64,7 @@ export default function WorkshopPage() {
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b border-stone-200 bg-[#F8F7F4]/95 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <Link href="/"><HunterWordmark size="sm" onLight /></Link>
+          <HunterWordmark size="sm" onLight />
           <Link href="/sign-up"
             className="flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 transition-colors px-4 py-2 text-sm font-bold text-black">
             Try 4unter free <ArrowRight className="h-3.5 w-3.5" />

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /**
@@ -29,7 +30,7 @@ export function HunterWordmark({ size = "md", onLight = false }: { size?: "sm" |
   const boxSize   = size === "lg" ? "h-11 w-11 rounded-xl" : size === "sm" ? "h-7 w-7 rounded-md" : "h-9 w-9 rounded-lg";
 
   return (
-    <div className="flex items-center gap-2.5">
+    <Link href="/" className="flex items-center gap-2.5 focus:outline-none">
       <div className={cn(
         "flex items-center justify-center shrink-0 text-zinc-950",
         "bg-amber-400",
@@ -42,6 +43,6 @@ export function HunterWordmark({ size = "md", onLight = false }: { size?: "sm" |
         <span className="text-amber-400">4</span>
         <span className={onLight ? "text-stone-950" : "text-zinc-100"}>UNTER</span>
       </span>
-    </div>
+    </Link>
   );
 }
