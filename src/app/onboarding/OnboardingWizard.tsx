@@ -7,14 +7,14 @@ import { cn } from "@/lib/utils";
 import { HunterWordmark } from "@/components/HunterLogo";
 
 const ROLES = [
-  { value: "agency",       label: "Agency / Consultant",     desc: "I sell services, software, or expertise to other businesses",          icon: "🏢" },
-  { value: "manufacturer", label: "Manufacturer / Producer",  desc: "I make products and need buyers, retailers, or distributors",          icon: "🏭" },
-  { value: "distributor",  label: "Distributor / Wholesaler", desc: "I source or supply products to resell, distribute, or export",         icon: "📦" },
-  { value: "agriculture",  label: "Agriculture / Farming",    desc: "I produce goods and need buyers, processors, or input suppliers",      icon: "🌾" },
-  { value: "finance",      label: "Finance / Investment",     desc: "I provide capital, loans, or financial services to businesses",        icon: "💼" },
-  { value: "recruiter",    label: "Recruiter / HR",           desc: "I find candidates or talent for companies in specific sectors",        icon: "🎯" },
-  { value: "research",     label: "Research / Intelligence",  desc: "I do market research, competitive analysis, or business intelligence", icon: "🔍" },
-  { value: "other",        label: "Other",                    desc: "My use case is different — I'll describe it below",                    icon: "⚙️" },
+  { value: "agency",       label: "Agency / Consultant",     desc: "Selling services, software, or expertise to other businesses" },
+  { value: "manufacturer", label: "Manufacturer / Producer",  desc: "Finding buyers, retailers, or distributors for your products" },
+  { value: "distributor",  label: "Distributor / Wholesaler", desc: "Sourcing or supplying goods to resell, distribute, or export" },
+  { value: "agriculture",  label: "Agriculture / Farming",    desc: "Finding buyers, processors, or input suppliers" },
+  { value: "finance",      label: "Finance / Investment",     desc: "Providing capital, loans, or financial services to SMEs" },
+  { value: "recruiter",    label: "Recruiter / HR",           desc: "Placing candidates in companies across specific sectors" },
+  { value: "research",     label: "Research / Intelligence",  desc: "Market research, competitive analysis, or business intelligence" },
+  { value: "other",        label: "Other",                    desc: "A use case not listed above" },
 ];
 
 const CHANNELS = [
@@ -25,14 +25,14 @@ const CHANNELS = [
 ];
 
 const SIGNALS = [
-  { value: "established", label: "Established business",       desc: "High Google rating and strong review count" },
-  { value: "growing",     label: "Growing fast",               desc: "Recent surge in reviews or expanding locations" },
-  { value: "gap",         label: "Has a gap I can fill",       desc: "Clearly missing my product, service, or supply" },
-  { value: "volume",      label: "High customer volume",       desc: "Lots of transactions, foot traffic, or reviews" },
-  { value: "reachable",   label: "Contactable directly",       desc: "Has phone, email, or WhatsApp available" },
-  { value: "no_digital",  label: "Limited digital presence",   desc: "No website, no social, or very outdated online presence" },
-  { value: "budget",      label: "Budget signals",             desc: "Premium positioning, multiple locations, or high-end clientele" },
-  { value: "geography",   label: "Serves my target area",      desc: "Located in or delivers to my region" },
+  { value: "established", label: "Established business",     desc: "High Google rating and strong review count" },
+  { value: "growing",     label: "Growing fast",             desc: "Recent surge in reviews or expanding locations" },
+  { value: "gap",         label: "Has a gap I can fill",     desc: "Clearly missing my product, service, or supply" },
+  { value: "volume",      label: "High customer volume",     desc: "Lots of transactions, foot traffic, or reviews" },
+  { value: "reachable",   label: "Contactable directly",     desc: "Has phone, email, or WhatsApp available" },
+  { value: "no_digital",  label: "Limited digital presence", desc: "No website, no social, or very outdated online presence" },
+  { value: "budget",      label: "Budget signals",           desc: "Premium positioning, multiple locations, or high-end clientele" },
+  { value: "geography",   label: "Serves my target area",    desc: "Located in or delivers to my region" },
 ];
 
 const ORG_DESC_PLACEHOLDER: Record<string, string> = {
@@ -43,7 +43,7 @@ const ORG_DESC_PLACEHOLDER: Record<string, string> = {
   finance:      "e.g. We provide working capital and invoice financing to SMEs in manufacturing and trade",
   recruiter:    "e.g. We place mid-to-senior level talent in fintech and healthcare companies",
   research:     "e.g. We produce market intelligence reports for investors and corporate strategy teams",
-  other:        "Describe what you do and who you serve…",
+  other:        "Describe what you do and who you serve",
 };
 
 const TARGET_PLACEHOLDER: Record<string, string> = {
@@ -54,26 +54,28 @@ const TARGET_PLACEHOLDER: Record<string, string> = {
   finance:      "e.g. Manufacturing SMEs with 3+ years in business, 30+ Google reviews, and active operations",
   recruiter:    "e.g. Fast-growing tech or healthcare companies that are actively hiring or recently expanded",
   research:     "e.g. Businesses in targeted sectors with verifiable online presence and consistent activity",
-  other:        "Describe the type of business you are looking for…",
+  other:        "Describe the type of business you are looking for",
 };
 
 interface OrgProfile {
-  business_name:      string | null;
-  sender_name:        string | null;
-  use_case:           string | null;
-  org_description:    string | null;
-  target_description: string | null;
-  priority_signals:   string[] | null;
-  outreach_channel:   string | null;
+  business_name:       string | null;
+  sender_name:         string | null;
+  use_case:            string | null;
+  org_description:     string | null;
+  target_description:  string | null;
+  priority_signals:    string[] | null;
+  outreach_channel:    string | null;
   onboarding_complete: boolean;
 }
+
+const TOTAL_STEPS = 5;
 
 export default function OnboardingWizard({ existing }: { existing: OrgProfile | null }) {
   const isEditing = existing?.onboarding_complete === true;
 
   const [step, setStep]                     = useState(1);
   const [useCase, setUseCase]               = useState(existing?.use_case ?? "");
-  const [businessName, setBusinessName]     = useState(existing?.business_name ?? existing?.business_name ?? "");
+  const [businessName, setBusinessName]     = useState(existing?.business_name ?? "");
   const [senderName, setSenderName]         = useState(existing?.sender_name ?? "");
   const [orgDescription, setOrgDescription] = useState(existing?.org_description ?? "");
   const [targetDesc, setTargetDesc]         = useState(existing?.target_description ?? "");
@@ -85,8 +87,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
 
   function toggleSignal(val: string) {
     setSignals((prev) =>
-      prev.includes(val)
-        ? prev.filter((s) => s !== val)
+      prev.includes(val) ? prev.filter((s) => s !== val)
         : prev.length < 4 ? [...prev, val] : prev
     );
   }
@@ -98,7 +99,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
       const res = await fetch("/api/onboarding", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
+        body: JSON.stringify({
           businessName,
           senderName,
           useCase,
@@ -124,40 +125,49 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
   const canProceed3 = targetDesc.trim().length > 0;
   const canProceed4 = signals.length > 0;
 
-  const descPlaceholder   = ORG_DESC_PLACEHOLDER[useCase]    ?? ORG_DESC_PLACEHOLDER.other;
-  const targetPlaceholder = TARGET_PLACEHOLDER[useCase]      ?? TARGET_PLACEHOLDER.other;
+  const descPlaceholder   = ORG_DESC_PLACEHOLDER[useCase] ?? ORG_DESC_PLACEHOLDER.other;
+  const targetPlaceholder = TARGET_PLACEHOLDER[useCase]   ?? TARGET_PLACEHOLDER.other;
+
+  const inputCls = "w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-900 resize-none transition-colors";
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ background: "var(--background)" }}>
-      <div className="w-full max-w-xl">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16 bg-stone-50">
+      <div className="w-full max-w-lg">
 
         {/* Logo */}
-        <div className="flex justify-center mb-10">
+        <div className="flex justify-center mb-12">
           <HunterWordmark size="sm" onLight />
         </div>
 
-        {/* Progress dots */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          {[1, 2, 3, 4, 5].map((s) => (
+        {/* Progress bar */}
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-stone-400 tracking-wide uppercase">
+              Step {step} of {TOTAL_STEPS}
+            </span>
+            {step > 1 && (
+              <span className="text-xs text-stone-400">
+                {Math.round(((step - 1) / TOTAL_STEPS) * 100)}% complete
+              </span>
+            )}
+          </div>
+          <div className="h-0.5 w-full bg-stone-200 rounded-full">
             <div
-              key={s}
-              className={cn(
-                "rounded-full transition-all",
-                s === step   ? "h-2 w-6 bg-amber-500" :
-                s < step     ? "h-2 w-2 bg-amber-600"  :
-                               "h-2 w-2 bg-stone-300"
-              )}
+              className="h-full bg-stone-900 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${((step - 1) / TOTAL_STEPS) * 100}%` }}
             />
-          ))}
+          </div>
         </div>
 
         {/* ── Step 1: Role ── */}
         {step === 1 && (
           <div>
-            <h1 className="text-xl font-bold text-stone-900 mb-1">
-              {isEditing ? "Update your profile" : "Welcome to 4unter"}
+            <h1 className="text-2xl font-semibold text-stone-900 mb-1 tracking-tight">
+              {isEditing ? "Update your profile" : "What best describes you?"}
             </h1>
-            <p className="text-sm text-stone-500 mb-6">What best describes you?</p>
+            <p className="text-sm text-stone-500 mb-8">
+              This determines how 4unter scores and qualifies your leads.
+            </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {ROLES.map((r) => (
@@ -165,20 +175,26 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                   key={r.value}
                   onClick={() => setUseCase(r.value)}
                   className={cn(
-                    "text-left rounded-xl border p-4 transition-all",
+                    "text-left rounded-md border p-4 transition-all duration-150",
                     useCase === r.value
-                      ? "border-amber-500 bg-amber-500/10 ring-1 ring-amber-500/30"
+                      ? "border-stone-900 bg-white shadow-sm"
                       : "border-stone-200 bg-white hover:border-stone-300"
                   )}
                 >
-                  <div className="text-2xl mb-2">{r.icon}</div>
-                  <p className="text-sm font-semibold text-stone-900 mb-0.5">{r.label}</p>
-                  <p className="text-xs text-stone-400 leading-snug">{r.desc}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-medium text-stone-900 leading-snug">{r.label}</p>
+                    {useCase === r.value && (
+                      <div className="shrink-0 h-4 w-4 rounded-full bg-stone-900 flex items-center justify-center mt-0.5">
+                        <Check className="h-2.5 w-2.5 text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-stone-400 mt-1 leading-relaxed">{r.desc}</p>
                 </button>
               ))}
             </div>
 
-            <div className="mt-6 flex justify-end">
+            <div className="mt-8 flex justify-end">
               <Button onClick={() => setStep(2)} disabled={!canProceed1} className="gap-2">
                 Continue <ChevronRight className="h-4 w-4" />
               </Button>
@@ -189,14 +205,16 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
         {/* ── Step 2: About your business ── */}
         {step === 2 && (
           <div>
-            <h1 className="text-xl font-bold text-stone-900 mb-1">Tell us about your business</h1>
-            <p className="text-sm text-stone-500 mb-6">
+            <h1 className="text-2xl font-semibold text-stone-900 mb-1 tracking-tight">About your business</h1>
+            <p className="text-sm text-stone-500 mb-8">
               This shapes how 4unter qualifies and scores leads for you.
             </p>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5">Business / organisation name *</label>
+                <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">
+                  Business or organisation name
+                </label>
                 <Input
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
@@ -205,26 +223,31 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                 />
               </div>
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5">Your name (used in outreach messages) *</label>
+                <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">
+                  Your name
+                </label>
                 <Input
                   value={senderName}
                   onChange={(e) => setSenderName(e.target.value)}
                   placeholder="e.g. John Kamau"
                 />
+                <p className="text-xs text-stone-400 mt-1.5">Used in outreach messages as the sender name</p>
               </div>
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5">What do you do? <span className="text-stone-400">(optional but improves scoring)</span></label>
+                <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">
+                  What you do <span className="normal-case text-stone-400 font-normal">(optional — improves scoring)</span>
+                </label>
                 <textarea
                   value={orgDescription}
                   onChange={(e) => setOrgDescription(e.target.value)}
                   placeholder={descPlaceholder}
                   rows={3}
-                  className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
+                  className={inputCls}
                 />
               </div>
             </div>
 
-            <div className="mt-6 flex justify-between">
+            <div className="mt-8 flex justify-between">
               <Button variant="outline" onClick={() => setStep(1)} className="gap-2">
                 <ChevronLeft className="h-4 w-4" /> Back
               </Button>
@@ -238,36 +261,40 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
         {/* ── Step 3: Ideal lead ── */}
         {step === 3 && (
           <div>
-            <h1 className="text-xl font-bold text-stone-900 mb-1">Describe your ideal lead</h1>
-            <p className="text-sm text-stone-500 mb-6">
-              4unter&apos;s AI scores leads against this — be specific about what matters to you.
+            <h1 className="text-2xl font-semibold text-stone-900 mb-1 tracking-tight">Your ideal lead</h1>
+            <p className="text-sm text-stone-500 mb-8">
+              4unter&apos;s AI scores every lead against this. Be specific — it directly affects quality.
             </p>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5">What type of business are you looking for? *</label>
+                <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">
+                  Describe the business you are looking for
+                </label>
                 <textarea
                   value={targetDesc}
                   onChange={(e) => setTargetDesc(e.target.value)}
                   placeholder={targetPlaceholder}
                   rows={4}
                   autoFocus
-                  className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
+                  className={inputCls}
                 />
               </div>
 
               <div>
-                <label className="block text-xs text-stone-500 mb-2">How will you reach out to leads?</label>
+                <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-3">
+                  Primary outreach channel
+                </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {CHANNELS.map((c) => (
                     <button
                       key={c.value}
                       onClick={() => setChannel(c.value)}
                       className={cn(
-                        "rounded-lg border py-2.5 text-sm font-medium transition-all",
+                        "rounded-md border py-2.5 text-sm font-medium transition-all duration-150",
                         channel === c.value
-                          ? "border-amber-500 bg-amber-500/10 text-amber-600"
-                          : "border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700"
+                          ? "border-stone-900 bg-white text-stone-900 shadow-sm"
+                          : "border-stone-200 text-stone-500 hover:border-stone-300 hover:text-stone-700"
                       )}
                     >
                       {c.label}
@@ -277,7 +304,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
               </div>
             </div>
 
-            <div className="mt-6 flex justify-between">
+            <div className="mt-8 flex justify-between">
               <Button variant="outline" onClick={() => setStep(2)} className="gap-2">
                 <ChevronLeft className="h-4 w-4" /> Back
               </Button>
@@ -291,12 +318,12 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
         {/* ── Step 4: Priority signals ── */}
         {step === 4 && (
           <div>
-            <h1 className="text-xl font-bold text-stone-900 mb-1">What matters most?</h1>
-            <p className="text-sm text-stone-500 mb-6">
-              Pick up to 4 signals. 4unter weights the AI score around these.
+            <h1 className="text-2xl font-semibold text-stone-900 mb-1 tracking-tight">What matters most?</h1>
+            <p className="text-sm text-stone-500 mb-8">
+              Select up to 4 signals. 4unter weights the AI score around your priorities.
             </p>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {SIGNALS.map((s) => {
                 const selected = signals.includes(s.value);
                 const disabled = !selected && signals.length >= 4;
@@ -306,20 +333,20 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                     onClick={() => toggleSignal(s.value)}
                     disabled={disabled}
                     className={cn(
-                      "w-full text-left rounded-xl border px-4 py-3 transition-all flex items-start gap-3",
-                      selected  ? "border-amber-500 bg-amber-500/10"
-                                : disabled ? "border-stone-200/50 opacity-40 cursor-not-allowed"
-                                : "border-stone-200 hover:border-stone-300"
+                      "w-full text-left rounded-md border px-4 py-3 transition-all duration-150 flex items-center gap-3",
+                      selected  ? "border-stone-900 bg-white shadow-sm"
+                      : disabled ? "border-stone-100 opacity-35 cursor-not-allowed"
+                      : "border-stone-200 bg-white hover:border-stone-300"
                     )}
                   >
                     <div className={cn(
-                      "mt-0.5 h-4 w-4 shrink-0 rounded border flex items-center justify-center",
-                      selected ? "border-amber-500 bg-amber-500" : "border-stone-300"
+                      "shrink-0 h-4 w-4 rounded border-2 flex items-center justify-center transition-colors",
+                      selected ? "border-stone-900 bg-stone-900" : "border-stone-300"
                     )}>
                       {selected && <Check className="h-2.5 w-2.5 text-white" />}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-stone-800">{s.label}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-stone-900">{s.label}</p>
                       <p className="text-xs text-stone-400 mt-0.5">{s.desc}</p>
                     </div>
                   </button>
@@ -327,11 +354,11 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
               })}
             </div>
 
-            <p className="text-xs text-stone-400 mt-3">{signals.length}/4 selected</p>
+            <p className="text-xs text-stone-400 mt-3">{signals.length} of 4 selected</p>
 
             {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
 
-            <div className="mt-6 flex justify-between">
+            <div className="mt-8 flex justify-between">
               <Button variant="outline" onClick={() => setStep(3)} className="gap-2">
                 <ChevronLeft className="h-4 w-4" /> Back
               </Button>
@@ -351,13 +378,16 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
         {/* ── Step 5: WhatsApp (optional) ── */}
         {step === 5 && (
           <div>
-            <h1 className="text-xl font-bold text-stone-900 mb-1">Get updates on WhatsApp</h1>
-            <p className="text-sm text-stone-500 mb-6">
-              We&apos;ll send you setup tips and lead alerts for your first week. Optional — takes 5 seconds.
+            <h1 className="text-2xl font-semibold text-stone-900 mb-1 tracking-tight">Stay informed</h1>
+            <p className="text-sm text-stone-500 mb-8">
+              Add your WhatsApp number to receive setup guidance and lead alerts during your first week.
+              You can skip this and add it later in Settings.
             </p>
 
             <div>
-              <label className="block text-xs text-stone-500 mb-1.5">Your WhatsApp number</label>
+              <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">
+                WhatsApp number
+              </label>
               <Input
                 value={waNumber}
                 onChange={(e) => setWaNumber(e.target.value)}
@@ -365,12 +395,12 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                 type="tel"
                 autoFocus
               />
-              <p className="text-xs text-stone-400 mt-1.5">Include country code, e.g. +254 for Kenya</p>
+              <p className="text-xs text-stone-400 mt-1.5">Include your country code, e.g. +254 for Kenya</p>
             </div>
 
-            {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+            {error && <p className="text-xs text-red-500 mt-4">{error}</p>}
 
-            <div className="mt-6 flex justify-between items-center">
+            <div className="mt-8 flex items-center justify-between">
               <button
                 onClick={handleSubmit}
                 disabled={loading}
@@ -384,7 +414,7 @@ export default function OnboardingWizard({ existing }: { existing: OrgProfile | 
                 loading={loading}
                 className="gap-2"
               >
-                Activate {!loading && <ChevronRight className="h-4 w-4" />}
+                Save and continue {!loading && <ChevronRight className="h-4 w-4" />}
               </Button>
             </div>
           </div>

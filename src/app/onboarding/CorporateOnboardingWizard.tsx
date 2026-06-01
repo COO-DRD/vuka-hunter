@@ -10,14 +10,14 @@ import { cn } from "@/lib/utils";
 import { HunterWordmark } from "@/components/HunterLogo";
 
 const ROLES = [
-  { value: "agency",       label: "Agency / Consultant",     desc: "I sell services, software, or expertise to other businesses",          icon: "🏢" },
-  { value: "manufacturer", label: "Manufacturer / Producer",  desc: "I make products and need buyers, retailers, or distributors",          icon: "🏭" },
-  { value: "distributor",  label: "Distributor / Wholesaler", desc: "I source or supply products to resell, distribute, or export",         icon: "📦" },
-  { value: "agriculture",  label: "Agriculture / Farming",    desc: "I produce goods and need buyers, processors, or input suppliers",      icon: "🌾" },
-  { value: "finance",      label: "Finance / Investment",     desc: "I provide capital, loans, or financial services to businesses",        icon: "💼" },
-  { value: "recruiter",    label: "Recruiter / HR",           desc: "I find candidates or talent for companies in specific sectors",        icon: "🎯" },
-  { value: "research",     label: "Research / Intelligence",  desc: "I do market research, competitive analysis, or business intelligence", icon: "🔍" },
-  { value: "other",        label: "Other",                    desc: "My use case is different — I'll describe it below",                    icon: "⚙️" },
+  { value: "agency",       label: "Agency / Consultant",     desc: "Selling services, software, or expertise to other businesses" },
+  { value: "manufacturer", label: "Manufacturer / Producer",  desc: "Finding buyers, retailers, or distributors for your products" },
+  { value: "distributor",  label: "Distributor / Wholesaler", desc: "Sourcing or supplying goods to resell, distribute, or export" },
+  { value: "agriculture",  label: "Agriculture / Farming",    desc: "Finding buyers, processors, or input suppliers" },
+  { value: "finance",      label: "Finance / Investment",     desc: "Providing capital, loans, or financial services to SMEs" },
+  { value: "recruiter",    label: "Recruiter / HR",           desc: "Placing candidates in companies across specific sectors" },
+  { value: "research",     label: "Research / Intelligence",  desc: "Market research, competitive analysis, or business intelligence" },
+  { value: "other",        label: "Other",                    desc: "A use case not listed above" },
 ];
 
 const CHANNELS = [
@@ -170,51 +170,69 @@ export default function CorporateOnboardingWizard({
   // suppress unused variable warning — orgId kept in props for future API calls
   void orgId;
 
+  const inputCls = "w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-900 resize-none transition-colors";
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ background: "var(--background)" }}>
-      <div className="w-full max-w-xl">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16 bg-stone-50">
+      <div className="w-full max-w-lg">
 
         {/* Logo + corporate badge */}
-        <div className="flex items-center gap-3 justify-center mb-8">
+        <div className="flex items-center gap-3 justify-center mb-12">
           <HunterWordmark size="sm" onLight />
-          <span className="flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-600">
+          <span className="flex items-center gap-1.5 rounded-md border border-stone-200 bg-white px-2.5 py-1 text-xs font-medium text-stone-600">
             <Building2 className="h-3 w-3" /> Corporate
           </span>
         </div>
 
-        {/* Progress */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s) => (
-            <div key={s} className={cn(
-              "rounded-full transition-all",
-              s === step  ? "h-2 w-6 bg-amber-500" :
-              s < step    ? "h-2 w-2 bg-amber-600"  :
-                            "h-2 w-2 bg-stone-300"
-            )} />
-          ))}
+        {/* Progress bar */}
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-stone-400 tracking-wide uppercase">
+              Step {step} of {TOTAL_STEPS}
+            </span>
+            {step > 1 && (
+              <span className="text-xs text-stone-400">
+                {Math.round(((step - 1) / TOTAL_STEPS) * 100)}% complete
+              </span>
+            )}
+          </div>
+          <div className="h-0.5 w-full bg-stone-200 rounded-full">
+            <div
+              className="h-full bg-stone-900 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${((step - 1) / TOTAL_STEPS) * 100}%` }}
+            />
+          </div>
         </div>
 
         {/* ── Step 1: Role ── */}
         {step === 1 && (
           <div>
-            <h1 className="text-xl font-bold text-stone-900 mb-1">Welcome to 4unter</h1>
-            <p className="text-sm text-stone-500 mb-6">What best describes your organisation?</p>
+            <h1 className="text-2xl font-semibold text-stone-900 mb-1 tracking-tight">What best describes your organisation?</h1>
+            <p className="text-sm text-stone-500 mb-8">
+              This determines how 4unter scores and qualifies leads for your team.
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {ROLES.map((r) => (
                 <button key={r.value} onClick={() => setUseCase(r.value)}
                   className={cn(
-                    "text-left rounded-xl border p-4 transition-all",
+                    "text-left rounded-md border p-4 transition-all duration-150",
                     useCase === r.value
-                      ? "border-amber-500 bg-amber-500/10 ring-1 ring-amber-500/30"
+                      ? "border-stone-900 bg-white shadow-sm"
                       : "border-stone-200 bg-white hover:border-stone-300"
                   )}>
-                  <div className="text-2xl mb-2">{r.icon}</div>
-                  <p className="text-sm font-semibold text-stone-900 mb-0.5">{r.label}</p>
-                  <p className="text-xs text-stone-400 leading-snug">{r.desc}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-medium text-stone-900 leading-snug">{r.label}</p>
+                    {useCase === r.value && (
+                      <div className="shrink-0 h-4 w-4 rounded-full bg-stone-900 flex items-center justify-center mt-0.5">
+                        <Check className="h-2.5 w-2.5 text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-stone-400 mt-1 leading-relaxed">{r.desc}</p>
                 </button>
               ))}
             </div>
-            <div className="mt-6 flex justify-end">
+            <div className="mt-8 flex justify-end">
               <Button onClick={() => setStep(2)} disabled={!canProceed1} className="gap-2">
                 Continue <ChevronRight className="h-4 w-4" />
               </Button>
@@ -225,27 +243,29 @@ export default function CorporateOnboardingWizard({
         {/* ── Step 2: Business details ── */}
         {step === 2 && (
           <div>
-            <h1 className="text-xl font-bold text-stone-900 mb-1">Your organisation</h1>
-            <p className="text-sm text-stone-500 mb-6">This shapes how 4unter qualifies and scores leads.</p>
-            <div className="space-y-4">
+            <h1 className="text-2xl font-semibold text-stone-900 mb-1 tracking-tight">Your organisation</h1>
+            <p className="text-sm text-stone-500 mb-8">This shapes how 4unter qualifies and scores leads for your team.</p>
+            <div className="space-y-5">
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5">Organisation / company name *</label>
+                <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Organisation name</label>
                 <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)}
                   placeholder="e.g. Acme Kenya Ltd." autoFocus />
               </div>
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5">Your name (team lead / admin) *</label>
+                <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Your name</label>
                 <Input value={senderName} onChange={(e) => setSenderName(e.target.value)}
                   placeholder="e.g. Jane Wanjiku" />
+                <p className="text-xs text-stone-400 mt-1.5">Team lead or admin — used as default sender name</p>
               </div>
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5">What does your organisation do? <span className="text-stone-400">(optional)</span></label>
+                <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">
+                  What your organisation does <span className="normal-case font-normal text-stone-400">(optional)</span>
+                </label>
                 <textarea value={orgDescription} onChange={(e) => setOrgDescription(e.target.value)}
-                  placeholder={descPlaceholder} rows={3}
-                  className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none" />
+                  placeholder={descPlaceholder} rows={3} className={inputCls} />
               </div>
             </div>
-            <div className="mt-6 flex justify-between">
+            <div className="mt-8 flex justify-between">
               <Button variant="outline" onClick={() => setStep(1)} className="gap-2"><ChevronLeft className="h-4 w-4" /> Back</Button>
               <Button onClick={() => setStep(3)} disabled={!canProceed2} className="gap-2">
                 Continue <ChevronRight className="h-4 w-4" />
@@ -257,25 +277,28 @@ export default function CorporateOnboardingWizard({
         {/* ── Step 3: Ideal lead ── */}
         {step === 3 && (
           <div>
-            <h1 className="text-xl font-bold text-stone-900 mb-1">Describe your ideal lead</h1>
-            <p className="text-sm text-stone-500 mb-6">4unter&apos;s AI scores leads against this. Be specific.</p>
-            <div className="space-y-4">
+            <h1 className="text-2xl font-semibold text-stone-900 mb-1 tracking-tight">Your ideal lead</h1>
+            <p className="text-sm text-stone-500 mb-8">4unter&apos;s AI scores every lead against this. Be specific.</p>
+            <div className="space-y-5">
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5">What type of business are you looking for? *</label>
+                <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">
+                  Describe the business you are looking for
+                </label>
                 <textarea value={targetDesc} onChange={(e) => setTargetDesc(e.target.value)}
-                  placeholder={targetPlaceholder} rows={4} autoFocus
-                  className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none" />
+                  placeholder={targetPlaceholder} rows={4} autoFocus className={inputCls} />
               </div>
               <div>
-                <label className="block text-xs text-stone-500 mb-2">How will your team reach out to leads?</label>
+                <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-3">
+                  Primary outreach channel
+                </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {CHANNELS.map((c) => (
                     <button key={c.value} onClick={() => setChannel(c.value)}
                       className={cn(
-                        "rounded-lg border py-2.5 text-sm font-medium transition-all",
+                        "rounded-md border py-2.5 text-sm font-medium transition-all duration-150",
                         channel === c.value
-                          ? "border-amber-500 bg-amber-500/10 text-amber-600"
-                          : "border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700"
+                          ? "border-stone-900 bg-white text-stone-900 shadow-sm"
+                          : "border-stone-200 text-stone-500 hover:border-stone-300 hover:text-stone-700"
                       )}>
                       {c.label}
                     </button>
@@ -283,7 +306,7 @@ export default function CorporateOnboardingWizard({
                 </div>
               </div>
             </div>
-            <div className="mt-6 flex justify-between">
+            <div className="mt-8 flex justify-between">
               <Button variant="outline" onClick={() => setStep(2)} className="gap-2"><ChevronLeft className="h-4 w-4" /> Back</Button>
               <Button onClick={() => setStep(4)} disabled={!canProceed3} className="gap-2">
                 Continue <ChevronRight className="h-4 w-4" />
@@ -295,37 +318,37 @@ export default function CorporateOnboardingWizard({
         {/* ── Step 4: Priority signals ── */}
         {step === 4 && (
           <div>
-            <h1 className="text-xl font-bold text-stone-900 mb-1">What matters most?</h1>
-            <p className="text-sm text-stone-500 mb-6">Pick up to 4 signals. 4unter weights the AI score around these.</p>
-            <div className="space-y-2">
+            <h1 className="text-2xl font-semibold text-stone-900 mb-1 tracking-tight">What matters most?</h1>
+            <p className="text-sm text-stone-500 mb-8">Select up to 4 signals. 4unter weights the AI score around your priorities.</p>
+            <div className="space-y-1.5">
               {SIGNALS.map((s) => {
                 const selected = signals.includes(s.value);
                 const disabled = !selected && signals.length >= 4;
                 return (
                   <button key={s.value} onClick={() => toggleSignal(s.value)} disabled={disabled}
                     className={cn(
-                      "w-full text-left rounded-xl border px-4 py-3 transition-all flex items-start gap-3",
-                      selected  ? "border-amber-500 bg-amber-500/10"
-                                : disabled ? "border-stone-200/50 opacity-40 cursor-not-allowed"
-                                : "border-stone-200 hover:border-stone-300"
+                      "w-full text-left rounded-md border px-4 py-3 transition-all duration-150 flex items-center gap-3",
+                      selected  ? "border-stone-900 bg-white shadow-sm"
+                      : disabled ? "border-stone-100 opacity-35 cursor-not-allowed"
+                      : "border-stone-200 bg-white hover:border-stone-300"
                     )}>
                     <div className={cn(
-                      "mt-0.5 h-4 w-4 shrink-0 rounded border flex items-center justify-center",
-                      selected ? "border-amber-500 bg-amber-500" : "border-stone-300"
+                      "shrink-0 h-4 w-4 rounded border-2 flex items-center justify-center transition-colors",
+                      selected ? "border-stone-900 bg-stone-900" : "border-stone-300"
                     )}>
                       {selected && <Check className="h-2.5 w-2.5 text-white" />}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-stone-800">{s.label}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-stone-900">{s.label}</p>
                       <p className="text-xs text-stone-400 mt-0.5">{s.desc}</p>
                     </div>
                   </button>
                 );
               })}
             </div>
-            <p className="text-xs text-stone-400 mt-3">{signals.length}/4 selected</p>
+            <p className="text-xs text-stone-400 mt-3">{signals.length} of 4 selected</p>
             {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
-            <div className="mt-6 flex justify-between">
+            <div className="mt-8 flex justify-between">
               <Button variant="outline" onClick={() => setStep(3)} className="gap-2"><ChevronLeft className="h-4 w-4" /> Back</Button>
               <Button
                 onClick={async () => {
@@ -344,25 +367,19 @@ export default function CorporateOnboardingWizard({
         {/* ── Step 5: Team invites ── */}
         {step === 5 && (
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Users className="h-5 w-5 text-amber-500" />
-              <h1 className="text-xl font-bold text-stone-900">Set up your team</h1>
-            </div>
-            <p className="text-sm text-stone-500 mb-1">
-              Invite up to <span className="text-amber-600 font-medium">{maxInvites} team members</span> to your corporate workspace.
-            </p>
-            <p className="text-xs text-stone-400 mb-6">
-              Each invited member receives an email to set their password and join your account.
-              You can skip this and invite from Settings later.
+            <h1 className="text-2xl font-semibold text-stone-900 mb-1 tracking-tight">Set up your team</h1>
+            <p className="text-sm text-stone-500 mb-8">
+              Invite team members to your corporate workspace. Each person receives an email to join.
+              You can skip this and manage invites from Settings later.
             </p>
 
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 mb-5 flex items-center gap-3">
-              <Shield className="h-4 w-4 text-amber-500 shrink-0" />
+            <div className="rounded-md border border-stone-200 bg-white px-4 py-3 mb-6 flex items-center gap-3">
+              <Shield className="h-4 w-4 text-stone-400 shrink-0" />
               <div>
-                <p className="text-xs font-medium text-amber-700">
+                <p className="text-xs font-medium text-stone-700">
                   {seatLimit} seat{seatLimit !== 1 ? "s" : ""} on your plan
                 </p>
-                <p className="text-xs text-stone-500">1 used (you) · {maxInvites} available to invite</p>
+                <p className="text-xs text-stone-400">1 used (you) · {maxInvites} available to invite</p>
               </div>
             </div>
 
@@ -391,7 +408,7 @@ export default function CorporateOnboardingWizard({
 
             {inviteEmails.length < maxInvites && (
               <button onClick={addInviteRow} type="button"
-                className="flex items-center gap-1.5 text-xs text-amber-600 hover:text-amber-700 transition-colors mb-5">
+                className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-800 transition-colors mb-5">
                 <UserPlus className="h-3.5 w-3.5" /> Add another member
               </button>
             )}
