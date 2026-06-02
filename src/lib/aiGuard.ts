@@ -1,8 +1,6 @@
 import { createSupabaseServiceClient } from "./supabase/server";
+import { redisIncrAICap } from "./ratelimit";
 
-// Per-plan hourly AI action caps (score + opener + sequence + enrich combined).
-// Beta users get a high cap since they're running production workloads.
-// Agency skips the DB check entirely.
 const HOURLY_CAPS: Record<string, number> = {
   trial:   20,
   starter: 150,
@@ -20,6 +18,11 @@ export async function checkAIHourlyCap(
   const cap = HOURLY_CAPS[plan] ?? 20;
   if (!isFinite(cap)) return { allowed: true, used: 0, cap };
 
+  // Atomic Redis INCR — no race condition across concurrent requests
+  const redisResult = await redisIncrAICap(orgId, cap);
+  if (redisResult) return redisResult;
+
+  // Fallback: DB count (non-atomic, but kept for when Redis is not configured)
   const db      = createSupabaseServiceClient();
   const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
 

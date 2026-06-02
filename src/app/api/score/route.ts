@@ -87,8 +87,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { leadId } = await req.json();
-  if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
+  const body = await req.json().catch(() => ({}));
+  const { leadId } = body as Record<string, unknown>;
+  if (!leadId || typeof leadId !== "string" || !/^[0-9a-f-]{36}$/i.test(leadId)) {
+    return NextResponse.json({ error: "Invalid leadId" }, { status: 400 });
+  }
 
   const db = createSupabaseServiceClient();
   const [{ data: lead }, { data: org }] = await Promise.all([

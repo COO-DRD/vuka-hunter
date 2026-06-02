@@ -92,7 +92,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  // Rate-limit API routes (IP-level)
+  // Rate-limit API routes (IP-level, in-memory per Edge instance)
   if (pathname.startsWith("/api/")) {
     const limit = pathname.startsWith("/api/auth/") ? MAX_AUTH_RPM : MAX_API_RPM;
     if (rateLimit(ip, limit)) {

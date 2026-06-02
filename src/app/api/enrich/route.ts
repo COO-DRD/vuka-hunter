@@ -33,8 +33,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { leadId, mode: modeOverride } = await req.json();
-  if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
+  const body = await req.json().catch(() => ({}));
+  const { leadId, mode: modeOverride } = body as Record<string, unknown>;
+  if (!leadId || typeof leadId !== "string" || !/^[0-9a-f-]{36}$/i.test(leadId)) {
+    return NextResponse.json({ error: "Invalid leadId" }, { status: 400 });
+  }
 
   const db = createSupabaseServiceClient();
   const [{ data: lead }, { data: org }] = await Promise.all([
@@ -57,7 +60,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Website URL is not a public address" }, { status: 400 });
   }
 
-  const mode = getMode(modeOverride ?? (org as Record<string, unknown> | null)?.enrichment_mode as string | undefined);
+  const modeStr = typeof modeOverride === "string" ? modeOverride : undefined;
+  const mode = getMode(modeStr ?? (org as Record<string, unknown> | null)?.enrichment_mode as string | undefined);
 
   try {
     const vertical = (lead.vertical as string | null) ?? undefined;

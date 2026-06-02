@@ -118,7 +118,7 @@ SIGNALS: <comma-separated match signals, max 4>`;
         score_reasoning: reasoning,
         pain_signals,
         scored_at: new Date().toISOString(),
-      }).eq("id", lead.id);
+      }).eq("id", lead.id).eq("org_id", orgId);
 
       scored++;
     } catch (err) {
