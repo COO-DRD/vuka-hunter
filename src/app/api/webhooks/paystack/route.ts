@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { sendUpgradeConfirmationEmail } from "@/lib/email";
 
@@ -8,7 +8,11 @@ export const dynamic = "force-dynamic";
 function verifySignature(body: string, signature: string): boolean {
   const secret = process.env.PAYSTACK_SECRET_KEY ?? "";
   const hash = createHmac("sha512", secret).update(body).digest("hex");
-  return hash === signature;
+  try {
+    return timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(signature, "hex"));
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -64,6 +68,19 @@ export async function POST(req: NextRequest) {
   if (event.event === "subscription.disable" && orgId) {
     await db.from("hunter_orgs").update({ subscription_status: "cancelled" }).eq("id", orgId);
     await db.from("hunter_subscriptions").update({ status: "cancelled" }).eq("org_id", orgId);
+  }
+
+  // Recurring payment failed — mark past_due, do not immediately cancel
+  if ((event.event === "invoice.payment_failed" || event.event === "charge.failed") && orgId) {
+    await db.from("hunter_orgs").update({ subscription_status: "past_due" }).eq("id", orgId);
+    await db.from("hunter_subscriptions").update({ status: "past_due" }).eq("org_id", orgId);
+  }
+
+  // Subscription not renewed (user turned off auto-renew)
+  if (event.event === "subscription.not_renew" && orgId) {
+    await db.from("hunter_subscriptions")
+      .update({ cancel_at_period_end: true })
+      .eq("org_id", orgId);
   }
 
   await db.from("hunter_payment_events").insert({

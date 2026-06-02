@@ -16,8 +16,15 @@ export async function POST(req: NextRequest) {
 
   const orgId = await resolveOrgId(user.id);
 
-  const { leadId, channel, message, subject } = await req.json();
+  const body = await req.json().catch(() => ({}));
+  const { leadId, channel, message, subject } = body as Record<string, unknown>;
   if (!leadId || !channel) return NextResponse.json({ error: "leadId and channel required" }, { status: 400 });
+  if (typeof message === "string" && message.length > 4000) {
+    return NextResponse.json({ error: "Message too long (max 4000 chars)" }, { status: 400 });
+  }
+  if (typeof subject === "string" && subject.length > 200) {
+    return NextResponse.json({ error: "Subject too long (max 200 chars)" }, { status: 400 });
+  }
 
   const db = createSupabaseServiceClient();
   const { data: lead } = await db
@@ -33,7 +40,7 @@ export async function POST(req: NextRequest) {
     org_id:          orgId,
     lead_id:         leadId,
     channel,
-    message,
+    message:         typeof message === "string" ? message : null,
     sent_by_user_id: user.id,
   });
 
@@ -46,15 +53,18 @@ export async function POST(req: NextRequest) {
 
   let actionUrl: string | null = null;
 
+  const messageStr = typeof message === "string" ? message : "";
+  const subjectStr = typeof subject === "string" ? subject : "";
+
   if (channel === "whatsapp" && lead.phone) {
     const phone = formatPhone(lead.phone);
-    actionUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message ?? "")}`;
+    actionUrl = `https://wa.me/${phone}?text=${encodeURIComponent(messageStr)}`;
   }
 
   if (channel === "email" && lead.email) {
     const params = new URLSearchParams();
-    if (subject) params.set("subject", subject);
-    if (message) params.set("body", message);
+    if (subjectStr) params.set("subject", subjectStr);
+    if (messageStr) params.set("body", messageStr);
     actionUrl = `mailto:${lead.email}?${params.toString()}`;
   }
 

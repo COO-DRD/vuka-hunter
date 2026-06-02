@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
   for (const lead of leads) {
     if (!lead.website || !isSafeUrl(lead.website)) {
-      await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", lead.id);
+      await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", lead.id).eq("org_id", orgId);
       continue;
     }
     try {
@@ -81,11 +81,11 @@ export async function POST(req: NextRequest) {
         opportunity_score:   result.opportunityScore,
         enrichment_version:  2,
         ...(painSignals.length > 0 && { pain_signals: painSignals }),
-      }).eq("id", lead.id);
+      }).eq("id", lead.id).eq("org_id", orgId);
       enriched++;
     } catch (err) {
       console.error("[enrich/bulk] lead", lead.id, err);
-      await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", lead.id);
+      await db.from("hunter_leads").update({ enrichment_status: "failed" }).eq("id", lead.id).eq("org_id", orgId);
     }
     await new Promise((r) => setTimeout(r, 300));
   }
