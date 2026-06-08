@@ -1,10 +1,10 @@
-import { requireUser, resolveOrgId } from "@/lib/auth";
+import { getUser, resolveOrgId } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Zap, Infinity, Mail, Calendar, ShieldCheck, Hash, Building2,
   Pencil, CheckCircle2, XCircle, ExternalLink, MapPin,
-  FileText, BadgeCheck,
+  FileText, BadgeCheck, Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import ChangePasswordForm from "./ChangePasswordForm";
@@ -13,7 +13,38 @@ import EnrichmentModeSelector from "@/components/settings/EnrichmentModeSelector
 import { MobileSignOut } from "./MobileSignOut";
 
 export default async function SettingsPage() {
-  const user  = await requireUser();
+  const user = await getUser();
+
+  if (!user) {
+    return (
+      <div className="p-6 max-w-2xl">
+        <div className="mb-6">
+          <h1 className="text-xl font-bold text-stone-900">Settings</h1>
+          <p className="text-sm text-stone-500 mt-0.5">Account, compliance &amp; preferences</p>
+        </div>
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-8 text-center">
+          <Sparkles className="h-8 w-8 text-amber-500 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-stone-900 mb-2">Create a free account to access settings</p>
+          <p className="text-xs text-stone-500 mb-5">Manage your workspace, subscription, and profile — no credit card needed.</p>
+          <div className="flex items-center justify-center gap-3">
+            <Link
+              href="/sign-up"
+              className="inline-flex items-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 px-5 py-2.5 text-sm font-semibold text-black transition-colors"
+            >
+              Create account
+            </Link>
+            <Link
+              href="/sign-in"
+              className="inline-flex items-center gap-2 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 px-5 py-2.5 text-sm font-medium text-stone-700 transition-colors"
+            >
+              Sign in
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const orgId = await resolveOrgId(user.id);
   const db    = createSupabaseServiceClient();
 

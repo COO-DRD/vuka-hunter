@@ -24,6 +24,8 @@ const isPublicRoute = createRouteMatcher([
   "/pipeline(.*)",
   "/import(.*)",
   "/onboarding(.*)",
+  "/settings(.*)",
+  "/upgrade(.*)",
 ]);
 
 // Pages search engines are allowed to index

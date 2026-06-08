@@ -1,4 +1,4 @@
-import { requireUser, resolveOrgId, checkOrgAccess } from "@/lib/auth";
+import { checkOrgAccess } from "@/lib/auth";
 import { getOrgId } from "@/lib/session";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,11 +52,14 @@ const PIPELINE_STEPS = [
 
 export default async function DashboardPage() {
   const { orgId, isAnon } = await getOrgId();
-  const [{ total, hot, enriched, scored, unenriched, needsScore, recent, stageCounts }, access] =
-    await Promise.all([getStats(orgId), checkOrgAccess(orgId)]);
+  const [stats, access] = await Promise.all([
+    getStats(orgId),
+    isAnon ? Promise.resolve(null) : checkOrgAccess(orgId),
+  ]);
+  const { total, hot, enriched, scored, unenriched, needsScore, recent, stageCounts } = stats;
 
   const totalN = total ?? 0;
-  const stats = [
+  const statCards = [
     { label: "Total Leads",     value: totalN,          icon: Users,      color: "text-blue-500" },
     { label: "Hot ★4.5+",       value: hot ?? 0,        icon: Star,       color: "text-yellow-500" },
     { label: "Enriched",        value: enriched ?? 0,   icon: Mail,       color: "text-amber-500" },
@@ -65,10 +68,10 @@ export default async function DashboardPage() {
 
   const nextAction = getNextAction(totalN, unenriched ?? 0, needsScore ?? 0, scored ?? 0);
 
-  const trialExpired  = !access.allowed && access.reason === "trial_expired";
-  const paymentFailed = !access.allowed && access.reason === "payment_failed";
-  const trialUrgent   = access.isTrialing && (access.daysLeft ?? 99) <= 3;
-  const showBanner    = !access.allowed || (access.isTrialing && (access.daysLeft ?? 99) < 999);
+  const trialExpired  = !!access && !access.allowed && access.reason === "trial_expired";
+  const paymentFailed = !!access && !access.allowed && access.reason === "payment_failed";
+  const trialUrgent   = !!access && access.isTrialing && (access.daysLeft ?? 99) <= 3;
+  const showBanner    = !!access && (!access.allowed || (access.isTrialing && (access.daysLeft ?? 99) < 999));
 
   return (
     <div className="p-4 md:p-6 max-w-6xl">
@@ -103,10 +106,10 @@ export default async function DashboardPage() {
             )}
             {access.isTrialing && !trialExpired && (
               <p className={`text-sm font-semibold ${trialUrgent ? "text-red-700" : "text-amber-700"}`}>
-                {(access.daysLeft ?? 0) <= 1
+                {(access?.daysLeft ?? 0) <= 1
                   ? "Last day of your free trial."
-                  : `${access.daysLeft} days left in your free trial.`}
-                {` ${access.trialLeadLimit - totalN} lead slots remaining.`}
+                  : `${access?.daysLeft} days left in your free trial.`}
+                {` ${(access?.trialLeadLimit ?? 0) - totalN} lead slots remaining.`}
               </p>
             )}
             <p className="text-xs text-stone-500 mt-0.5">
@@ -181,7 +184,7 @@ export default async function DashboardPage() {
 
       {/* ── Stats row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-        {stats.map(({ label, value, icon: Icon, color }) => (
+        {statCards.map(({ label, value, icon: Icon, color }) => (
           <Card key={label}><CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-stone-500">{label}</span>
