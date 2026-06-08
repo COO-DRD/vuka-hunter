@@ -1,21 +1,21 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser, resolveOrgId, checkOrgAccess, ACCESS_DENIED } from "@/lib/auth";
+import { getOrgId } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { isSafeUrl, enrichWebsite } from "@/lib/enrichLead";
 import { logEvent } from "@/lib/logEvent";
 
 export async function POST(req: NextRequest) {
-  const user = await getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { orgId, isAnon } = await getOrgId();
 
-  const orgId = await resolveOrgId(user.id);
-
-  const access = await checkOrgAccess(orgId);
-  if (!access.allowed) {
-    return NextResponse.json(
-      { error: ACCESS_DENIED[access.reason!], reason: access.reason, upgradeUrl: "/upgrade" },
-      { status: 402 }
-    );
+  if (!isAnon) {
+    const access = await checkOrgAccess(orgId);
+    if (!access.allowed) {
+      return NextResponse.json(
+        { error: ACCESS_DENIED[access.reason!], reason: access.reason, upgradeUrl: "/upgrade" },
+        { status: 402 }
+      );
+    }
   }
 
   const { limit = 50, minRating = 0 } = await req.json().catch(() => ({}));

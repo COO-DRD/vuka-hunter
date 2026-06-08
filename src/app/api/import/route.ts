@@ -1,13 +1,10 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser, resolveOrgId } from "@/lib/auth";
+import { getOrgId } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { applyProtocol } from "@/lib/protocol";
 
 export async function POST(req: NextRequest) {
-  const user = await getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const orgId = await resolveOrgId(user.id);
+  const { orgId } = await getOrgId();
 
   const formData = await req.formData();
   const file     = formData.get("file") as File | null;
@@ -36,7 +33,7 @@ export async function POST(req: NextRequest) {
     headers.forEach((h, i) => { obj[h] = (values[i] ?? "").replace(/^"|"$/g, ""); });
     return {
       org_id:     orgId,
-      created_by: user.id,
+      created_by: orgId,
       name: obj.name ?? "",
       vertical: obj.vertical || vertical || null,
       city: obj.city || city || null,

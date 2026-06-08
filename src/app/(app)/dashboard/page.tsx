@@ -1,4 +1,5 @@
 import { requireUser, resolveOrgId, checkOrgAccess } from "@/lib/auth";
+import { getOrgId } from "@/lib/session";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, TrendingUp, Star, Mail, Zap, ArrowRight, Search, Sparkles, MessageSquare, GitBranch, ChevronRight, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
@@ -50,8 +51,7 @@ const PIPELINE_STEPS = [
 ];
 
 export default async function DashboardPage() {
-  const user = await requireUser();
-  const orgId = await resolveOrgId(user.id);
+  const { orgId, isAnon } = await getOrgId();
   const [{ total, hot, enriched, scored, unenriched, needsScore, recent, stageCounts }, access] =
     await Promise.all([getStats(orgId), checkOrgAccess(orgId)]);
 

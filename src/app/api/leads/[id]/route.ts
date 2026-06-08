@@ -1,13 +1,10 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser, resolveOrgId } from "@/lib/auth";
+import { getOrgId } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const user = await getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const orgId = await resolveOrgId(user.id);
+  const { orgId } = await getOrgId();
 
   const body = await req.json();
   const allowed = ["stage", "notes", "next_follow_up_at", "last_contacted_at"];

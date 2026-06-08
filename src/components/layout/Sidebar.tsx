@@ -3,12 +3,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Search, Users, GitBranch,
-  Settings, Upload, LogOut, Shield, Zap, Moon, Sun,
+  Settings, Upload, LogOut, Shield, Zap, Moon, Sun, LogIn, Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useClerk } from "@clerk/nextjs";
 import { HunterWordmark } from "@/components/HunterLogo";
 import { useTheme } from "@/components/ThemeProvider";
+import { AdSlot } from "@/components/ui/AdSlot";
 
 const ADMIN_EMAILS = new Set(["ian.dullu@akamom.org", "dr.dullu@gmail.com"]);
 
@@ -108,37 +109,83 @@ export function Sidebar({ email }: { email: string | null }) {
         )}
       </nav>
 
-      {/* User footer */}
-      <div className="px-3 py-3 space-y-1" style={{ borderTop: "1px solid var(--border)" }}>
-        <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-md">
-          <div
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-black"
+      {/* Ad slot */}
+      <AdSlot slot="REPLACE_SIDEBAR_SLOT" format="rectangle" className="px-2 py-1" />
+
+      {/* Anon upgrade prompt */}
+      {!email && (
+        <div className="mx-3 mb-2 rounded-lg border p-3" style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}>
+          <div className="flex items-center gap-1.5 mb-1">
+            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+            <span className="text-xs font-semibold" style={{ color: "var(--text-1)" }}>Unlimited scrapes</span>
+          </div>
+          <p className="text-[11px] mb-2" style={{ color: "var(--text-3)" }}>Sign up free — no credit card</p>
+          <Link
+            href="/sign-up"
+            className="block w-full rounded-md py-1.5 text-center text-xs font-semibold text-black transition-colors"
             style={{ background: "var(--brand)" }}
           >
-            {initial}
-          </div>
-          <span className="text-xs truncate flex-1 min-w-0" style={{ color: "var(--text-2)" }}>
-            {email ?? "—"}
-          </span>
+            Create account
+          </Link>
         </div>
-        <button
-          onClick={toggle}
-          className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors hover:bg-stone-100"
-          style={{ color: "var(--text-3)" }}
-        >
-          {theme === "dark"
-            ? <Sun className="h-3.5 w-3.5 shrink-0" />
-            : <Moon className="h-3.5 w-3.5 shrink-0" />}
-          {theme === "dark" ? "Light mode" : "Dark mode"}
-        </button>
-        <button
-          onClick={() => signOut(() => router.push("/sign-in"))}
-          className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors hover:bg-stone-100"
-          style={{ color: "var(--text-3)" }}
-        >
-          <LogOut className="h-3.5 w-3.5 shrink-0" />
-          Sign out
-        </button>
+      )}
+
+      {/* User footer */}
+      <div className="px-3 py-3 space-y-1" style={{ borderTop: "1px solid var(--border)" }}>
+        {email ? (
+          <>
+            <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-md">
+              <div
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-black"
+                style={{ background: "var(--brand)" }}
+              >
+                {initial}
+              </div>
+              <span className="text-xs truncate flex-1 min-w-0" style={{ color: "var(--text-2)" }}>
+                {email}
+              </span>
+            </div>
+            <button
+              onClick={toggle}
+              className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors hover:bg-stone-100"
+              style={{ color: "var(--text-3)" }}
+            >
+              {theme === "dark"
+                ? <Sun className="h-3.5 w-3.5 shrink-0" />
+                : <Moon className="h-3.5 w-3.5 shrink-0" />}
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </button>
+            <button
+              onClick={() => signOut(() => router.push("/sign-in"))}
+              className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors hover:bg-stone-100"
+              style={{ color: "var(--text-3)" }}
+            >
+              <LogOut className="h-3.5 w-3.5 shrink-0" />
+              Sign out
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={toggle}
+              className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors hover:bg-stone-100"
+              style={{ color: "var(--text-3)" }}
+            >
+              {theme === "dark"
+                ? <Sun className="h-3.5 w-3.5 shrink-0" />
+                : <Moon className="h-3.5 w-3.5 shrink-0" />}
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </button>
+            <Link
+              href="/sign-in"
+              className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors hover:bg-stone-100"
+              style={{ color: "var(--text-3)" }}
+            >
+              <LogIn className="h-3.5 w-3.5 shrink-0" />
+              Sign in
+            </Link>
+          </>
+        )}
       </div>
     </aside>
   );
