@@ -16,49 +16,8 @@ export interface OrgAccess {
   trialLeadLimit: number;
 }
 
-export async function checkOrgAccess(orgId: string): Promise<OrgAccess> {
-  const db = createSupabaseServiceClient();
-  const { data: org } = await db
-    .from("hunter_orgs")
-    .select("subscribed_plan, subscription_status, trial_ends_at, account_type")
-    .eq("id", orgId)
-    .single();
-
-  if (!org) {
-    return { allowed: false, reason: "suspended", plan: "unknown", status: "unknown", isTrialing: false, trialEndsAt: null, accountType: "individual", trialLeadLimit: 100 };
-  }
-
-  const status        = org.subscription_status ?? "trialing";
-  const plan          = org.subscribed_plan     ?? "trial";
-  const accountType   = org.account_type        ?? "individual";
-  const trialEndsAt   = org.trial_ends_at ? new Date(org.trial_ends_at) : null;
-  const isTrialing    = status === "trialing";
-  const trialLeadLimit = accountType === "corporate" ? 300 : 100;
-
-  if (status === "active" && plan !== "trial") {
-    return { allowed: true, plan, status, isTrialing: false, trialEndsAt, accountType, trialLeadLimit };
-  }
-
-  if (isTrialing) {
-    if (!trialEndsAt) {
-      return { allowed: true, plan, status, isTrialing, trialEndsAt, accountType, trialLeadLimit, daysLeft: 999 };
-    }
-    if (new Date() > trialEndsAt) {
-      return { allowed: false, reason: "trial_expired", plan, status, isTrialing, trialEndsAt, accountType, trialLeadLimit };
-    }
-    const daysLeft = Math.max(1, Math.ceil((trialEndsAt.getTime() - Date.now()) / 86400000));
-    return { allowed: true, plan, status, isTrialing, trialEndsAt, accountType, trialLeadLimit, daysLeft };
-  }
-
-  if (status === "past_due" || status === "unpaid") {
-    return { allowed: false, reason: "payment_failed", plan, status, isTrialing: false, trialEndsAt, accountType, trialLeadLimit };
-  }
-
-  if (status === "cancelled") {
-    return { allowed: false, reason: "cancelled", plan, status, isTrialing: false, trialEndsAt, accountType, trialLeadLimit };
-  }
-
-  return { allowed: true, plan, status, isTrialing: false, trialEndsAt, accountType, trialLeadLimit };
+export async function checkOrgAccess(_orgId: string): Promise<OrgAccess> {
+  return { allowed: true, plan: "active", status: "active", isTrialing: false, trialEndsAt: null, accountType: "individual", trialLeadLimit: 999999 };
 }
 
 export const ACCESS_DENIED: Record<NonNullable<OrgAccess["reason"]>, string> = {

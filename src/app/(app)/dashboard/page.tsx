@@ -1,9 +1,12 @@
-import { requireUser, resolveOrgId, checkOrgAccess } from "@/lib/auth";
+import { requireUser, resolveOrgId } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, TrendingUp, Star, Mail, Zap, ArrowRight, Search, Sparkles, MessageSquare, GitBranch, ChevronRight, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { STAGES } from "@/lib/utils";
+import {
+  IconUsers, IconTrendingUp, IconStar, IconMail,
+  IconBolt, IconArrowRight, IconSearch, IconSparkles,
+  IconMessageCircle, IconGitBranch, IconChevronRight, IconCircleCheck,
+} from "@tabler/icons-react";
 
 async function getStats(orgId: string) {
   const db = createSupabaseServiceClient();
@@ -32,281 +35,235 @@ async function getStats(orgId: string) {
   return { total, hot, enriched, scored, unenriched, needsScore, recent: recent ?? [], stageCounts };
 }
 
-function getNextAction(total: number, unenriched: number, needsScore: number, scored: number): {
-  label: string; desc: string; href: string; color: string; icon: typeof Zap;
-} | null {
+function getNextAction(total: number, unenriched: number, needsScore: number, scored: number) {
   if (total === 0)       return null;
-  if (unenriched > 0)    return { label: `Enrich ${unenriched} lead${unenriched > 1 ? "s" : ""}`, desc: "Find contact details, website intelligence, and tech stack.", href: "/leads", color: "text-blue-600 bg-blue-50 border-blue-200", icon: Mail };
-  if (needsScore > 0)    return { label: `Score ${needsScore} lead${needsScore > 1 ? "s" : ""} with AI`, desc: "AI ranks each lead by revenue signal. Know in 2 seconds who's worth the call.", href: "/leads", color: "text-purple-600 bg-purple-50 border-purple-200", icon: Sparkles };
-  if (scored > 0)        return { label: "Write outreach copy for your top leads", desc: "AI-generated WhatsApp + email openers personalised per lead.", href: "/leads", color: "text-amber-700 bg-amber-50 border-amber-200", icon: MessageSquare };
-  return { label: "Move leads through your pipeline", desc: "Track which leads are contacted, replied, and won.", href: "/pipeline", color: "text-amber-700 bg-amber-50 border-amber-200", icon: GitBranch };
+  if (unenriched > 0)    return { label: `Enrich ${unenriched} lead${unenriched > 1 ? "s" : ""}`, desc: "Find contact details, website intelligence, and tech stack.", href: "/leads", color: "blue", icon: IconMail };
+  if (needsScore > 0)    return { label: `Score ${needsScore} lead${needsScore > 1 ? "s" : ""} with AI`, desc: "AI ranks each lead by revenue signal.", href: "/leads", color: "purple", icon: IconSparkles };
+  if (scored > 0)        return { label: "Write outreach copy for your top leads", desc: "AI-generated WhatsApp + email openers personalised per lead.", href: "/leads", color: "yellow", icon: IconMessageCircle };
+  return { label: "Move leads through your pipeline", desc: "Track which leads are contacted, replied, and won.", href: "/pipeline", color: "orange", icon: IconGitBranch };
 }
 
 const PIPELINE_STEPS = [
-  { step: 1, label: "Discover",  desc: "Surface businesses from 36 Kenyan verticals",           href: "/discover",  icon: Search,        time: "~2 min" },
-  { step: 2, label: "Enrich",    desc: "Crawl each website for contacts, tech stack & more",     href: "/leads",     icon: Mail,          time: "~1 min/lead" },
-  { step: 3, label: "Score",     desc: "AI ranks every lead — know who to call before you dial", href: "/leads",     icon: Sparkles,      time: "~10 sec/lead" },
-  { step: 4, label: "Outreach",  desc: "Generate personalised WhatsApp + email openers",         href: "/leads",     icon: MessageSquare, time: "~5 sec/lead" },
+  { step: 1, label: "Discover",  desc: "Surface businesses from 36+ verticals", href: "/discover",  icon: IconSearch,       time: "~2 min" },
+  { step: 2, label: "Enrich",    desc: "Crawl websites for contacts & tech stack", href: "/leads",   icon: IconMail,         time: "~1 min/lead" },
+  { step: 3, label: "Score",     desc: "AI ranks every lead before you dial",      href: "/leads",   icon: IconSparkles,     time: "~10 sec/lead" },
+  { step: 4, label: "Outreach",  desc: "Generate personalised WhatsApp + email",   href: "/leads",   icon: IconMessageCircle, time: "~5 sec/lead" },
 ];
 
 export default async function DashboardPage() {
   const user = await requireUser();
   const orgId = await resolveOrgId(user.id);
-  const [{ total, hot, enriched, scored, unenriched, needsScore, recent, stageCounts }, access] =
-    await Promise.all([getStats(orgId), checkOrgAccess(orgId)]);
+  const { total, hot, enriched, scored, unenriched, needsScore, recent, stageCounts } = await getStats(orgId);
 
   const totalN = total ?? 0;
-  const stats = [
-    { label: "Total Leads",     value: totalN,          icon: Users,      color: "text-blue-500" },
-    { label: "Hot ★4.5+",       value: hot ?? 0,        icon: Star,       color: "text-yellow-500" },
-    { label: "Enriched",        value: enriched ?? 0,   icon: Mail,       color: "text-amber-500" },
-    { label: "AI Scored",       value: scored ?? 0,     icon: TrendingUp, color: "text-purple-500" },
-  ];
-
   const nextAction = getNextAction(totalN, unenriched ?? 0, needsScore ?? 0, scored ?? 0);
 
-  const trialExpired  = !access.allowed && access.reason === "trial_expired";
-  const paymentFailed = !access.allowed && access.reason === "payment_failed";
-  const trialUrgent   = access.isTrialing && (access.daysLeft ?? 99) <= 3;
-  const showBanner    = !access.allowed || (access.isTrialing && (access.daysLeft ?? 99) < 999);
+  const stats = [
+    { label: "Total Leads",  value: totalN,        icon: IconUsers,       color: "blue"   },
+    { label: "Hot ★4.5+",   value: hot ?? 0,      icon: IconStar,        color: "yellow" },
+    { label: "Enriched",     value: enriched ?? 0, icon: IconMail,        color: "orange" },
+    { label: "AI Scored",    value: scored ?? 0,   icon: IconTrendingUp,  color: "purple" },
+  ];
 
   return (
-    <div className="p-4 md:p-6 max-w-6xl">
-      <div className="mb-5">
-        <h1 className="text-xl font-bold text-stone-900">Dashboard</h1>
-        <p className="text-sm text-stone-500 mt-0.5">Pipeline status — what needs your attention</p>
+    <div className="container-xl">
+      {/* Page header */}
+      <div className="page-header d-print-none">
+        <div className="row g-2 align-items-center">
+          <div className="col">
+            <h2 className="page-title">Dashboard</h2>
+            <div className="text-muted mt-1">Pipeline status — what needs your attention</div>
+          </div>
+        </div>
       </div>
 
-      {/* ── Trial / access banner ── */}
-      {showBanner && (
-        <div className={`mb-5 rounded-xl border px-4 py-3.5 flex items-center gap-3 ${
-          trialExpired || paymentFailed
-            ? "border-red-200 bg-red-50"
-            : trialUrgent
-            ? "border-red-200 bg-red-50"
-            : "border-amber-200 bg-amber-50"
-        }`}>
-          {trialExpired || paymentFailed
-            ? <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
-            : <Clock className={`h-4 w-4 shrink-0 ${trialUrgent ? "text-red-500" : "text-amber-500"}`} />
-          }
-          <div className="flex-1 min-w-0">
-            {trialExpired && (
-              <p className="text-sm font-semibold text-red-700">
-                Your free trial has ended — your {totalN} saved leads are waiting.
-              </p>
-            )}
-            {paymentFailed && (
-              <p className="text-sm font-semibold text-red-700">
-                Payment failed — update your payment method to restore access.
-              </p>
-            )}
-            {access.isTrialing && !trialExpired && (
-              <p className={`text-sm font-semibold ${trialUrgent ? "text-red-700" : "text-amber-700"}`}>
-                {(access.daysLeft ?? 0) <= 1
-                  ? "Last day of your free trial."
-                  : `${access.daysLeft} days left in your free trial.`}
-                {` ${access.trialLeadLimit - totalN} lead slots remaining.`}
-              </p>
-            )}
-            <p className="text-xs text-stone-500 mt-0.5">
-              {trialExpired
-                ? "Upgrade to keep prospecting. Your pipeline and leads are preserved."
-                : paymentFailed
-                ? "No access until payment is resolved."
-                : "Upgrade any time to remove limits and keep your pipeline running."}
-            </p>
-          </div>
-          <Link
-            href="/upgrade"
-            className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-              trialExpired || paymentFailed || trialUrgent
-                ? "bg-red-500 hover:bg-red-400 text-white"
-                : "bg-amber-500 hover:bg-amber-400 text-white"
-            }`}
-          >
-            Upgrade →
-          </Link>
-        </div>
-      )}
-
-      {/* ── Zero-lead activation ── */}
+      {/* Zero-state activation */}
       {totalN === 0 && (
-        <div className="mb-6 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-stone-50 p-6">
-          <div className="flex items-start gap-3 mb-5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-200">
-              <Zap className="h-4 w-4 text-amber-500" />
+        <div className="card mb-4" style={{ borderColor: "var(--tblr-primary)", borderWidth: 1 }}>
+          <div className="card-body">
+            <div className="d-flex align-items-center gap-3 mb-4">
+              <span className="avatar bg-yellow-lt text-yellow">
+                <IconBolt size={20} stroke={1.5} />
+              </span>
+              <div>
+                <div className="fw-semibold">Get your first leads in 2 minutes</div>
+                <div className="text-muted small">Follow these 4 steps — each runs in the background.</div>
+              </div>
             </div>
-            <div>
-              <h2 className="font-semibold text-stone-900">Get your first leads in 2 minutes</h2>
-              <p className="text-sm text-stone-400 mt-0.5">Follow these 4 steps — each one runs in the background while you move on.</p>
+            <div className="row g-3 mb-4">
+              {PIPELINE_STEPS.map((s) => (
+                <div key={s.step} className="col-12 col-sm-6 col-lg-3">
+                  <Link href={s.href} className="card card-sm h-100 text-decoration-none border-hover" style={{ transition: "border-color 0.15s" }}>
+                    <div className="card-body">
+                      <div className="d-flex align-items-center justify-content-between mb-2">
+                        <span className="badge bg-yellow-lt text-yellow">Step {s.step}</span>
+                        <IconChevronRight size={14} className="text-muted" />
+                      </div>
+                      <s.icon size={20} stroke={1.5} className="text-yellow mb-2" />
+                      <div className="fw-semibold text-body small">{s.label}</div>
+                      <div className="text-muted" style={{ fontSize: "0.75rem" }}>{s.desc}</div>
+                      <div className="text-muted mt-1" style={{ fontSize: "0.7rem" }}>{s.time}</div>
+                    </div>
+                  </Link>
+                </div>
+              ))}
             </div>
+            <Link href="/discover" className="btn btn-primary">
+              <IconSearch size={16} stroke={1.5} className="me-2" />
+              Start with Discover
+            </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-            {PIPELINE_STEPS.map((s) => (
-              <Link key={s.step} href={s.href}
-                className="group flex flex-col gap-2 rounded-xl border border-stone-200 bg-white p-4 hover:border-amber-300 hover:bg-amber-50/50 transition-all">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Step {s.step}</span>
-                  <ChevronRight className="h-3.5 w-3.5 text-stone-300 group-hover:text-amber-500 transition-colors" />
-                </div>
-                <s.icon className="h-5 w-5 text-amber-500" />
-                <div>
-                  <p className="text-sm font-semibold text-stone-800">{s.label}</p>
-                  <p className="text-xs text-stone-400 mt-0.5 leading-relaxed">{s.desc}</p>
-                </div>
-                <span className="text-[11px] text-stone-400">{s.time}</span>
-              </Link>
-            ))}
-          </div>
-          <Link href="/discover"
-            className="inline-flex items-center gap-2 rounded-xl bg-amber-600 hover:bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors">
-            <Search className="h-4 w-4" /> Start with Discover →
-          </Link>
         </div>
       )}
 
-      {/* ── Smart next-action banner ── */}
+      {/* Next action prompt */}
       {nextAction && (
-        <Link href={nextAction.href}
-          className={`flex items-center gap-3 rounded-xl border px-4 py-3 mb-5 transition-all hover:opacity-90 ${nextAction.color}`}>
-          <nextAction.icon className="h-4 w-4 shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-stone-900">{nextAction.label}</p>
-            <p className="text-xs text-stone-500 truncate">{nextAction.desc}</p>
+        <Link href={nextAction.href} className={`alert alert-${nextAction.color} d-flex align-items-center gap-3 mb-4 text-decoration-none`}>
+          <nextAction.icon size={18} stroke={1.5} />
+          <div className="flex-fill">
+            <div className="fw-semibold">{nextAction.label}</div>
+            <div className="small">{nextAction.desc}</div>
           </div>
-          <ArrowRight className="h-4 w-4 shrink-0 text-stone-400" />
+          <IconArrowRight size={16} />
         </Link>
       )}
 
-      {/* ── Stats row ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      {/* Stat cards */}
+      <div className="row g-3 mb-4">
         {stats.map(({ label, value, icon: Icon, color }) => (
-          <Card key={label}><CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-stone-500">{label}</span>
-              <Icon className={`h-4 w-4 ${color}`} />
+          <div key={label} className="col-6 col-lg-3">
+            <div className="card card-sm">
+              <div className="card-body">
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <div className="text-muted small">{label}</div>
+                  <span className={`avatar avatar-sm bg-${color}-lt text-${color}`}>
+                    <Icon size={16} stroke={1.5} />
+                  </span>
+                </div>
+                <div className="h1 mb-0">{value.toLocaleString()}</div>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-stone-900">{value.toLocaleString()}</div>
-          </CardContent></Card>
+          </div>
         ))}
       </div>
 
-      {/* ── Pipeline + Recent ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-1">
-          <CardHeader><CardTitle>Pipeline</CardTitle></CardHeader>
-          <CardContent>
-            {totalN === 0 ? (
-              <div className="space-y-2">
-                {STAGES.map((s) => (
-                  <div key={s.value}>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-stone-400">{s.label}</span>
-                      <span className="text-stone-300 font-medium">0</span>
+      {/* Pipeline + Recent leads */}
+      <div className="row g-4">
+        {/* Pipeline */}
+        <div className="col-12 col-lg-4">
+          <div className="card h-100">
+            <div className="card-header">
+              <h3 className="card-title">Pipeline</h3>
+            </div>
+            <div className="card-body">
+              {STAGES.map((s) => {
+                const count = stageCounts[s.value] ?? 0;
+                const pct = totalN ? Math.round((count / totalN) * 100) : 0;
+                return (
+                  <div key={s.value} className="mb-3">
+                    <div className="d-flex justify-content-between mb-1">
+                      <span className="text-muted small">{s.label}</span>
+                      <span className="fw-medium small">{count}</span>
                     </div>
-                    <div className="h-1.5 bg-stone-100 rounded-full" />
+                    <div className="progress progress-sm">
+                      <div className="progress-bar bg-primary" style={{ width: `${pct}%` }} />
+                    </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {STAGES.map((s) => {
-                  const count = stageCounts[s.value] ?? 0;
-                  const pct = totalN ? Math.round((count / totalN) * 100) : 0;
-                  return (
-                    <div key={s.value}>
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-stone-500">{s.label}</span>
-                        <span className="text-stone-700 font-medium">{count}</span>
-                      </div>
-                      <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
-                        <div className={`h-full ${s.color} rounded-full transition-all`} style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            {totalN > 0 && (
-              <Link href="/pipeline" className="mt-4 flex items-center gap-1 text-xs text-stone-400 hover:text-amber-600 transition-colors">
-                Manage pipeline <ArrowRight className="h-3 w-3" />
-              </Link>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Recent Leads</CardTitle>
-              {recent.length > 0 && (
-                <Link href="/leads" className="text-xs text-amber-600 hover:text-amber-500 flex items-center gap-1">
-                  View all <ArrowRight className="h-3 w-3" />
+                );
+              })}
+              {totalN > 0 && (
+                <Link href="/pipeline" className="btn btn-ghost-secondary btn-sm mt-2 gap-1">
+                  Manage pipeline <IconArrowRight size={14} />
                 </Link>
               )}
             </div>
-          </CardHeader>
-          <CardContent>
-            {recent.length === 0 ? (
-              <div className="text-center py-10">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100 mb-3">
-                  <Users className="h-5 w-5 text-stone-400" />
+          </div>
+        </div>
+
+        {/* Recent leads */}
+        <div className="col-12 col-lg-8">
+          <div className="card h-100">
+            <div className="card-header">
+              <h3 className="card-title">Recent Leads</h3>
+              {recent.length > 0 && (
+                <div className="card-options">
+                  <Link href="/leads" className="btn btn-ghost-secondary btn-sm gap-1">
+                    View all <IconArrowRight size={14} />
+                  </Link>
                 </div>
-                <p className="text-sm text-stone-500 mb-1">No leads yet.</p>
-                <p className="text-xs text-stone-400 mb-4">Run a scrape to populate your workspace with real businesses.</p>
-                <Link href="/discover"
-                  className="inline-flex items-center gap-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-200 px-4 py-2 text-sm font-medium text-amber-600 transition-colors">
-                  <Search className="h-4 w-4" /> Go to Discover
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {recent.map((lead: Record<string, unknown>) => {
-                  const score = lead.score as number | null;
-                  const enriched = lead.enrichment_status === "done";
-                  return (
-                    <Link key={lead.id as string} href={`/leads/${lead.id}`}
-                      className="flex items-center gap-3 rounded-lg p-2 hover:bg-stone-50 transition-colors group">
-                      <div className="h-8 w-8 rounded-md bg-stone-100 flex items-center justify-center text-xs font-bold text-stone-500 shrink-0 group-hover:bg-stone-200 transition-colors">
-                        {(lead.name as string).charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-stone-800 truncate">{lead.name as string}</p>
-                        <p className="text-xs text-stone-400 truncate capitalize">{lead.vertical as string} · {lead.city as string}</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {enriched && <CheckCircle2 className="h-3.5 w-3.5 text-amber-500" />}
-                        {score !== null && (
-                          <span className={`text-xs font-bold tabular-nums ${score >= 70 ? "text-amber-600" : score >= 40 ? "text-yellow-600" : "text-stone-400"}`}>
-                            {score}
-                          </span>
-                        )}
-                      </div>
+              )}
+            </div>
+            <div className="card-body p-0">
+              {recent.length === 0 ? (
+                <div className="empty py-5">
+                  <div className="empty-icon">
+                    <IconUsers size={32} stroke={1} className="text-muted" />
+                  </div>
+                  <p className="empty-title">No leads yet</p>
+                  <p className="empty-subtitle text-muted">Run a scrape to populate your workspace with real businesses.</p>
+                  <div className="empty-action">
+                    <Link href="/discover" className="btn btn-primary">
+                      <IconSearch size={16} stroke={1.5} className="me-2" />
+                      Go to Discover
                     </Link>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  </div>
+                </div>
+              ) : (
+                <div className="list-group list-group-flush">
+                  {recent.map((lead: Record<string, unknown>) => {
+                    const score = lead.score as number | null;
+                    const isEnriched = lead.enrichment_status === "done";
+                    return (
+                      <Link key={lead.id as string} href={`/leads/${lead.id}`}
+                        className="list-group-item list-group-item-action d-flex align-items-center gap-3 text-decoration-none">
+                        <span className="avatar avatar-sm rounded text-white fw-bold"
+                          style={{ background: "var(--tblr-primary)", fontSize: "0.7rem" }}>
+                          {(lead.name as string).charAt(0).toUpperCase()}
+                        </span>
+                        <div className="flex-fill overflow-hidden">
+                          <div className="fw-medium text-truncate">{lead.name as string}</div>
+                          <div className="text-muted small text-capitalize text-truncate">
+                            {lead.vertical as string} · {lead.city as string}
+                          </div>
+                        </div>
+                        <div className="d-flex align-items-center gap-2">
+                          {isEnriched && <IconCircleCheck size={16} stroke={1.5} className="text-primary" />}
+                          {score !== null && (
+                            <span className={`badge ${score >= 70 ? "bg-success-lt text-success" : score >= 40 ? "bg-warning-lt text-warning" : "bg-secondary-lt text-secondary"}`}>
+                              {score}
+                            </span>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* ── How it works ── */}
+      {/* Pipeline steps (shown when 1–4 leads) */}
       {totalN > 0 && totalN < 5 && (
-        <div className="mt-5 rounded-xl border border-stone-200 bg-stone-50 p-5">
-          <p className="text-xs font-semibold text-stone-500 mb-3 uppercase tracking-wider">Pipeline steps</p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {PIPELINE_STEPS.map((s) => (
-              <Link key={s.step} href={s.href}
-                className="flex items-center gap-2.5 rounded-lg p-3 border border-stone-200 bg-white hover:border-amber-300 transition-colors group">
-                <s.icon className="h-4 w-4 text-stone-400 group-hover:text-amber-500 transition-colors shrink-0" />
-                <div>
-                  <p className="text-xs font-medium text-stone-700">{s.label}</p>
-                  <p className="text-[11px] text-stone-400">{s.time}</p>
+        <div className="card mt-4">
+          <div className="card-header">
+            <h3 className="card-title text-uppercase text-muted" style={{ fontSize: "0.7rem", letterSpacing: "0.08em" }}>Pipeline steps</h3>
+          </div>
+          <div className="card-body">
+            <div className="row g-3">
+              {PIPELINE_STEPS.map((s) => (
+                <div key={s.step} className="col-6 col-lg-3">
+                  <Link href={s.href} className="d-flex align-items-center gap-2 p-2 rounded border text-decoration-none text-body hover-shadow" style={{ transition: "box-shadow 0.15s" }}>
+                    <s.icon size={16} stroke={1.5} className="text-muted flex-shrink-0" />
+                    <div>
+                      <div className="small fw-medium">{s.label}</div>
+                      <div style={{ fontSize: "0.7rem" }} className="text-muted">{s.time}</div>
+                    </div>
+                  </Link>
                 </div>
-              </Link>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       )}

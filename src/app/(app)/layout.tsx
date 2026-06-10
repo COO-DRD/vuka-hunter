@@ -1,8 +1,5 @@
-import { Sidebar } from "@/components/layout/Sidebar";
-import { BottomNav } from "@/components/layout/BottomNav";
+import { TablerSidebar } from "@/components/layout/TablerSidebar";
 import { InstallPrompt } from "@/components/InstallPrompt";
-import { EnterpriseBanner } from "@/components/EnterpriseBanner";
-import { ThemeProvider, ThemeToggleMobile } from "@/components/ThemeProvider";
 import { requireUser, resolveOrgId } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -21,23 +18,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!org?.onboarding_complete) redirect("/onboarding");
 
   return (
-    <ThemeProvider>
-      {/* Desktop: fixed viewport height with sidebar scroll. Mobile: body scrolls
-          naturally — h-screen + overflow-hidden clips content on Safari iOS because
-          100vh > visible area when the browser toolbar is showing. */}
-      <div className="flex md:h-screen md:overflow-hidden">
-        <Sidebar email={user.email} />
-        <main
-          className="flex-1 md:overflow-y-auto"
-          style={{ background: "var(--background)", paddingBottom: "calc(3.5rem + env(safe-area-inset-bottom))" }}
-        >
+    <div className="page">
+      <TablerSidebar email={user.email} />
+      <div className="page-wrapper">
+        <div className="page-body">
           {children}
-        </main>
-        <BottomNav />
-        <ThemeToggleMobile />
-        <InstallPrompt />
-        <EnterpriseBanner />
+        </div>
       </div>
-    </ThemeProvider>
+      <InstallPrompt />
+    </div>
   );
 }

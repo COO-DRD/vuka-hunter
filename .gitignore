@@ -11,3 +11,4 @@ public/workbox-*.js.map
 public/swe-worker-*.js
 .vercel
 .env*
+!.env.example

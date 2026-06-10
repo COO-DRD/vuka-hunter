@@ -21,6 +21,8 @@
     "@stripe/stripe-js": "^9.6.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
+    "@tabler/core": "^1.4.0",
+    "@tabler/icons-react": "^3.44.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "@vercel/analytics": "^2.0.1",

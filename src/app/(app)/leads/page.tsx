@@ -1,107 +1,37 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { VERTICALS, STAGES, scoreColor } from "@/lib/utils";
+import { VERTICALS, STAGES } from "@/lib/utils";
 import { MODE_OPTIONS } from "@/lib/enrichmentModes";
-import {
-  Search, Star, Globe, Phone, ChevronRight,
-  RefreshCw, Zap, SlidersHorizontal, X, ExternalLink,
-} from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import {
+  IconSearch, IconStar, IconWorld, IconPhone, IconChevronRight,
+  IconRefresh, IconBolt, IconAdjustments, IconX, IconExternalLink,
+  IconCircleCheck,
+} from "@tabler/icons-react";
 
 interface Lead {
-  id: string;
-  name: string;
-  vertical: string;
-  city: string;
-  phone: string;
-  email: string;
-  website: string;
-  google_rating: number;
-  google_review_count: number;
-  score: number | null;
-  stage: string;
-  enrichment_status: string;
-  created_at: string;
+  id: string; name: string; vertical: string; city: string;
+  phone: string; email: string; website: string;
+  google_rating: number; google_review_count: number;
+  score: number | null; stage: string;
+  enrichment_status: string; created_at: string;
 }
 
-function ScorePill({ score }: { score: number | null }) {
-  if (score === null) return <span style={{ color: "var(--text-3)" }} className="text-xs">—</span>;
-  const color = score >= 70 ? "#3fb950" : score >= 40 ? "#d29922" : "#8b949e";
-  const bg    = score >= 70 ? "rgba(63,185,80,0.1)" : score >= 40 ? "rgba(210,153,34,0.1)" : "rgba(139,148,158,0.1)";
-  return (
-    <span
-      className="inline-flex items-center justify-center w-9 h-6 rounded text-xs font-bold tabular-nums"
-      style={{ color, background: bg }}
-    >
-      {score}
-    </span>
-  );
+function ScoreBadge({ score }: { score: number | null }) {
+  if (score === null) return <span className="text-muted">—</span>;
+  const cls = score >= 70 ? "bg-success-lt text-success" : score >= 40 ? "bg-warning-lt text-warning" : "bg-secondary-lt text-secondary";
+  return <span className={`badge ${cls}`}>{score}</span>;
 }
 
-function StagePill({ stage }: { stage: string }) {
+function StageBadge({ stage }: { stage: string }) {
   const label = STAGES.find((s) => s.value === stage)?.label ?? stage;
-  const styles: Record<string, { color: string; bg: string }> = {
-    new:       { color: "#8b949e", bg: "rgba(139,148,158,0.1)" },
-    contacted: { color: "#58a6ff", bg: "rgba(88,166,255,0.1)"  },
-    replied:   { color: "#d29922", bg: "rgba(210,153,34,0.1)"  },
-    qualified: { color: "#bc8cff", bg: "rgba(188,140,255,0.1)" },
-    won:       { color: "#3fb950", bg: "rgba(63,185,80,0.1)"   },
-    lost:      { color: "#f85149", bg: "rgba(248,81,73,0.1)"   },
+  const cls: Record<string, string> = {
+    new: "bg-secondary-lt text-secondary", contacted: "bg-info-lt text-info",
+    replied: "bg-warning-lt text-warning", qualified: "bg-purple-lt text-purple",
+    won: "bg-success-lt text-success", lost: "bg-danger-lt text-danger",
   };
-  const s = styles[stage] ?? styles.new;
-  return (
-    <span
-      className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium"
-      style={{ color: s.color, background: s.bg }}
-    >
-      {label}
-    </span>
-  );
-}
-
-function FilterChip({
-  label, value, options, onChange,
-}: {
-  label: string;
-  value: string;
-  options: { value: string; label: string }[];
-  onChange: (v: string) => void;
-}) {
-  const active = !!value;
-  const display = active ? options.find((o) => o.value === value)?.label : label;
-  return (
-    <div className="relative group">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={cn(
-          "appearance-none cursor-pointer rounded-full border px-3 py-1 text-xs font-medium transition-all pr-6",
-          "focus:outline-none"
-        )}
-        style={{
-          background:  active ? "rgba(245,158,11,0.08)" : "var(--bg-elevated)",
-          border:      `1px solid ${active ? "rgba(245,158,11,0.35)" : "var(--border)"}`,
-          color:       active ? "#F59E0B" : "var(--text-2)",
-        }}
-      >
-        <option value="">{label}</option>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
-      {active && (
-        <button
-          onClick={(e) => { e.preventDefault(); onChange(""); }}
-          className="absolute right-2 top-1/2 -translate-y-1/2"
-          style={{ color: "#F59E0B" }}
-        >
-          <X className="h-3 w-3" />
-        </button>
-      )}
-    </div>
-  );
+  return <span className={`badge ${cls[stage] ?? cls.new}`}>{label}</span>;
 }
 
 export default function LeadsPage() {
@@ -130,7 +60,7 @@ export default function LeadsPage() {
     if (filterV)         params.set("vertical", filterV);
     if (filterStage)     params.set("stage", filterStage);
     if (filterScore)     params.set("min_score", filterScore);
-    const res  = await fetch(`/api/leads?${params}`);
+    const res = await fetch(`/api/leads?${params}`);
     const data = await res.json();
     setLeads(data.leads ?? []);
     setLoading(false);
@@ -142,9 +72,8 @@ export default function LeadsPage() {
     setEnriching(id);
     try {
       const res = await fetch("/api/enrich", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ leadId: id, mode: enrichMode }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: id, mode: enrichMode }),
       });
       if (!res.ok) throw new Error();
       toast.success("Enriched — open lead to score");
@@ -154,295 +83,178 @@ export default function LeadsPage() {
   }
 
   const allSelected = leads.length > 0 && selected.size === leads.length;
-
-  function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(leads.map((l) => l.id)));
-  }
-
+  function toggleAll() { setSelected(allSelected ? new Set() : new Set(leads.map((l) => l.id))); }
   function toggleOne(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+    setSelected((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   }
+  const hasFilters = !!(filterV || filterStage || filterScore || search);
 
   return (
-    <div className="flex flex-col h-full">
-
-      {/* Top bar */}
-      <div
-        className="flex items-center justify-between px-5 py-3 shrink-0"
-        style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-surface)" }}
-      >
-        <div className="flex items-center gap-3">
-          <h1 className="text-sm font-semibold" style={{ color: "var(--text-1)" }}>Leads</h1>
-          <span
-            className="text-xs px-2 py-0.5 rounded-full font-mono"
-            style={{ background: "var(--bg-elevated)", color: "var(--text-2)" }}
-          >
-            {leads.length}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Enrich mode selector */}
-          <div
-            className="flex items-center gap-1.5 rounded-md border px-2.5 h-8"
-            style={{ background: "var(--bg-elevated)", borderColor: "var(--border)" }}
-          >
-            <Zap className="h-3 w-3 shrink-0" style={{ color: "var(--brand)" }} />
-            <select
-              value={enrichMode}
-              onChange={(e) => setEnrichMode(e.target.value)}
-              className="text-xs border-0 bg-transparent focus:outline-none"
-              style={{ color: "var(--text-2)" }}
-            >
-              {MODE_OPTIONS.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
-            </select>
+    <div className="container-xl">
+      {/* Page header */}
+      <div className="page-header d-print-none">
+        <div className="row g-2 align-items-center">
+          <div className="col">
+            <h2 className="page-title d-flex align-items-center gap-2">
+              Leads
+              <span className="badge bg-secondary-lt text-secondary">{leads.length}</span>
+            </h2>
           </div>
-          <button
-            onClick={fetchLeads}
-            className="flex items-center justify-center h-8 w-8 rounded-md border transition-colors hover:bg-stone-100"
-            style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-          </button>
+          <div className="col-auto d-flex gap-2">
+            {/* Enrich mode */}
+            <div className="input-group input-group-sm">
+              <span className="input-group-text">
+                <IconBolt size={14} stroke={1.5} className="text-warning" />
+              </span>
+              <select className="form-select form-select-sm" value={enrichMode} onChange={(e) => setEnrichMode(e.target.value)}>
+                {MODE_OPTIONS.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
+              </select>
+            </div>
+            <button onClick={fetchLeads} className="btn btn-sm btn-ghost-secondary" title="Refresh">
+              <IconRefresh size={15} stroke={1.5} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Filter bar */}
-      <div
-        className="flex items-center gap-2 px-5 py-2.5 shrink-0 flex-wrap"
-        style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-surface)" }}
-      >
-        {/* Search */}
-        <div className="relative flex-1 min-w-52 max-w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: "var(--text-3)" }} />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search leads..."
-            className="w-full rounded-full border pl-8 pr-3 py-1 text-xs transition-all focus:outline-none"
-            style={{
-              background:   "var(--bg-elevated)",
-              borderColor:  "var(--border)",
-              color:        "var(--text-1)",
-            }}
-          />
-        </div>
-
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--text-3)" }} />
-          <FilterChip
-            label="Vertical"
-            value={filterV}
-            options={VERTICALS}
-            onChange={setFilterV}
-          />
-          <FilterChip
-            label="Stage"
-            value={filterStage}
-            options={STAGES}
-            onChange={setFilterStage}
-          />
-          <FilterChip
-            label="Score"
-            value={filterScore}
-            options={[
-              { value: "70", label: "Hot 70+" },
-              { value: "40", label: "Warm 40+" },
-            ]}
-            onChange={setFilterScore}
-          />
-          {(filterV || filterStage || filterScore || search) && (
-            <button
-              onClick={() => { setFilterV(""); setFilterStage(""); setFilterScore(""); setSearch(""); }}
-              className="text-xs rounded-full px-2.5 py-1 transition-colors hover:bg-white/5"
-              style={{ color: "var(--text-3)" }}
-            >
-              Clear all
+      <div className="card">
+        {/* Filter toolbar */}
+        <div className="card-header d-flex flex-wrap gap-2 align-items-center">
+          <div className="input-group input-group-sm" style={{ maxWidth: 260 }}>
+            <span className="input-group-text"><IconSearch size={14} /></span>
+            <input
+              type="text" className="form-control" placeholder="Search leads…"
+              value={search} onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <IconAdjustments size={15} className="text-muted ms-1" />
+          <select className="form-select form-select-sm" style={{ width: "auto" }} value={filterV} onChange={(e) => setFilterV(e.target.value)}>
+            <option value="">All verticals</option>
+            {VERTICALS.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
+          </select>
+          <select className="form-select form-select-sm" style={{ width: "auto" }} value={filterStage} onChange={(e) => setFilterStage(e.target.value)}>
+            <option value="">All stages</option>
+            {STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+          <select className="form-select form-select-sm" style={{ width: "auto" }} value={filterScore} onChange={(e) => setFilterScore(e.target.value)}>
+            <option value="">All scores</option>
+            <option value="70">Hot 70+</option>
+            <option value="40">Warm 40+</option>
+          </select>
+          {hasFilters && (
+            <button onClick={() => { setFilterV(""); setFilterStage(""); setFilterScore(""); setSearch(""); }}
+              className="btn btn-ghost-secondary btn-sm gap-1">
+              <IconX size={13} /> Clear
             </button>
           )}
         </div>
-      </div>
 
-      {/* Table */}
-      <div className="flex-1 overflow-auto">
-        <table className="w-full text-sm border-collapse">
-          <thead className="sticky top-0 z-10" style={{ background: "var(--bg-surface)" }}>
-            <tr style={{ borderBottom: "1px solid var(--border)" }}>
-              <th className="w-10 px-4 py-2.5">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={toggleAll}
-                  className="rounded"
-                  style={{ accentColor: "var(--brand)" }}
-                />
-              </th>
-              {["Company", "City", "Contact", "Rating", "Score", "Stage", "Actions", ""].map((h) => (
-                <th
-                  key={h}
-                  className="text-left px-3 py-2.5 text-[11px] font-semibold tracking-wide whitespace-nowrap"
-                  style={{ color: "var(--text-3)" }}
-                >
-                  {h}
+        {/* Table */}
+        <div className="table-responsive">
+          <table className="table table-vcenter table-hover card-table">
+            <thead>
+              <tr>
+                <th className="w-1">
+                  <input type="checkbox" className="form-check-input m-0" checked={allSelected} onChange={toggleAll} />
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={9} className="px-4 py-14 text-center text-sm" style={{ color: "var(--text-3)" }}>
-                  Loading…
-                </td>
+                <th>Company</th>
+                <th>City</th>
+                <th>Contact</th>
+                <th>Rating</th>
+                <th>Score</th>
+                <th>Stage</th>
+                <th>Actions</th>
+                <th className="w-1" />
               </tr>
-            ) : leads.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="px-4 py-14 text-center">
-                  <p className="text-sm mb-2" style={{ color: "var(--text-2)" }}>No leads match your filters</p>
-                  <Link href="/discover" className="text-xs" style={{ color: "var(--brand)" }}>
-                    Discover leads →
-                  </Link>
-                </td>
-              </tr>
-            ) : (
-              leads.map((lead) => (
-                <tr
-                  key={lead.id}
-                  className={cn(
-                    "transition-colors cursor-pointer",
-                    selected.has(lead.id) ? "bg-amber-500/8" : "hover:bg-stone-50"
-                  )}
-                  style={{ borderBottom: "1px solid var(--border)" }}
-                  onClick={() => toggleOne(lead.id)}
-                >
-                  <td className="w-10 px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      checked={selected.has(lead.id)}
-                      onChange={() => toggleOne(lead.id)}
-                      className="rounded"
-                      style={{ accentColor: "var(--brand)" }}
-                    />
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={9} className="text-center text-muted py-5">Loading…</td></tr>
+              ) : leads.length === 0 ? (
+                <tr>
+                  <td colSpan={9}>
+                    <div className="empty py-5">
+                      <p className="empty-title">No leads match your filters</p>
+                      <div className="empty-action">
+                        <Link href="/discover" className="btn btn-primary btn-sm">Discover leads →</Link>
+                      </div>
+                    </div>
                   </td>
-
-                  {/* Company */}
-                  <td className="px-3 py-2.5 max-w-52">
-                    <p className="font-medium text-xs truncate" style={{ color: "var(--text-1)" }}>{lead.name}</p>
-                    <p className="text-[11px] mt-0.5 truncate capitalize" style={{ color: "var(--text-3)" }}>{lead.vertical}</p>
+                </tr>
+              ) : leads.map((lead) => (
+                <tr key={lead.id} className={selected.has(lead.id) ? "table-active" : ""} onClick={() => toggleOne(lead.id)} style={{ cursor: "pointer" }}>
+                  <td onClick={(e) => e.stopPropagation()}>
+                    <input type="checkbox" className="form-check-input m-0"
+                      checked={selected.has(lead.id)} onChange={() => toggleOne(lead.id)} />
                   </td>
-
-                  {/* City */}
-                  <td className="px-3 py-2.5 whitespace-nowrap">
-                    <span className="text-xs" style={{ color: "var(--text-2)" }}>{lead.city || "—"}</span>
+                  <td>
+                    <div className="fw-medium text-truncate" style={{ maxWidth: 180 }}>{lead.name}</div>
+                    <div className="text-muted small text-capitalize">{lead.vertical}</div>
                   </td>
-
-                  {/* Contact */}
-                  <td className="px-3 py-2.5">
-                    <div className="flex items-center gap-2">
-                      {lead.phone && (
-                        <span title={lead.phone}>
-                          <Phone className="h-3.5 w-3.5" style={{ color: "var(--text-3)" }} />
-                        </span>
-                      )}
+                  <td><span className="text-muted small">{lead.city || "—"}</span></td>
+                  <td>
+                    <div className="d-flex align-items-center gap-1">
+                      {lead.phone && <IconPhone size={14} className="text-muted" title={lead.phone} />}
                       {lead.website && (
-                        <a
-                          href={lead.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          title={lead.website}
-                        >
-                          <ExternalLink className="h-3.5 w-3.5 transition-colors hover:text-amber-400" style={{ color: "var(--text-3)" }} />
+                        <a href={lead.website} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                          <IconExternalLink size={14} className="text-muted" />
                         </a>
                       )}
                       {lead.email && (
-                        <span className="text-[11px] truncate max-w-28" style={{ color: "var(--text-2)" }}>{lead.email}</span>
+                        <span className="text-muted small text-truncate" style={{ maxWidth: 120 }}>{lead.email}</span>
                       )}
                     </div>
                   </td>
-
-                  {/* Rating */}
-                  <td className="px-3 py-2.5 whitespace-nowrap">
+                  <td>
                     {lead.google_rating ? (
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        <span className="text-xs" style={{ color: "var(--text-2)" }}>{lead.google_rating}</span>
+                      <div className="d-flex align-items-center gap-1">
+                        <IconStar size={12} className="text-warning" />
+                        <span className="small">{lead.google_rating}</span>
                       </div>
-                    ) : <span style={{ color: "var(--text-3)" }}>—</span>}
+                    ) : <span className="text-muted">—</span>}
                   </td>
-
-                  {/* Score */}
-                  <td className="px-3 py-2.5">
-                    <ScorePill score={lead.score} />
-                  </td>
-
-                  {/* Stage */}
-                  <td className="px-3 py-2.5">
-                    <StagePill stage={lead.stage} />
-                  </td>
-
-                  {/* Actions */}
-                  <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center gap-1">
+                  <td><ScoreBadge score={lead.score} /></td>
+                  <td><StageBadge stage={lead.stage} /></td>
+                  <td onClick={(e) => e.stopPropagation()}>
+                    <div className="d-flex gap-1">
                       {lead.enrichment_status !== "done" && (
-                        <button
-                          onClick={() => enrichLead(lead.id)}
-                          disabled={enriching === lead.id}
-                          className="text-[11px] px-2 py-1 rounded transition-colors disabled:opacity-40"
-                          style={{
-                            color:      "#58a6ff",
-                            background: "rgba(88,166,255,0.08)",
-                          }}
-                          title="Enrich this lead"
-                        >
+                        <button onClick={() => enrichLead(lead.id)} disabled={enriching === lead.id}
+                          className="btn btn-ghost-info btn-xs">
                           {enriching === lead.id ? "…" : "Enrich"}
                         </button>
                       )}
                       {lead.score === null && lead.enrichment_status === "done" && (
-                        <Link
-                          href={`/leads/${lead.id}`}
-                          className="flex items-center gap-1 text-[11px] px-2 py-1 rounded transition-colors"
-                          style={{ color: "var(--brand)", background: "var(--brand-dim)" }}
-                          title="Score with AI"
-                        >
-                          <Zap className="h-3 w-3" />
-                          Score
+                        <Link href={`/leads/${lead.id}`} className="btn btn-ghost-warning btn-xs gap-1">
+                          <IconBolt size={11} /> Score
                         </Link>
+                      )}
+                      {lead.enrichment_status === "done" && lead.score !== null && (
+                        <IconCircleCheck size={15} className="text-success" />
                       )}
                     </div>
                   </td>
-
-                  {/* Open */}
-                  <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
-                    <Link
-                      href={`/leads/${lead.id}`}
-                      className="transition-colors hover:text-amber-400"
-                      style={{ color: "var(--text-3)" }}
-                    >
-                      <ChevronRight className="h-4 w-4" />
+                  <td onClick={(e) => e.stopPropagation()}>
+                    <Link href={`/leads/${lead.id}`} className="btn btn-ghost-secondary btn-xs">
+                      <IconChevronRight size={15} />
                     </Link>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Bulk action bar — shows when rows selected */}
+      {/* Bulk action bar */}
       {selected.size > 0 && (
-        <div
-          className="fixed bottom-16 md:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2.5 rounded-xl shadow-2xl z-50 text-sm font-medium"
-          style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-1)" }}
-        >
-          <span style={{ color: "var(--text-2)" }}>{selected.size} selected</span>
-          <div className="w-px h-4" style={{ background: "var(--border)" }} />
-          <button onClick={() => setSelected(new Set())} className="text-xs" style={{ color: "var(--text-3)" }}>
-            Clear
-          </button>
+        <div className="position-fixed bottom-0 start-50 translate-middle-x mb-4 z-3">
+          <div className="card shadow-lg px-4 py-2 d-flex flex-row align-items-center gap-3">
+            <span className="text-muted small">{selected.size} selected</span>
+            <div className="vr" />
+            <button onClick={() => setSelected(new Set())} className="btn btn-ghost-secondary btn-sm">
+              <IconX size={14} /> Clear
+            </button>
+          </div>
         </div>
       )}
     </div>

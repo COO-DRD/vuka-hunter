@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Search, Users, GitBranch,
-  Settings, Upload, LogOut, Shield, Zap, Moon, Sun,
+  Settings, Upload, LogOut, Shield, Moon, Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useClerk } from "@clerk/nextjs";
@@ -32,7 +32,6 @@ const SECTIONS = [
     label: "Workspace",
     items: [
       { href: "/settings", icon: Settings, label: "Settings" },
-      { href: "/upgrade",  icon: Zap,      label: "Upgrade"  },
     ],
   },
 ];

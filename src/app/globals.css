@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@tabler/core/dist/css/tabler.min.css";
 
 :root {
   --background:   #F8F7F4;
@@ -12,6 +13,15 @@
   --brand:        #F59E0B;
   --brand-dim:    rgba(245, 158, 11, 0.08);
   --brand-glow:   rgba(245, 158, 11, 0.15);
+
+  /* Tabler primary colour → amber brand */
+  --tblr-primary:            #F59E0B;
+  --tblr-primary-rgb:        245, 158, 11;
+  --tblr-primary-lt:         rgba(245, 158, 11, 0.1);
+  --tblr-link-color:         #F59E0B;
+  --tblr-link-hover-color:   #D97706;
+  --tblr-navbar-bg:          #FFFFFF;
+  --tblr-sidebar-bg:         #FFFFFF;
 }
 
 @theme inline {
