@@ -9,9 +9,23 @@ const isPublicRoute = createRouteMatcher([
   "/api/workshop",
   "/api/billing/configured",
   "/api/health",
+  "/api/scrape(.*)",
+  "/api/leads(.*)",
+  "/api/enrich(.*)",
+  "/api/score(.*)",
+  "/api/opener(.*)",
+  "/api/import(.*)",
   "/terms",
   "/workshop",
   "/",
+  "/dashboard(.*)",
+  "/discover(.*)",
+  "/leads(.*)",
+  "/pipeline(.*)",
+  "/import(.*)",
+  "/onboarding(.*)",
+  "/settings(.*)",
+  "/upgrade(.*)",
 ]);
 
 // Pages search engines are allowed to index
@@ -148,7 +162,16 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     }
   }
 
-  return addSecurityHeaders(NextResponse.next(), isIndexableRoute(req));
+  const res = addSecurityHeaders(NextResponse.next(), isIndexableRoute(req));
+  if (!req.cookies.get("hunter_anon")) {
+    res.cookies.set("hunter_anon", crypto.randomUUID(), {
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365,
+      path: "/",
+    });
+  }
+  return res;
 });
 
 function addSecurityHeaders(res: NextResponse, allowIndex = false): NextResponse {

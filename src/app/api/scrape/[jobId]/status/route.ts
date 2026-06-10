@@ -1,13 +1,10 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser, resolveOrgId } from "@/lib/auth";
+import { getOrgId } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ jobId: string }> }) {
   const { jobId } = await params;
-  const user = await getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const orgId = await resolveOrgId(user.id);
+  const { orgId } = await getOrgId();
   const db = createSupabaseServiceClient();
   const { data: job } = await db
     .from("hunter_scrape_jobs")

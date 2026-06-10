@@ -1,5 +1,6 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser, resolveOrgId, checkOrgAccess, ACCESS_DENIED } from "@/lib/auth";
+import { getOrgId } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { isSafeUrl, enrichWebsite, computeReachabilityScore, getDecisionTitles } from "@/lib/enrichLead";
 import { logEvent, logError } from "@/lib/logEvent";
@@ -12,25 +13,23 @@ import {
 } from "@/lib/contactExtraction";
 
 export async function POST(req: NextRequest) {
-  const user = await getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { orgId, isAnon } = await getOrgId();
 
-  const orgId = await resolveOrgId(user.id);
-
-  const access = await checkOrgAccess(orgId);
-  if (!access.allowed) {
-    return NextResponse.json(
-      { error: ACCESS_DENIED[access.reason!], reason: access.reason, upgradeUrl: "/upgrade" },
-      { status: 402 }
-    );
-  }
-
-  const aiCap = await checkAIHourlyCap(orgId, access.plan);
-  if (!aiCap.allowed) {
+  if (!isAnon) {
+    const access = await checkOrgAccess(orgId);
+    if (!access.allowed) {
+      return NextResponse.json(
+        { error: ACCESS_DENIED[access.reason!], reason: access.reason, upgradeUrl: "/upgrade" },
+        { status: 402 }
+      );
+    }
+    const aiCap = await checkAIHourlyCap(orgId, access.plan);
+    if (!aiCap.allowed) {
     return NextResponse.json(
       { error: `Hourly AI limit reached (${aiCap.used}/${aiCap.cap} actions). Resets within the hour.` },
       { status: 429 }
     );
+  }
   }
 
   const body = await req.json().catch(() => ({}));

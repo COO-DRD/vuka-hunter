@@ -1,5 +1,7 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getUser, resolveOrgId, checkOrgAccess, ACCESS_DENIED } from "@/lib/auth";
+import { getOrgId } from "@/lib/session";
+import { checkScrapeLimit } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
 import { PROTOCOL, PROTOCOL_CITIES } from "@/lib/protocol";
@@ -8,18 +10,29 @@ import { runScrapeJob, type OrgProfile } from "@/lib/scrapeJob";
 export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
-  const user = await getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { orgId, isAnon } = await getOrgId();
 
-  const orgId = await resolveOrgId(user.id);
+  // eslint-disable-next-line prefer-const
+  let access: Awaited<ReturnType<typeof checkOrgAccess>> | null = null;
 
-  // ── Trial / subscription gate ───────────────────────────────────────────
-  const access = await checkOrgAccess(orgId);
-  if (!access.allowed) {
-    return NextResponse.json(
-      { error: ACCESS_DENIED[access.reason!], reason: access.reason, upgradeUrl: "/upgrade" },
-      { status: 402 }
-    );
+  if (isAnon) {
+    // ── Free-tier rate limit ─────────────────────────────────────────────
+    const limit = await checkScrapeLimit(orgId);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: "Free limit reached", detail: `${limit.limit} scrape jobs per hour on the free tier. Sign up for unlimited.`, remaining: 0 },
+        { status: 429 }
+      );
+    }
+  } else {
+    // ── Trial / subscription gate (authenticated users only) ────────────
+    access = await checkOrgAccess(orgId);
+    if (!access.allowed) {
+      return NextResponse.json(
+        { error: ACCESS_DENIED[access.reason!], reason: access.reason, upgradeUrl: "/upgrade" },
+        { status: 402 }
+      );
+    }
   }
 
   const {
@@ -57,16 +70,16 @@ export async function POST(req: NextRequest) {
   const approvedCity = PROTOCOL_CITIES.find((c) => c.value === city);
   if (!approvedCity) return NextResponse.json({ error: `"${city}" is not an approved city` }, { status: 400 });
 
-  // ── Trial lead ceiling ─────────────────────────────────────────────────
-  if (access.isTrialing) {
+  // ── Trial lead ceiling (authenticated users only) ───────────────────────
+  if (!isAnon && access?.isTrialing) {
     const db2 = createSupabaseServiceClient();
     const { count: currentLeads } = await db2
       .from("hunter_leads")
       .select("*", { count: "exact", head: true })
       .eq("org_id", orgId);
-    if ((currentLeads ?? 0) >= access.trialLeadLimit) {
+    if ((currentLeads ?? 0) >= (access?.trialLeadLimit ?? 0)) {
       return NextResponse.json({
-        error:      `Free trial limit: you can store up to ${access.trialLeadLimit} leads. Upgrade to remove this cap.`,
+        error:      `Free trial limit: you can store up to ${access?.trialLeadLimit} leads. Upgrade to remove this cap.`,
         reason:     "leads_limit",
         upgradeUrl: "/upgrade",
       }, { status: 402 });
@@ -103,7 +116,7 @@ export async function POST(req: NextRequest) {
   // Smart filter — fetch org profile for Pro/Agency/Beta accounts
   let orgProfile: OrgProfile | undefined;
   const smartFilterPlans = ["pro", "agency", "starter", "beta"];
-  if (smartFilterPlans.includes(access.plan)) {
+  if (!isAnon && access && smartFilterPlans.includes(access.plan)) {
     const { data: profile } = await db
       .from("hunter_orgs")
       .select("org_description, target_description, priority_signals")

@@ -1,12 +1,9 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getUser, resolveOrgId } from "@/lib/auth";
+import { getOrgId } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const user = await getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const orgId = await resolveOrgId(user.id);
+  const { orgId } = await getOrgId();
 
   const { searchParams } = req.nextUrl;
   const q        = (searchParams.get("q") ?? "").slice(0, 100);
