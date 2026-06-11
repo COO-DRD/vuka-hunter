@@ -35,6 +35,14 @@ body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+/* ── Tailwind v4 / Bootstrap .collapse conflict fix ─────────────── */
+/* Tailwind v4 emits .collapse { visibility: collapse } which makes   */
+/* Bootstrap's navbar-collapse invisible even when display: flex.     */
+.navbar-collapse,
+.collapsing {
+  visibility: visible;
+}
+
 /* ── Tap highlight ───────────────────────────────────────────────── */
 * { -webkit-tap-highlight-color: transparent; }
 
