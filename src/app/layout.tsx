@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ClerkProvider } from "@clerk/nextjs";
+import Script from "next/script";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -191,6 +192,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Toaster theme="dark" richColors position="top-center" />
           <Analytics />
           <SpeedInsights />
+          <Script
+            src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta21/dist/js/tabler.min.js"
+            strategy="afterInteractive"
+          />
         </body>
       </html>
     </ClerkProvider>

@@ -1,15 +1,12 @@
 "use client";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useClerk } from "@clerk/nextjs";
+import { usePathname } from "next/navigation";
 import {
   IconLayoutDashboard, IconSearch, IconUsers, IconGitBranch,
-  IconSettings, IconUpload, IconLogout, IconShield,
+  IconSettings, IconUpload, IconShield,
   IconSun, IconMoon,
 } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
-
-const ADMIN_EMAILS = new Set(["ian.dullu@akamom.org", "dr.dullu@gmail.com"]);
 
 const NAV_ITEMS = [
   { href: "/dashboard", icon: IconLayoutDashboard, label: "Dashboard" },
@@ -20,10 +17,8 @@ const NAV_ITEMS = [
   { href: "/settings",  icon: IconSettings,        label: "Settings"  },
 ];
 
-export function TablerSidebar({ email }: { email: string | null }) {
+export function TablerSidebar({ email, isAdmin }: { email: string | null; isAdmin: boolean }) {
   const path = usePathname();
-  const router = useRouter();
-  const { signOut } = useClerk();
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
@@ -40,8 +35,6 @@ export function TablerSidebar({ email }: { email: string | null }) {
     document.documentElement.setAttribute("data-bs-theme", next ? "dark" : "light");
     localStorage.setItem("theme", next ? "dark" : "light");
   }
-
-  const initial = email ? email[0].toUpperCase() : "?";
 
   return (
     <aside className="navbar navbar-vertical navbar-expand-lg" data-bs-theme="light">
@@ -77,7 +70,7 @@ export function TablerSidebar({ email }: { email: string | null }) {
               </li>
             ))}
 
-            {email && ADMIN_EMAILS.has(email) && (
+            {isAdmin && (
               <li className="nav-item">
                 <Link href="/admin" className={`nav-link${path.startsWith("/admin") ? " active" : ""}`}>
                   <span className="nav-link-icon d-md-none d-lg-block">
@@ -89,39 +82,15 @@ export function TablerSidebar({ email }: { email: string | null }) {
             )}
           </ul>
 
-          {/* Bottom actions */}
+          {/* Bottom: theme toggle */}
           <div className="mt-auto pt-3 border-top">
-            {/* User pill */}
-            <div className="d-flex align-items-center gap-2 px-3 py-2 mb-1">
-              <span
-                className="avatar avatar-sm rounded-circle text-white fw-bold"
-                style={{ background: "var(--tblr-primary)", fontSize: "0.7rem" }}
-              >
-                {initial}
-              </span>
-              <span className="text-truncate small text-secondary" style={{ maxWidth: 120 }}>
-                {email ?? "—"}
-              </span>
-            </div>
-
-            {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="btn btn-ghost-secondary w-100 justify-content-start gap-2 mb-1"
+              className="btn btn-ghost-secondary w-100 justify-content-start gap-2"
               style={{ fontSize: "0.8rem" }}
             >
               {dark ? <IconSun size={16} stroke={1.5} /> : <IconMoon size={16} stroke={1.5} />}
               {dark ? "Light mode" : "Dark mode"}
-            </button>
-
-            {/* Sign out */}
-            <button
-              onClick={() => signOut(() => router.push("/sign-in"))}
-              className="btn btn-ghost-secondary w-100 justify-content-start gap-2"
-              style={{ fontSize: "0.8rem" }}
-            >
-              <IconLogout size={16} stroke={1.5} />
-              Sign out
             </button>
           </div>
         </div>
