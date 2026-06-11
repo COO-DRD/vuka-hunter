@@ -19,6 +19,17 @@ const isPublicRoute = createRouteMatcher([
   "/terms",
   "/workshop",
   "/",
+  // App pages: auth enforced in server components via requireUser()
+  // Not guarded here because Clerk's hosted redirect needs the destination
+  // reachable before the session cookie propagates to middleware.
+  "/dashboard(.*)",
+  "/discover(.*)",
+  "/leads(.*)",
+  "/pipeline(.*)",
+  "/import(.*)",
+  "/onboarding(.*)",
+  "/settings(.*)",
+  "/upgrade(.*)",
 ]);
 
 // Pages search engines are allowed to index
