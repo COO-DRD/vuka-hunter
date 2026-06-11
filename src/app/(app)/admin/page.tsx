@@ -8,7 +8,9 @@ import {
 } from "@tabler/icons-react";
 import { UpgradeRequestActions } from "./UpgradeRequestActions";
 
-const ADMIN_EMAILS = new Set(["ian.dullu@akamom.org", "dr.dullu@gmail.com"]);
+const ADMIN_EMAILS = new Set(
+  (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean)
+);
 
 
 async function getAnalytics() {
