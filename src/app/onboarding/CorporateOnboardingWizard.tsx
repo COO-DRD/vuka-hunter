@@ -3,9 +3,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  ChevronRight, ChevronLeft, Check, Building2,
-  Users, UserPlus, X, Mail, Shield,
-} from "lucide-react";
+  IconChevronRight as ChevronRight, IconChevronLeft as ChevronLeft, IconCheck as Check,
+  IconBuilding as Building2, IconUsers as Users, IconUserPlus as UserPlus,
+  IconX as X, IconMail as Mail, IconShieldCheck as Shield,
+} from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { HunterWordmark } from "@/components/HunterLogo";
 

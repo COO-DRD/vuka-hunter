@@ -1,7 +1,11 @@
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Shield, Users, Zap, Target, MessageSquare, AlertTriangle, CalendarDays, TrendingUp, Receipt } from "lucide-react";
+import {
+  IconShieldCheck as Shield, IconUsers as Users, IconBolt as Zap, IconTarget as Target,
+  IconMessageCircle as MessageSquare, IconAlertTriangle as AlertTriangle,
+  IconCalendar as CalendarDays, IconTrendingUp as TrendingUp, IconReceipt as Receipt,
+} from "@tabler/icons-react";
 import { UpgradeRequestActions } from "./UpgradeRequestActions";
 
 const ADMIN_EMAILS = new Set(["ian.dullu@akamom.org", "dr.dullu@gmail.com"]);

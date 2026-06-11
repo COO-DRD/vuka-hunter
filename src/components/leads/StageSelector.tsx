@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { STAGES } from "@/lib/utils";
 import { toast } from "sonner";
-import { ChevronDown } from "lucide-react";
+import { IconChevronDown as ChevronDown } from "@tabler/icons-react";
 
 export default function StageSelector({ leadId, currentStage }: { leadId: string; currentStage: string }) {
   const [stage, setStage]   = useState(currentStage);

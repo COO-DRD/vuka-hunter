@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { X, Download, Share } from "lucide-react";
+import { IconX as X, IconDownload as Download, IconShare as Share } from "@tabler/icons-react";
 
 type Mode = "android" | "ios" | null;
 

@@ -1,61 +1,72 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-
-function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded bg-zinc-800 ${className}`} />;
-}
-
 export default function DashboardLoading() {
   return (
-    <div className="p-6 max-w-6xl">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-zinc-100">Dashboard</h1>
-        <p className="text-sm text-zinc-400 mt-0.5">Your lead pipeline at a glance</p>
+    <div className="container-xl">
+      <div className="page-header d-print-none">
+        <div className="row g-2 align-items-center">
+          <div className="col">
+            <h2 className="page-title placeholder-glow">
+              <span className="placeholder col-3" />
+            </h2>
+          </div>
+        </div>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+      {/* Stat cards */}
+      <div className="row g-3 mb-4">
         {[...Array(4)].map((_, i) => (
-          <Card key={i}><CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-4 w-4" />
+          <div key={i} className="col-6 col-lg-3">
+            <div className="card card-sm">
+              <div className="card-body placeholder-glow">
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <div className="placeholder col-5" style={{ height: 12 }} />
+                  <div className="placeholder col-2 rounded-circle" style={{ height: 28, width: 28 }} />
+                </div>
+                <div className="placeholder col-4" style={{ height: 32 }} />
+              </div>
             </div>
-            <Skeleton className="h-8 w-16" />
-          </CardContent></Card>
+          </div>
         ))}
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-1">
-          <CardHeader><Skeleton className="h-5 w-20" /></CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+
+      {/* Pipeline + Recent leads */}
+      <div className="row g-4">
+        <div className="col-12 col-lg-4">
+          <div className="card h-100">
+            <div className="card-header placeholder-glow">
+              <div className="placeholder col-4" style={{ height: 16 }} />
+            </div>
+            <div className="card-body placeholder-glow">
               {[...Array(6)].map((_, i) => (
-                <div key={i}>
-                  <div className="flex justify-between mb-1">
-                    <Skeleton className="h-3 w-16" />
-                    <Skeleton className="h-3 w-6" />
+                <div key={i} className="mb-3">
+                  <div className="d-flex justify-content-between mb-1">
+                    <div className="placeholder col-4" style={{ height: 12 }} />
+                    <div className="placeholder col-2" style={{ height: 12 }} />
                   </div>
-                  <Skeleton className="h-1.5 w-full" />
+                  <div className="placeholder col-12 progress progress-sm" style={{ height: 6 }} />
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-        <Card className="lg:col-span-2">
-          <CardHeader><Skeleton className="h-5 w-28" /></CardHeader>
-          <CardContent>
-            <div className="space-y-2">
+          </div>
+        </div>
+        <div className="col-12 col-lg-8">
+          <div className="card h-100">
+            <div className="card-header placeholder-glow">
+              <div className="placeholder col-4" style={{ height: 16 }} />
+            </div>
+            <div className="card-body p-0 placeholder-glow">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center gap-3 p-2">
-                  <Skeleton className="h-8 w-8 rounded-md shrink-0" />
-                  <div className="flex-1 space-y-1.5">
-                    <Skeleton className="h-3 w-3/4" />
-                    <Skeleton className="h-3 w-1/2" />
+                <div key={i} className="d-flex align-items-center gap-3 p-3 border-bottom">
+                  <div className="placeholder rounded" style={{ height: 32, width: 32 }} />
+                  <div className="flex-fill">
+                    <div className="placeholder col-6 mb-1" style={{ height: 12 }} />
+                    <div className="placeholder col-4" style={{ height: 10 }} />
                   </div>
-                  <Skeleton className="h-4 w-6" />
+                  <div className="placeholder col-1" style={{ height: 20 }} />
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

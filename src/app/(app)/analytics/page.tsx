@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Users, Mail, Zap, MessageSquare, BarChart2 } from "lucide-react";
+import {
+  IconTrendingUp, IconUsers, IconMail, IconBolt,
+  IconMessageCircle, IconChartBar,
+} from "@tabler/icons-react";
 
 interface AnalyticsData {
   total: number;
@@ -23,8 +25,9 @@ const STAGE_LABELS: Record<string, string> = {
   new: "New", contacted: "Contacted", replied: "Replied", qualified: "Qualified", won: "Won",
 };
 
-const STAGE_COLOURS: Record<string, string> = {
-  new: "bg-zinc-500", contacted: "bg-blue-500", replied: "bg-purple-500", qualified: "bg-amber-500", won: "bg-green-500",
+const STAGE_COLORS: Record<string, string> = {
+  new: "bg-secondary", contacted: "bg-info", replied: "bg-purple",
+  qualified: "bg-warning", won: "bg-success",
 };
 
 export default function AnalyticsPage() {
@@ -40,134 +43,204 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="h-6 w-40 bg-zinc-800 rounded animate-pulse mb-6" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-24 bg-zinc-900 rounded-xl animate-pulse" />
+      <div className="container-xl">
+        <div className="page-header d-print-none">
+          <div className="row g-2 align-items-center">
+            <div className="col">
+              <h2 className="page-title">Analytics</h2>
+              <div className="text-muted mt-1 small">Pipeline intelligence — Time · Money · Efficiency</div>
+            </div>
+          </div>
+        </div>
+        <div className="row g-3 mb-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="col-6 col-lg">
+              <div className="card card-sm">
+                <div className="card-body">
+                  <div className="placeholder-glow">
+                    <div className="placeholder col-6 mb-2" />
+                    <div className="placeholder col-4" style={{ height: 28 }} />
+                  </div>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       </div>
     );
   }
 
-  if (!data) return <div className="p-6 text-zinc-500">Failed to load analytics.</div>;
+  if (!data) {
+    return (
+      <div className="container-xl">
+        <div className="empty py-5">
+          <p className="empty-title text-muted">Failed to load analytics.</p>
+        </div>
+      </div>
+    );
+  }
 
   const maxWeekly = Math.max(...data.weeklyLeads.map((d) => d.count), 1);
   const maxVertical = Math.max(...data.topVerticals.map((v) => v.count), 1);
 
+  const kpis = [
+    { label: "Total Leads",    value: data.total,                icon: IconUsers,          color: "blue"   },
+    { label: "Enriched",       value: `${data.enrichmentRate}%`, icon: IconBolt,           color: "orange" },
+    { label: "Avg Score",      value: data.avgScore,             icon: IconTrendingUp,     color: "purple" },
+    { label: "Outreach Ready", value: `${data.outreachRate}%`,   icon: IconMail,           color: "yellow" },
+    { label: "Reachable",      value: data.reachable,            icon: IconMessageCircle,  color: "green"  },
+  ];
+
   return (
-    <div className="p-6 max-w-6xl space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-zinc-100">Analytics</h1>
-        <p className="text-sm text-zinc-400 mt-0.5">Pipeline intelligence — Time · Money · Efficiency</p>
+    <div className="container-xl">
+      {/* Page header */}
+      <div className="page-header d-print-none">
+        <div className="row g-2 align-items-center">
+          <div className="col">
+            <h2 className="page-title">Analytics</h2>
+            <div className="text-muted mt-1 small">Pipeline intelligence — Time · Money · Efficiency</div>
+          </div>
+        </div>
       </div>
 
       {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        {[
-          { label: "Total Leads",     value: data.total,           icon: Users,       colour: "text-blue-400"   },
-          { label: "Enriched",        value: `${data.enrichmentRate}%`, icon: Zap,    colour: "text-green-400"  },
-          { label: "Avg Score",       value: data.avgScore,        icon: TrendingUp,  colour: "text-purple-400" },
-          { label: "Outreach Ready",  value: `${data.outreachRate}%`,  icon: Mail,    colour: "text-amber-400"  },
-          { label: "Reachable",       value: data.reachable,       icon: MessageSquare, colour: "text-red-400"  },
-        ].map(({ label, value, icon: Icon, colour }) => (
-          <Card key={label}><CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs text-zinc-500">{label}</span>
-              <Icon className={`h-4 w-4 ${colour}`} />
+      <div className="row g-3 mb-4">
+        {kpis.map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="col-6 col-lg">
+            <div className="card card-sm">
+              <div className="card-body">
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <div className="text-muted small">{label}</div>
+                  <span className={`avatar avatar-sm bg-${color}-lt text-${color}`}>
+                    <Icon size={16} stroke={1.5} />
+                  </span>
+                </div>
+                <div className="h1 mb-0">{value.toLocaleString()}</div>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-zinc-100">{value}</div>
-          </CardContent></Card>
+          </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Conversion funnel */}
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><BarChart2 className="h-4 w-4 text-zinc-400" /> Pipeline Funnel</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            {data.funnel.map(({ stage, count, pct, dropOffToNext }) => (
-              <div key={stage}>
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-zinc-400 font-medium">{STAGE_LABELS[stage] ?? stage}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-zinc-300">{count.toLocaleString()}</span>
-                    <span className="text-zinc-600">({pct}%)</span>
-                    {dropOffToNext !== null && dropOffToNext > 0 && (
-                      <span className="text-zinc-700 text-[10px]">→ {dropOffToNext}%</span>
-                    )}
+      <div className="row g-4 mb-4">
+        {/* Pipeline funnel */}
+        <div className="col-12 col-lg-6">
+          <div className="card h-100">
+            <div className="card-header">
+              <h3 className="card-title d-flex align-items-center gap-2">
+                <IconChartBar size={16} stroke={1.5} className="text-muted" />
+                Pipeline Funnel
+              </h3>
+            </div>
+            <div className="card-body">
+              {data.funnel.map(({ stage, count, pct, dropOffToNext }) => (
+                <div key={stage} className="mb-3">
+                  <div className="d-flex align-items-center justify-content-between mb-1">
+                    <span className="text-muted small">{STAGE_LABELS[stage] ?? stage}</span>
+                    <div className="d-flex align-items-center gap-2">
+                      <span className="fw-medium small">{count.toLocaleString()}</span>
+                      <span className="text-muted small">({pct}%)</span>
+                      {dropOffToNext !== null && dropOffToNext > 0 && (
+                        <span className="text-muted" style={{ fontSize: "0.7rem" }}>→ {dropOffToNext}%</span>
+                      )}
+                    </div>
                   </div>
+                  <div className="progress progress-sm">
+                    <div
+                      className={`progress-bar ${STAGE_COLORS[stage] ?? "bg-secondary"}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  {data.avgScoreByStage[stage] > 0 && (
+                    <div className="text-muted mt-1" style={{ fontSize: "0.7rem" }}>
+                      avg score {data.avgScoreByStage[stage]}
+                    </div>
+                  )}
                 </div>
-                <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full ${STAGE_COLOURS[stage] ?? "bg-zinc-500"} rounded-full transition-all`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                {data.avgScoreByStage[stage] > 0 && (
-                  <p className="text-[10px] text-zinc-600 mt-0.5">avg score {data.avgScoreByStage[stage]}</p>
-                )}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* Weekly activity */}
-        <Card>
-          <CardHeader><CardTitle>Leads Added — Last 7 Days</CardTitle></CardHeader>
-          <CardContent>
-            <div className="flex items-end justify-between gap-1 h-32">
-              {data.weeklyLeads.map(({ date, count }) => {
-                const pct = (count / maxWeekly) * 100;
-                const label = new Date(date + "T12:00:00Z").toLocaleDateString("en-KE", { weekday: "short" });
-                return (
-                  <div key={date} className="flex flex-col items-center gap-1 flex-1">
-                    <span className="text-[10px] text-zinc-600">{count > 0 ? count : ""}</span>
-                    <div className="w-full bg-zinc-800 rounded-t-sm overflow-hidden" style={{ height: "80px" }}>
-                      <div
-                        className="w-full bg-red-500/70 rounded-t-sm transition-all"
-                        style={{ height: `${Math.max(pct, count > 0 ? 4 : 0)}%`, marginTop: "auto" }}
-                      />
+        <div className="col-12 col-lg-6">
+          <div className="card h-100">
+            <div className="card-header">
+              <h3 className="card-title">Leads Added — Last 7 Days</h3>
+            </div>
+            <div className="card-body">
+              <div className="d-flex align-items-end justify-content-between gap-1" style={{ height: 120 }}>
+                {data.weeklyLeads.map(({ date, count }) => {
+                  const pct = (count / maxWeekly) * 100;
+                  const label = new Date(date + "T12:00:00Z").toLocaleDateString("en-KE", { weekday: "short" });
+                  return (
+                    <div key={date} className="d-flex flex-column align-items-center gap-1 flex-fill">
+                      <span className="text-muted" style={{ fontSize: "0.65rem" }}>{count > 0 ? count : ""}</span>
+                      <div className="w-100 rounded-top overflow-hidden" style={{ height: 80, display: "flex", alignItems: "flex-end", background: "var(--bg-elevated)" }}>
+                        <div
+                          style={{
+                            width: "100%",
+                            height: `${Math.max(pct, count > 0 ? 4 : 0)}%`,
+                            background: "var(--tblr-primary)",
+                            borderRadius: "2px 2px 0 0",
+                            transition: "height 0.3s ease",
+                          }}
+                        />
+                      </div>
+                      <span className="text-muted" style={{ fontSize: "0.65rem" }}>{label}</span>
                     </div>
-                    <span className="text-[10px] text-zinc-600">{label}</span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+              <div className="d-flex align-items-center gap-4 mt-3 pt-3 border-top small text-muted">
+                <span>
+                  WhatsApp outreach:{" "}
+                  <strong className="text-body">{data.channelSplit.whatsapp ?? 0}</strong>
+                </span>
+                <span>
+                  Email outreach:{" "}
+                  <strong className="text-body">{data.channelSplit.email ?? 0}</strong>
+                </span>
+              </div>
             </div>
-            <div className="mt-4 flex items-center gap-4 text-xs text-zinc-500 border-t border-zinc-800 pt-3">
-              <span>WhatsApp outreach: <strong className="text-zinc-300">{data.channelSplit.whatsapp ?? 0}</strong></span>
-              <span>Email outreach: <strong className="text-zinc-300">{data.channelSplit.email ?? 0}</strong></span>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Top verticals */}
-      <Card>
-        <CardHeader><CardTitle>Top Verticals</CardTitle></CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {data.topVerticals.map(({ vertical, count, avgScore }) => {
-              const pct = Math.round((count / maxVertical) * 100);
-              return (
-                <div key={vertical} className="flex items-center gap-3">
-                  <span className="w-28 text-xs text-zinc-400 truncate capitalize">{vertical.replace(/_/g, " ")}</span>
-                  <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-red-500/60 rounded-full" style={{ width: `${pct}%` }} />
-                  </div>
-                  <span className="w-8 text-right text-xs text-zinc-400">{count}</span>
-                  {avgScore > 0 && (
-                    <span className={`w-12 text-right text-xs font-medium ${avgScore >= 70 ? "text-green-400" : avgScore >= 40 ? "text-amber-400" : "text-red-400"}`}>
-                      {avgScore}pts
-                    </span>
-                  )}
+      <div className="card">
+        <div className="card-header">
+          <h3 className="card-title">Top Verticals</h3>
+        </div>
+        <div className="card-body">
+          {data.topVerticals.map(({ vertical, count, avgScore }) => {
+            const pct = Math.round((count / maxVertical) * 100);
+            return (
+              <div key={vertical} className="d-flex align-items-center gap-3 mb-3">
+                <span className="text-muted small text-capitalize text-truncate" style={{ width: 120 }}>
+                  {vertical.replace(/_/g, " ")}
+                </span>
+                <div className="flex-fill progress progress-sm">
+                  <div className="progress-bar bg-primary" style={{ width: `${pct}%` }} />
                 </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+                <span className="text-muted small" style={{ width: 32, textAlign: "right" }}>{count}</span>
+                {avgScore > 0 && (
+                  <span
+                    className={`small fw-medium`}
+                    style={{
+                      width: 48,
+                      textAlign: "right",
+                      color: avgScore >= 70 ? "var(--tblr-success)" : avgScore >= 40 ? "var(--tblr-warning)" : "var(--tblr-danger)",
+                    }}
+                  >
+                    {avgScore}pts
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import {
-  Users, UserPlus, Mail, Shield, Ban, RefreshCw,
-  Trash2, Check, X, Loader2, Globe,
-} from "lucide-react";
+  IconUsersGroup, IconUserPlus, IconMail, IconShieldCheck,
+  IconBan, IconRefresh, IconTrash, IconCheck, IconLoader2, IconGlobe,
+} from "@tabler/icons-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface Member {
-  user_id:       string;
-  role:          string;
-  status:        string;
-  display_name?: string | null;
+  user_id:         string;
+  role:            string;
+  status:          string;
+  display_name?:   string | null;
   last_active_at?: string | null;
 }
 
@@ -24,14 +24,14 @@ interface TeamPanelProps {
 }
 
 export default function TeamPanel({ members: initialMembers, seatLimit, seatsUsed, orgDomain: initialDomain }: TeamPanelProps) {
-  const [members,    setMembers]    = useState<Member[]>(initialMembers);
-  const [inviteInput, setInviteInput] = useState("");
-  const [inviting,   setInviting]   = useState(false);
-  const [inviteMsg,  setInviteMsg]  = useState("");
-  const [loading,    setLoading]    = useState<Record<string, boolean>>({});
-  const [domain,     setDomain]     = useState(initialDomain ?? "");
+  const [members,      setMembers]      = useState<Member[]>(initialMembers);
+  const [inviteInput,  setInviteInput]  = useState("");
+  const [inviting,     setInviting]     = useState(false);
+  const [inviteMsg,    setInviteMsg]    = useState("");
+  const [loading,      setLoading]      = useState<Record<string, boolean>>({});
+  const [domain,       setDomain]       = useState(initialDomain ?? "");
   const [savingDomain, setSavingDomain] = useState(false);
-  const [domainMsg,  setDomainMsg]  = useState("");
+  const [domainMsg,    setDomainMsg]    = useState("");
 
   const activeCount = members.filter((m) => m.status === "active").length;
   const available   = seatLimit - activeCount;
@@ -41,7 +41,7 @@ export default function TeamPanel({ members: initialMembers, seatLimit, seatsUse
       .split(/[,\n]+/)
       .map((e) => e.trim().toLowerCase())
       .filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e))
-      .slice(0, Math.max(0, available - 0));
+      .slice(0, Math.max(0, available));
 
     if (!emails.length) { setInviteMsg("Enter at least one valid email address."); return; }
     if (available <= 0) { setInviteMsg("No seats available."); return; }
@@ -112,73 +112,73 @@ export default function TeamPanel({ members: initialMembers, seatLimit, seatsUse
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       {/* Seat indicator */}
-      <div className="rounded-lg border border-amber-900/30 bg-amber-950/10 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Shield className="h-4 w-4 text-amber-500 shrink-0" />
-          <span className="text-xs text-amber-300 font-medium">
-            {activeCount} / {seatLimit} seats active
-          </span>
+      <div className="alert alert-warning d-flex align-items-center gap-2 mb-4">
+        <IconShieldCheck size={16} stroke={1.5} className="shrink-0" />
+        <div className="flex-fill small fw-medium">
+          {activeCount} / {seatLimit} seats active
         </div>
         {available > 0 && (
-          <span className="text-xs text-zinc-500">{available} seat{available !== 1 ? "s" : ""} available</span>
+          <span className="text-muted small">{available} seat{available !== 1 ? "s" : ""} available</span>
         )}
       </div>
 
       {/* Member list */}
-      <div className="space-y-2">
+      <div className="list-group list-group-flush mb-4">
         {members.map((m) => {
-          const isAdmin    = m.role === "admin";
-          const suspended  = m.status === "suspended";
-          const isPending  = loading[m.user_id];
-          const initial    = (m.display_name ?? m.user_id)?.[0]?.toUpperCase() ?? "?";
+          const isAdmin   = m.role === "admin";
+          const suspended = m.status === "suspended";
+          const isPending = loading[m.user_id];
+          const initial   = (m.display_name ?? m.user_id)?.[0]?.toUpperCase() ?? "?";
 
           return (
-            <div key={m.user_id} className={cn(
-              "flex items-center justify-between rounded-lg border px-3 py-2.5 transition-colors",
-              suspended
-                ? "border-zinc-800/50 bg-zinc-900/20 opacity-60"
-                : "border-zinc-800 bg-zinc-900/40"
-            )}>
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={cn(
-                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                  isAdmin ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" : "bg-zinc-800 text-zinc-300"
-                )}>
-                  {initial}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-zinc-200 truncate">{m.display_name ?? "—"}</p>
-                  <p className="text-[10px] text-zinc-600 capitalize">
-                    {isAdmin ? "Admin" : "Member"}
-                    {suspended ? " · Suspended" : ""}
-                    {m.last_active_at
-                      ? ` · Last active ${new Date(m.last_active_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}`
-                      : ""}
-                  </p>
+            <div
+              key={m.user_id}
+              className={cn(
+                "list-group-item d-flex align-items-center gap-3",
+                suspended && "opacity-50"
+              )}
+            >
+              <span
+                className={`avatar avatar-sm rounded-circle text-white fw-bold`}
+                style={{
+                  background: isAdmin ? "var(--tblr-primary)" : "var(--tblr-secondary)",
+                  fontSize: "0.7rem",
+                }}
+              >
+                {initial}
+              </span>
+              <div className="flex-fill min-w-0">
+                <div className="fw-medium small text-truncate">{m.display_name ?? "—"}</div>
+                <div className="text-muted text-capitalize" style={{ fontSize: "0.7rem" }}>
+                  {isAdmin ? "Admin" : "Member"}
+                  {suspended ? " · Suspended" : ""}
+                  {m.last_active_at
+                    ? ` · Last active ${new Date(m.last_active_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}`
+                    : ""}
                 </div>
               </div>
 
               {!isAdmin && (
-                <div className="flex items-center gap-1 shrink-0 ml-2">
+                <div className="d-flex align-items-center gap-1 shrink-0">
                   {isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 text-zinc-500 animate-spin" />
+                    <IconLoader2 size={14} className="text-muted animate-spin" />
                   ) : suspended ? (
                     <button
                       onClick={() => handleAction(m.user_id, "reinstate")}
                       title="Reinstate"
-                      className="rounded p-1.5 text-zinc-500 hover:text-green-400 hover:bg-zinc-800 transition-colors"
+                      className="btn btn-ghost-success btn-icon btn-sm"
                     >
-                      <RefreshCw className="h-3.5 w-3.5" />
+                      <IconRefresh size={14} stroke={1.5} />
                     </button>
                   ) : (
                     <button
                       onClick={() => handleAction(m.user_id, "suspend")}
                       title="Suspend"
-                      className="rounded p-1.5 text-zinc-500 hover:text-amber-400 hover:bg-zinc-800 transition-colors"
+                      className="btn btn-ghost-warning btn-icon btn-sm"
                     >
-                      <Ban className="h-3.5 w-3.5" />
+                      <IconBan size={14} stroke={1.5} />
                     </button>
                   )}
                   <button
@@ -188,9 +188,9 @@ export default function TeamPanel({ members: initialMembers, seatLimit, seatsUse
                       }
                     }}
                     title="Remove"
-                    className="rounded p-1.5 text-zinc-600 hover:text-red-400 hover:bg-zinc-800 transition-colors"
+                    className="btn btn-ghost-danger btn-icon btn-sm"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <IconTrash size={14} stroke={1.5} />
                   </button>
                 </div>
               )}
@@ -199,39 +199,46 @@ export default function TeamPanel({ members: initialMembers, seatLimit, seatsUse
         })}
 
         {members.length === 0 && (
-          <p className="text-xs text-zinc-600 py-2">No members yet. Invite your team below.</p>
+          <div className="list-group-item text-muted small py-3">
+            <IconUsersGroup size={16} stroke={1.5} className="me-2" />
+            No members yet. Invite your team below.
+          </div>
         )}
       </div>
 
       {/* Invite */}
       {available > 0 && (
-        <div className="space-y-2">
-          <label className="text-xs text-zinc-400 flex items-center gap-1.5">
-            <UserPlus className="h-3.5 w-3.5" /> Invite members
-            <span className="text-zinc-600">(comma or newline-separated emails)</span>
+        <div className="mb-4">
+          <label className="form-label text-muted small d-flex align-items-center gap-1">
+            <IconUserPlus size={14} stroke={1.5} />
+            Invite members
+            <span className="text-muted">(comma or newline-separated emails)</span>
           </label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500 pointer-events-none" />
-              <Input
-                value={inviteInput}
-                onChange={(e) => setInviteInput(e.target.value)}
-                placeholder="jane@company.com, john@company.com"
-                className="pl-9 text-xs"
-                onKeyDown={(e) => e.key === "Enter" && !inviting && handleInvite()}
-              />
-            </div>
+          <div className="input-group mb-1">
+            <span className="input-group-text">
+              <IconMail size={14} stroke={1.5} />
+            </span>
+            <Input
+              value={inviteInput}
+              onChange={(e) => setInviteInput(e.target.value)}
+              placeholder="jane@company.com, john@company.com"
+              className="form-control"
+              onKeyDown={(e) => e.key === "Enter" && !inviting && handleInvite()}
+            />
             <button
               onClick={handleInvite}
               disabled={inviting || !inviteInput.trim()}
-              className="flex items-center gap-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:opacity-50 px-3 py-2 text-xs font-medium text-white transition-colors"
+              className="btn btn-primary"
             >
-              {inviting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-              Send
+              {inviting
+                ? <IconLoader2 size={14} stroke={1.5} className="animate-spin" />
+                : <IconCheck size={14} stroke={1.5} />
+              }
+              <span className="ms-1">Send</span>
             </button>
           </div>
           {inviteMsg && (
-            <p className={cn("text-xs", inviteMsg.includes("sent") ? "text-green-400" : "text-red-400")}>
+            <p className={`small mb-0 ${inviteMsg.includes("sent") ? "text-success" : "text-danger"}`}>
               {inviteMsg}
             </p>
           )}
@@ -239,35 +246,37 @@ export default function TeamPanel({ members: initialMembers, seatLimit, seatsUse
       )}
 
       {/* Domain auto-join */}
-      <div className="border-t border-zinc-800 pt-5 space-y-2">
-        <label className="text-xs text-zinc-400 flex items-center gap-1.5">
-          <Globe className="h-3.5 w-3.5" /> Domain auto-join
+      <div className="border-top pt-4">
+        <label className="form-label text-muted small d-flex align-items-center gap-1 mb-1">
+          <IconGlobe size={14} stroke={1.5} />
+          Domain auto-join
         </label>
-        <p className="text-[11px] text-zinc-600 leading-relaxed">
-          Anyone who signs up with this email domain will automatically join your organisation as a member, if a seat is available.
-          Leave blank to disable.
-        </p>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-zinc-600 pointer-events-none">@</span>
-            <Input
-              value={domain}
-              onChange={(e) => setDomain(e.target.value.replace(/^@/, ""))}
-              placeholder="company.co.ke"
-              className="pl-7 text-xs font-mono"
-            />
-          </div>
+        <div className="form-text mb-2">
+          Anyone who signs up with this email domain will automatically join your organisation as a member,
+          if a seat is available. Leave blank to disable.
+        </div>
+        <div className="input-group mb-1">
+          <span className="input-group-text small text-muted">@</span>
+          <Input
+            value={domain}
+            onChange={(e) => setDomain(e.target.value.replace(/^@/, ""))}
+            placeholder="company.co.ke"
+            className="form-control font-monospace"
+          />
           <button
             onClick={handleSaveDomain}
             disabled={savingDomain}
-            className="flex items-center gap-1.5 rounded-lg border border-zinc-700 hover:border-zinc-500 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors"
+            className="btn btn-outline-secondary"
           >
-            {savingDomain ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-            Save
+            {savingDomain
+              ? <IconLoader2 size={14} stroke={1.5} className="animate-spin" />
+              : <IconCheck size={14} stroke={1.5} />
+            }
+            <span className="ms-1">Save</span>
           </button>
         </div>
         {domainMsg && (
-          <p className={cn("text-xs", domainMsg === "Domain saved." ? "text-green-400" : "text-red-400")}>
+          <p className={`small mb-0 ${domainMsg === "Domain saved." ? "text-success" : "text-danger"}`}>
             {domainMsg}
           </p>
         )}

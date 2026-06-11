@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { IconChevronRight as ChevronRight, IconChevronLeft as ChevronLeft, IconCheck as Check } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { HunterWordmark } from "@/components/HunterLogo";
 

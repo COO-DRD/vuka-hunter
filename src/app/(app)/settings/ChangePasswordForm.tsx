@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { KeyRound, CheckCircle } from "lucide-react";
+import { IconKey, IconCircleCheck } from "@tabler/icons-react";
 
 export default function ChangePasswordForm() {
   const { user } = useUser();
@@ -17,23 +17,18 @@ export default function ChangePasswordForm() {
   async function handle(e: React.FormEvent) {
     e.preventDefault();
     setErr("");
-    if (!current)       { setErr("Enter your current password."); return; }
-    if (!pw)            { setErr("Enter a new password."); return; }
-    if (pw.length < 8)  { setErr("New password must be at least 8 characters."); return; }
-    if (!/[A-Za-z]/.test(pw)) { setErr("Password must include at least one letter."); return; }
-    if (!/[0-9]/.test(pw))    { setErr("Password must include at least one number."); return; }
-    if (!confirm)       { setErr("Please confirm your new password."); return; }
-    if (pw !== confirm) { setErr("Passwords do not match."); return; }
-    if (pw === current) { setErr("New password must be different from your current password."); return; }
+    if (!current)                         { setErr("Enter your current password."); return; }
+    if (!pw)                              { setErr("Enter a new password."); return; }
+    if (pw.length < 8)                    { setErr("New password must be at least 8 characters."); return; }
+    if (!/[A-Za-z]/.test(pw))            { setErr("Password must include at least one letter."); return; }
+    if (!/[0-9]/.test(pw))               { setErr("Password must include at least one number."); return; }
+    if (!confirm)                         { setErr("Please confirm your new password."); return; }
+    if (pw !== confirm)                   { setErr("Passwords do not match."); return; }
+    if (pw === current)                   { setErr("New password must be different from your current password."); return; }
     setLo(true);
     try {
       if (!user) { setErr("Session expired. Please sign in again."); return; }
-
-      await user.updatePassword({
-        currentPassword: current,
-        newPassword: pw,
-      });
-
+      await user.updatePassword({ currentPassword: current, newPassword: pw });
       setDone(true);
       setCurrent(""); setPw(""); setCon("");
     } catch (err: unknown) {
@@ -50,17 +45,17 @@ export default function ChangePasswordForm() {
 
   if (done) {
     return (
-      <div className="flex items-center gap-2 text-sm text-green-400 py-1">
-        <CheckCircle className="h-4 w-4 shrink-0" />
+      <div className="d-flex align-items-center gap-2 text-success small py-1">
+        <IconCircleCheck size={16} stroke={1.5} />
         Password updated successfully.
       </div>
     );
   }
 
   return (
-    <form onSubmit={handle} className="space-y-3">
-      <div>
-        <label className="block text-xs text-zinc-400 mb-1.5">Current password</label>
+    <form onSubmit={handle}>
+      <div className="mb-3">
+        <label className="form-label text-muted small">Current password</label>
         <Input
           type="password"
           value={current}
@@ -70,8 +65,8 @@ export default function ChangePasswordForm() {
           required
         />
       </div>
-      <div>
-        <label className="block text-xs text-zinc-400 mb-1.5">New password</label>
+      <div className="mb-3">
+        <label className="form-label text-muted small">New password</label>
         <Input
           type="password"
           value={pw}
@@ -81,8 +76,8 @@ export default function ChangePasswordForm() {
           required
         />
       </div>
-      <div>
-        <label className="block text-xs text-zinc-400 mb-1.5">Confirm new password</label>
+      <div className="mb-3">
+        <label className="form-label text-muted small">Confirm new password</label>
         <Input
           type="password"
           value={confirm}
@@ -92,9 +87,9 @@ export default function ChangePasswordForm() {
           required
         />
       </div>
-      {error && <p className="text-xs text-red-400">{error}</p>}
-      <Button type="submit" loading={loading} className="w-full sm:w-auto">
-        <KeyRound className="h-3.5 w-3.5 mr-1.5" />
+      {error && <p className="text-danger small mb-3">{error}</p>}
+      <Button type="submit" loading={loading}>
+        <IconKey size={14} stroke={1.5} className="me-2" />
         Update password
       </Button>
     </form>

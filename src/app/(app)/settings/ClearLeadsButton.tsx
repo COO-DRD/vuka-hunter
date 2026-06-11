@@ -1,12 +1,12 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Trash2, AlertTriangle, CheckCircle } from "lucide-react";
+import { IconTrash, IconAlertTriangle, IconCircleCheck } from "@tabler/icons-react";
 
 type Phase = "idle" | "confirm" | "done";
 
 export default function ClearLeadsButton() {
-  const [phase, setPhase]     = useState<Phase>("idle");
+  const [phase, setPhase]       = useState<Phase>("idle");
   const [deleting, setDeleting] = useState(false);
   const [summary, setSummary]   = useState("");
 
@@ -28,8 +28,8 @@ export default function ClearLeadsButton() {
 
   if (phase === "done") {
     return (
-      <div className="flex items-center gap-2 text-sm text-green-400">
-        <CheckCircle className="h-4 w-4 shrink-0" />
+      <div className="d-flex align-items-center gap-2 text-success small">
+        <IconCircleCheck size={16} stroke={1.5} />
         {summary} Your workspace is clean — ready to start fresh.
       </div>
     );
@@ -37,28 +37,19 @@ export default function ClearLeadsButton() {
 
   if (phase === "confirm") {
     return (
-      <div className="rounded-lg border border-red-800 bg-red-950/20 p-4 space-y-3">
-        <div className="flex items-start gap-2">
-          <AlertTriangle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
-          <p className="text-sm text-red-300">
-            This will permanently delete <strong>all your leads and scrape history</strong> and reset your credit counter to zero. There is no undo.
+      <div className="alert alert-danger">
+        <div className="d-flex align-items-start gap-2 mb-3">
+          <IconAlertTriangle size={16} stroke={1.5} className="shrink-0 mt-1" />
+          <p className="mb-0 small">
+            This will permanently delete <strong>all your leads and scrape history</strong> and reset your
+            credit counter to zero. There is no undo.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            onClick={handleClear}
-            loading={deleting}
-            className="bg-red-600 hover:bg-red-500 text-white text-xs"
-          >
+        <div className="d-flex gap-2">
+          <Button size="sm" variant="destructive" onClick={handleClear} loading={deleting}>
             Yes, delete everything
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setPhase("idle")}
-            className="text-xs"
-          >
+          <Button size="sm" variant="outline" onClick={() => setPhase("idle")}>
             Cancel
           </Button>
         </div>
@@ -71,9 +62,9 @@ export default function ClearLeadsButton() {
       size="sm"
       variant="outline"
       onClick={() => setPhase("confirm")}
-      className="gap-2 border-red-800 text-red-400 hover:bg-red-950/40 hover:text-red-300 hover:border-red-700 text-xs"
+      className="gap-2 text-danger border-danger"
     >
-      <Trash2 className="h-3.5 w-3.5" />
+      <IconTrash size={14} stroke={1.5} />
       Reset all leads
     </Button>
   );

@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { IconLogout } from "@tabler/icons-react";
 import { useClerk } from "@clerk/nextjs";
 
 export function MobileSignOut() {
@@ -12,12 +12,12 @@ export function MobileSignOut() {
   }
 
   return (
-    <div className="md:hidden mb-5">
+    <div className="d-md-none mb-4">
       <button
         onClick={handleSignOut}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm font-medium text-zinc-400 hover:text-red-400 hover:border-red-800/50 hover:bg-red-950/20 transition-colors"
+        className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
       >
-        <LogOut className="h-4 w-4" />
+        <IconLogout size={16} stroke={1.5} />
         Sign out
       </button>
     </div>

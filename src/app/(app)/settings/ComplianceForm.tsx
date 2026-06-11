@@ -10,7 +10,6 @@ interface Props {
   billingEmail: string;
 }
 
-// KRA PIN: one uppercase letter + 9 digits + one uppercase letter
 const KRA_RE = /^[A-Z]\d{9}[A-Z]$/;
 
 function validate(pin: string, regNo: string, billing: string): string | null {
@@ -53,22 +52,22 @@ export default function ComplianceForm({ kraPin, companyRegNo, billingEmail }: P
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-xs text-zinc-400 mb-1.5">KRA PIN</label>
+    <div>
+      <div className="mb-3">
+        <label className="form-label text-muted small">KRA PIN</label>
         <Input
           type="text"
           value={pin}
           onChange={(e) => { setPin(e.target.value.toUpperCase()); setMsg(null); }}
           placeholder="A123456789B"
           maxLength={11}
-          className="font-mono tracking-widest"
+          className="font-monospace"
         />
-        <p className="mt-1 text-xs text-zinc-600">Format: one letter + nine digits + one letter (e.g. A123456789B)</p>
+        <div className="form-text">Format: one letter + nine digits + one letter (e.g. A123456789B)</div>
       </div>
 
-      <div>
-        <label className="block text-xs text-zinc-400 mb-1.5">Company Registration No.</label>
+      <div className="mb-3">
+        <label className="form-label text-muted small">Company Registration No.</label>
         <Input
           type="text"
           value={regNo}
@@ -76,11 +75,11 @@ export default function ComplianceForm({ kraPin, companyRegNo, billingEmail }: P
           placeholder="PVT-123456"
           maxLength={100}
         />
-        <p className="mt-1 text-xs text-zinc-600">Appears on invoices. As filed with the Registrar of Companies.</p>
+        <div className="form-text">Appears on invoices. As filed with the Registrar of Companies.</div>
       </div>
 
-      <div>
-        <label className="block text-xs text-zinc-400 mb-1.5">Billing Email</label>
+      <div className="mb-3">
+        <label className="form-label text-muted small">Billing Email</label>
         <Input
           type="email"
           value={billing}
@@ -88,11 +87,11 @@ export default function ComplianceForm({ kraPin, companyRegNo, billingEmail }: P
           placeholder="billing@yourcompany.co.ke"
           maxLength={200}
         />
-        <p className="mt-1 text-xs text-zinc-600">Invoices and payment receipts are sent here.</p>
+        <div className="form-text">Invoices and payment receipts are sent here.</div>
       </div>
 
       {msg && (
-        <p className={`text-xs ${msg.ok ? "text-amber-400" : "text-red-400"}`}>{msg.text}</p>
+        <p className={`small mb-3 ${msg.ok ? "text-warning" : "text-danger"}`}>{msg.text}</p>
       )}
 
       <Button onClick={save} loading={saving} variant="outline" size="sm">

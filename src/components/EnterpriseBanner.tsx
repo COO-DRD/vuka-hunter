@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { X, Sparkles, CalendarDays } from "lucide-react";
+import { IconX as X, IconSparkles as Sparkles, IconCalendar as CalendarDays } from "@tabler/icons-react";
 
 const DISMISSED_KEY = "hunter_enterprise_banner_dismissed";
 const DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days

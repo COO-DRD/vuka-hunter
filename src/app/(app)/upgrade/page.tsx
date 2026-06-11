@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Zap, Shield, Check, ArrowRight, Loader2, AlertTriangle, CheckCircle2, Phone, FileText } from "lucide-react";
+import {
+  IconBolt as Zap, IconShieldCheck as Shield, IconCheck as Check, IconArrowRight as ArrowRight,
+  IconLoader2 as Loader2, IconAlertTriangle as AlertTriangle, IconCircleCheck as CheckCircle2,
+  IconPhone as Phone, IconFileText as FileText,
+} from "@tabler/icons-react";
 import { Input } from "@/components/ui/input";
 
 const PLAN = {

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
-import { RotateCcw, ChevronLeft, Phone, MessageCircle } from "lucide-react";
+import { IconRotate as RotateCcw, IconChevronLeft as ChevronLeft, IconPhone as Phone, IconMessageCircle as MessageCircle } from "@tabler/icons-react";
 
 type Stage = "call" | "qualify" | "pitch" | "close" | "objection" | "action" | "booked" | "exit";
 type GuideMode = "call" | "whatsapp";

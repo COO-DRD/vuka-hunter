@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useState } from "react";
-import { Moon, Sun } from "lucide-react";
+import { IconMoon as Moon, IconSun as Sun } from "@tabler/icons-react";
 
 type Theme = "light" | "dark";
 

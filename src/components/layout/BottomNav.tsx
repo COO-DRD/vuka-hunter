@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Search, Users, GitBranch, Settings } from "lucide-react";
+import { IconLayoutDashboard as LayoutDashboard, IconSearch as Search, IconUsers as Users, IconGitBranch as GitBranch, IconSettings as Settings } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
