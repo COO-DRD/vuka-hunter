@@ -10,7 +10,6 @@ import { UpgradeRequestActions } from "./UpgradeRequestActions";
 
 const ADMIN_EMAILS = new Set(["ian.dullu@akamom.org", "dr.dullu@gmail.com"]);
 
-// ── data fetching ──────────────────────────────────────────────────────────
 
 async function getAnalytics() {
   const db = createSupabaseServiceClient();
@@ -92,7 +91,6 @@ async function getAnalytics() {
   };
 }
 
-// ── sub-components ─────────────────────────────────────────────────────────
 
 function Sparkline({ days }: { days: { date: string; count: number }[] }) {
   const max = Math.max(...days.map((d) => d.count), 1);
@@ -117,7 +115,6 @@ function Sparkline({ days }: { days: { date: string; count: number }[] }) {
   );
 }
 
-// ── page ──────────────────────────────────────────────────────────────────
 
 export default async function AdminPage() {
   const user = await requireUser();

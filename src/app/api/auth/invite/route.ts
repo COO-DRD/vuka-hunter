@@ -85,8 +85,7 @@ export async function POST(req: NextRequest) {
       status: "invited",
     });
 
-    // Log the invite URL for now (in production you'd send this via a transactional email service)
-    console.log(`[invite] ${email} invite URL: ${inviteUrl}`);
+    // TODO: send inviteUrl via transactional email
   }
 
   return NextResponse.json({ results });
