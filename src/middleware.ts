@@ -8,6 +8,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks(.*)",
   "/api/workshop",
   "/api/billing/configured",
+  "/api/billing/verify(.*)",
   "/api/health",
   "/api/scrape(.*)",
   "/api/leads(.*)",
@@ -18,18 +19,10 @@ const isPublicRoute = createRouteMatcher([
   "/terms",
   "/workshop",
   "/",
-  "/dashboard(.*)",
-  "/discover(.*)",
-  "/leads(.*)",
-  "/pipeline(.*)",
-  "/import(.*)",
-  "/onboarding(.*)",
-  "/settings(.*)",
-  "/upgrade(.*)",
 ]);
 
 // Pages search engines are allowed to index
-const isIndexableRoute = createRouteMatcher(["/", "/workshop", "/terms"]);
+const isIndexableRoute = createRouteMatcher(["/", "/workshop", "/terms", "/sign-in(.*)", "/sign-up(.*)"]);
 
 const ADMIN_ONLY_PATHS = [
   "/settings",
