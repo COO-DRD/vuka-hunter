@@ -1,4 +1,4 @@
-import { TablerNavbar } from "@/components/layout/TablerNavbar";
+import { AppShell } from "@/components/layout/AppShell";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { getUser, resolveOrgId } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
@@ -28,12 +28,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <>
-      <TablerNavbar email={email} isAdmin={isAdmin} plan={plan} />
-      <div className="page-wrapper">
-        <div className="page-body">
-          {children}
-        </div>
-      </div>
+      <AppShell email={email} plan={plan} isAdmin={isAdmin}>
+        {children}
+      </AppShell>
       <InstallPrompt />
     </>
   );
