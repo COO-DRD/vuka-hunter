@@ -2,9 +2,9 @@ import { requireUser } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import {
-  IconShieldCheck as Shield, IconUsers as Users, IconBolt as Zap, IconTarget as Target,
-  IconMessageCircle as MessageSquare, IconAlertTriangle as AlertTriangle,
-  IconCalendar as CalendarDays, IconTrendingUp as TrendingUp, IconReceipt as Receipt,
+  IconShieldCheck, IconUsers, IconTarget,
+  IconMessageCircle, IconAlertTriangle,
+  IconCalendar, IconTrendingUp, IconReceipt,
 } from "@tabler/icons-react";
 import { UpgradeRequestActions } from "./UpgradeRequestActions";
 
@@ -31,8 +31,7 @@ async function getAnalytics() {
     { count: workshopCount },
   ] = await Promise.all([
     db.from("hunter_orgs").select("*", { count: "exact", head: true }),
-    db.from("hunter_events").select("org_id", { count: "exact", head: true })
-      .gte("created_at", d30),
+    db.from("hunter_events").select("org_id", { count: "exact", head: true }).gte("created_at", d30),
     Promise.resolve({ data: null }),
     db.from("hunter_events").select("event_type,created_at").gte("created_at", d14),
     db.from("hunter_events").select("org_id").gte("created_at", d30),
@@ -49,13 +48,11 @@ async function getAnalytics() {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  // Aggregate event counts by type
   const byType: Record<string, number> = { scrape: 0, enrich: 0, score: 0, opener: 0 };
   if (dailyEvents) {
     for (const e of dailyEvents) byType[e.event_type as string] = (byType[e.event_type as string] ?? 0) + 1;
   }
 
-  // Build 14-day sparkline: day → count
   const byDay: Record<string, number> = {};
   if (dailyEvents) {
     for (const e of dailyEvents) {
@@ -70,12 +67,10 @@ async function getAnalytics() {
     sparkDays.push({ date: key, count: byDay[key] ?? 0 });
   }
 
-  // Top users by event count (last 30d)
   const orgCounts: Record<string, number> = {};
   if (topUsers) for (const e of topUsers) orgCounts[e.org_id as string] = (orgCounts[e.org_id as string] ?? 0) + 1;
   const topOrgIds = Object.entries(orgCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
-  // Fetch org names for top users
   let orgNames: Record<string, string> = {};
   if (topOrgIds.length > 0) {
     const { data: orgs } = await db.from("hunter_orgs").select("id,name").in("id", topOrgIds.map(([id]) => id));
@@ -97,55 +92,27 @@ async function getAnalytics() {
   };
 }
 
-// ── components ────────────────────────────────────────────────────────────
-
-function StatCard({ icon: Icon, label, value, sub, color = "text-stone-400" }: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: number | string;
-  sub?: string;
-  color?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] shadow-sm shadow-black/[0.04] p-4 space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-stone-500">{label}</span>
-        <Icon className={`h-4 w-4 ${color}`} />
-      </div>
-      <p className="text-2xl font-black tabular-nums text-stone-900">{value}</p>
-      {sub && <p className="text-xs text-stone-400">{sub}</p>}
-    </div>
-  );
-}
+// ── sub-components ─────────────────────────────────────────────────────────
 
 function Sparkline({ days }: { days: { date: string; count: number }[] }) {
   const max = Math.max(...days.map((d) => d.count), 1);
   return (
-    <div className="flex items-end gap-0.5 h-10">
+    <div className="d-flex align-items-end gap-1" style={{ height: 40 }}>
       {days.map(({ date, count }) => (
-        <div key={date} className="flex-1 flex flex-col items-center gap-0.5 group relative">
+        <div key={date} className="flex-fill d-flex align-items-end" style={{ height: "100%" }}>
           <div
-            className="w-full rounded-sm bg-amber-500/60 group-hover:bg-amber-500 transition-colors min-h-[2px]"
-            style={{ height: `${Math.max((count / max) * 100, 4)}%` }}
+            style={{
+              width: "100%",
+              height: `${Math.max((count / max) * 100, count > 0 ? 4 : 0)}%`,
+              background: "var(--tblr-primary)",
+              opacity: 0.7,
+              borderRadius: "2px 2px 0 0",
+              transition: "opacity 0.15s",
+            }}
+            title={`${date.slice(5)}: ${count}`}
           />
-          <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] bg-stone-800 text-stone-100 px-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none z-10">
-            {date.slice(5)} · {count}
-          </span>
         </div>
       ))}
-    </div>
-  );
-}
-
-function EventBar({ label, count, max, color }: { label: string; count: number; max: number; color: string }) {
-  const pct = max > 0 ? (count / max) * 100 : 0;
-  return (
-    <div className="flex items-center gap-3">
-      <span className="text-xs text-stone-500 w-14 shrink-0 font-mono capitalize">{label}</span>
-      <div className="flex-1 h-1.5 rounded-full bg-stone-100 overflow-hidden">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
-      </div>
-      <span className="text-xs font-mono text-stone-500 w-8 text-right">{count}</span>
     </div>
   );
 }
@@ -158,106 +125,155 @@ export default async function AdminPage() {
 
   const a = await getAnalytics();
   const totalEvents14d = a.sparkDays.reduce((s, d) => s + d.count, 0);
-  const maxEventType = Math.max(...Object.values(a.byType));
-  const maxTopUser = a.topOrgIds[0]?.count ?? 1;
+  const maxEventType   = Math.max(...Object.values(a.byType));
+  const maxTopUser     = a.topOrgIds[0]?.count ?? 1;
+
+  const statCards = [
+    { icon: IconUsers,      label: "Total orgs",       value: a.totalOrgs,    sub: "all time",              color: "blue"   },
+    { icon: IconTrendingUp, label: "Active orgs",       value: a.activeOrgs,   sub: "had event in 30d",     color: "green"  },
+    { icon: IconTarget,     label: "Total leads",       value: a.totalLeads,   sub: `${a.scoredLeads} scored`, color: "purple" },
+    { icon: IconCalendar,   label: "Workshop signups",  value: a.workshopCount, sub: "all time",             color: "orange" },
+  ];
 
   return (
-    <div className="p-6 max-w-5xl space-y-8">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 border border-red-200">
-          <Shield className="h-4 w-4 text-red-500" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-stone-900">Analytics</h1>
-          <p className="text-xs text-stone-500">Last 30 days unless noted</p>
+    <div className="container-xl">
+      <div className="page-header d-print-none">
+        <div className="row g-2 align-items-center">
+          <div className="col-auto">
+            <span className="avatar bg-danger-lt text-danger">
+              <IconShieldCheck size={18} stroke={1.5} />
+            </span>
+          </div>
+          <div className="col">
+            <h2 className="page-title">Admin</h2>
+            <div className="text-muted mt-1 small">Last 30 days unless noted</div>
+          </div>
         </div>
       </div>
 
       {/* Overview stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard icon={Users}         label="Total orgs"       value={a.totalOrgs}    sub="all time"              color="text-blue-500" />
-        <StatCard icon={TrendingUp}    label="Active orgs"      value={a.activeOrgs}   sub="had an event in 30d"  color="text-green-600" />
-        <StatCard icon={Target}        label="Total leads"      value={a.totalLeads}   sub={`${a.scoredLeads} scored`} color="text-purple-500" />
-        <StatCard icon={CalendarDays}  label="Workshop signups" value={a.workshopCount} sub="all time"             color="text-orange-500" />
+      <div className="row g-3 mb-4">
+        {statCards.map(({ icon: Icon, label, value, sub, color }) => (
+          <div key={label} className="col-6 col-lg-3">
+            <div className="card card-sm">
+              <div className="card-body">
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <div className="text-muted small">{label}</div>
+                  <span className={`avatar avatar-sm bg-${color}-lt text-${color}`}>
+                    <Icon size={14} stroke={1.5} />
+                  </span>
+                </div>
+                <div className="h1 mb-0">{value.toLocaleString()}</div>
+                {sub && <div className="text-muted" style={{ fontSize: "0.72rem" }}>{sub}</div>}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Activity sparkline + event breakdown */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] shadow-sm shadow-black/[0.04] p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-stone-600">Events · last 14 days</p>
-            <span className="text-xs font-mono text-stone-400">{totalEvents14d} total</span>
-          </div>
-          <Sparkline days={a.sparkDays} />
-          <div className="flex justify-between text-[10px] text-stone-400 font-mono pt-1">
-            <span>{a.sparkDays[0]?.date.slice(5)}</span>
-            <span>{a.sparkDays[13]?.date.slice(5)}</span>
+      {/* Sparkline + event breakdown */}
+      <div className="row g-4 mb-4">
+        <div className="col-12 col-lg-6">
+          <div className="card h-100">
+            <div className="card-header">
+              <h3 className="card-title">Events · last 14 days</h3>
+              <div className="card-options">
+                <span className="text-muted small font-monospace">{totalEvents14d} total</span>
+              </div>
+            </div>
+            <div className="card-body">
+              <Sparkline days={a.sparkDays} />
+              <div className="d-flex justify-content-between mt-2" style={{ fontSize: "0.68rem" }}>
+                <span className="text-muted font-monospace">{a.sparkDays[0]?.date.slice(5)}</span>
+                <span className="text-muted font-monospace">{a.sparkDays[13]?.date.slice(5)}</span>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] shadow-sm shadow-black/[0.04] p-4 space-y-3">
-          <p className="text-xs font-semibold text-stone-600">By event type · last 14d</p>
-          <div className="space-y-2.5 pt-1">
-            <EventBar label="scrape"  count={a.byType.scrape}  max={maxEventType} color="bg-green-500" />
-            <EventBar label="enrich"  count={a.byType.enrich}  max={maxEventType} color="bg-blue-500" />
-            <EventBar label="score"   count={a.byType.score}   max={maxEventType} color="bg-purple-500" />
-            <EventBar label="opener"  count={a.byType.opener}  max={maxEventType} color="bg-orange-500" />
+        <div className="col-12 col-lg-6">
+          <div className="card h-100">
+            <div className="card-header">
+              <h3 className="card-title">By event type · last 14d</h3>
+            </div>
+            <div className="card-body">
+              {[
+                { label: "scrape",  count: a.byType.scrape,  color: "bg-success" },
+                { label: "enrich",  count: a.byType.enrich,  color: "bg-info"    },
+                { label: "score",   count: a.byType.score,   color: "bg-purple"  },
+                { label: "opener",  count: a.byType.opener,  color: "bg-warning" },
+              ].map(({ label, count, color }) => {
+                const pct = maxEventType > 0 ? (count / maxEventType) * 100 : 0;
+                return (
+                  <div key={label} className="d-flex align-items-center gap-3 mb-2">
+                    <span className="text-muted small font-monospace text-capitalize" style={{ width: 56 }}>{label}</span>
+                    <div className="flex-fill progress progress-sm">
+                      <div className={`progress-bar ${color}`} style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className="text-muted small font-monospace" style={{ width: 28, textAlign: "right" }}>{count}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Top users */}
       {a.topOrgIds.length > 0 && (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] shadow-sm shadow-black/[0.04] p-4 space-y-3">
-          <p className="text-xs font-semibold text-stone-600">Most active users · last 30d</p>
-          <div className="space-y-2">
-            {a.topOrgIds.map(({ id, name, count }) => (
-              <div key={id} className="flex items-center gap-3">
-                <span className="text-xs text-stone-600 w-36 truncate shrink-0">{name}</span>
-                <div className="flex-1 h-1.5 rounded-full bg-stone-100 overflow-hidden">
-                  <div className="h-full rounded-full bg-amber-500" style={{ width: `${(count / maxTopUser) * 100}%` }} />
+        <div className="card mb-4">
+          <div className="card-header">
+            <h3 className="card-title">Most active users · last 30d</h3>
+          </div>
+          <div className="card-body">
+            {a.topOrgIds.map(({ id, name, count }) => {
+              const pct = (count / maxTopUser) * 100;
+              return (
+                <div key={id} className="d-flex align-items-center gap-3 mb-2">
+                  <span className="text-muted small text-truncate" style={{ width: 140 }}>{name}</span>
+                  <div className="flex-fill progress progress-sm">
+                    <div className="progress-bar bg-primary" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="text-muted small font-monospace" style={{ width: 28, textAlign: "right" }}>{count}</span>
                 </div>
-                <span className="text-xs font-mono text-stone-400 w-8 text-right">{count}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* Upgrade requests */}
       {a.upgradeRequests.length > 0 && (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] shadow-sm shadow-black/[0.04] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
-            <p className="text-xs font-semibold text-stone-600 flex items-center gap-2">
-              <Receipt className="h-3.5 w-3.5 text-amber-500" />
+        <div className="card mb-4">
+          <div className="card-header">
+            <h3 className="card-title d-flex align-items-center gap-2">
+              <IconReceipt size={16} stroke={1.5} className="text-primary" />
               Upgrade requests
-            </p>
-            <span className="text-xs font-mono text-stone-400">
-              {a.upgradeRequests.filter((r: {status:string}) => r.status === "pending").length} pending
-            </span>
+            </h3>
+            <div className="card-options">
+              <span className="text-muted small">
+                {a.upgradeRequests.filter((r: {status:string}) => r.status === "pending").length} pending
+              </span>
+            </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+          <div className="table-responsive">
+            <table className="table table-vcenter table-sm card-table">
               <thead>
-                <tr className="border-b border-[var(--border)]">
-                  {["Ref","Plan","Email","Phone","Note","Requested","Actions"].map((h) => (
-                    <th key={h} className="text-left px-4 py-2 text-stone-400 font-medium whitespace-nowrap">{h}</th>
+                <tr>
+                  {["Ref","Plan","Email","Phone","Note","Requested",""].map((h) => (
+                    <th key={h} className="text-muted small">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {a.upgradeRequests.map((r: {id:string;plan:string;email:string;phone:string|null;note:string|null;status:string;ref_number:string;created_at:string}) => (
-                  <tr key={r.id} className="border-b border-[var(--border)] hover:bg-stone-50">
-                    <td className="px-4 py-2.5 font-mono text-amber-600 font-semibold whitespace-nowrap">{r.ref_number}</td>
-                    <td className="px-4 py-2.5 text-stone-800 capitalize">{r.plan}</td>
-                    <td className="px-4 py-2.5 text-stone-600 max-w-[160px] truncate">{r.email}</td>
-                    <td className="px-4 py-2.5 text-stone-500">{r.phone ?? "—"}</td>
-                    <td className="px-4 py-2.5 text-stone-500 max-w-[200px] truncate" title={r.note ?? ""}>{r.note ?? "—"}</td>
-                    <td className="px-4 py-2.5 text-stone-400 font-mono whitespace-nowrap">{r.created_at.slice(0, 16).replace("T", " ")}</td>
-                    <td className="px-4 py-2.5">
-                      <UpgradeRequestActions id={r.id} initialStatus={r.status} />
-                    </td>
+                  <tr key={r.id}>
+                    <td className="font-monospace text-primary fw-semibold small">{r.ref_number}</td>
+                    <td className="text-capitalize small">{r.plan}</td>
+                    <td className="text-muted small" style={{ maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis" }}>{r.email}</td>
+                    <td className="text-muted small">{r.phone ?? "—"}</td>
+                    <td className="text-muted small" style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }} title={r.note ?? ""}>{r.note ?? "—"}</td>
+                    <td className="text-muted font-monospace small">{r.created_at.slice(0, 16).replace("T", " ")}</td>
+                    <td><UpgradeRequestActions id={r.id} initialStatus={r.status} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -268,31 +284,33 @@ export default async function AdminPage() {
 
       {/* Workshop registrations */}
       {a.workshopRegs.length > 0 && (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] shadow-sm shadow-black/[0.04] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
-            <p className="text-xs font-semibold text-stone-600 flex items-center gap-2">
-              <CalendarDays className="h-3.5 w-3.5 text-orange-500" />
+        <div className="card mb-4">
+          <div className="card-header">
+            <h3 className="card-title d-flex align-items-center gap-2">
+              <IconCalendar size={16} stroke={1.5} className="text-orange" />
               Workshop registrations
-            </p>
-            <span className="text-xs font-mono text-stone-400">{a.workshopCount} total</span>
+            </h3>
+            <div className="card-options">
+              <span className="text-muted small">{a.workshopCount} total</span>
+            </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+          <div className="table-responsive">
+            <table className="table table-vcenter table-sm card-table">
               <thead>
-                <tr className="border-b border-[var(--border)]">
+                <tr>
                   {["Name","Email","Company","Role","Signed up"].map((h) => (
-                    <th key={h} className="text-left px-4 py-2 text-stone-400 font-medium">{h}</th>
+                    <th key={h} className="text-muted small">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {a.workshopRegs.map((r: {name:string;email:string;company:string|null;role:string|null;created_at:string}, i: number) => (
-                  <tr key={i} className="border-b border-[var(--border)] hover:bg-stone-50">
-                    <td className="px-4 py-2.5 text-stone-800 font-medium">{r.name}</td>
-                    <td className="px-4 py-2.5 text-stone-600">{r.email}</td>
-                    <td className="px-4 py-2.5 text-stone-500">{r.company ?? "—"}</td>
-                    <td className="px-4 py-2.5 text-stone-500">{r.role ?? "—"}</td>
-                    <td className="px-4 py-2.5 text-stone-400 font-mono">{r.created_at.slice(0, 10)}</td>
+                  <tr key={i}>
+                    <td className="fw-medium small">{r.name}</td>
+                    <td className="text-muted small">{r.email}</td>
+                    <td className="text-muted small">{r.company ?? "—"}</td>
+                    <td className="text-muted small">{r.role ?? "—"}</td>
+                    <td className="text-muted font-monospace small">{r.created_at.slice(0, 10)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -302,28 +320,30 @@ export default async function AdminPage() {
       )}
 
       {/* Recent errors */}
-      {a.recentErrors.length > 0 && (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] shadow-sm shadow-black/[0.04] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2">
-            <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />
-            <p className="text-xs font-semibold text-stone-600">Recent errors</p>
+      {a.recentErrors.length > 0 ? (
+        <div className="card">
+          <div className="card-header">
+            <h3 className="card-title d-flex align-items-center gap-2">
+              <IconAlertTriangle size={16} stroke={1.5} className="text-warning" />
+              Recent errors
+            </h3>
           </div>
-          <div className="divide-y divide-[var(--border)]">
+          <div className="list-group list-group-flush">
             {a.recentErrors.map((e: {route:string;message:string;created_at:string}, i: number) => (
-              <div key={i} className="px-4 py-3 flex items-start gap-3">
-                <span className="text-[10px] font-mono text-stone-400 shrink-0 mt-0.5">{e.created_at.slice(0, 16).replace("T", " ")}</span>
-                <span className="text-xs font-mono text-red-500 shrink-0">{e.route}</span>
-                <span className="text-xs text-stone-500 truncate">{e.message}</span>
+              <div key={i} className="list-group-item d-flex align-items-start gap-3">
+                <span className="text-muted font-monospace shrink-0" style={{ fontSize: "0.68rem", marginTop: 2 }}>
+                  {e.created_at.slice(0, 16).replace("T", " ")}
+                </span>
+                <span className="text-danger font-monospace small shrink-0">{e.route}</span>
+                <span className="text-muted small text-truncate">{e.message}</span>
               </div>
             ))}
           </div>
         </div>
-      )}
-
-      {a.recentErrors.length === 0 && (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 flex items-center gap-2">
-          <MessageSquare className="h-3.5 w-3.5 text-green-600" />
-          <p className="text-xs text-stone-500">No errors in the log. Clean slate.</p>
+      ) : (
+        <div className="alert alert-success d-flex align-items-center gap-2">
+          <IconMessageCircle size={16} stroke={1.5} />
+          <span className="small">No errors in the log. Clean slate.</span>
         </div>
       )}
     </div>

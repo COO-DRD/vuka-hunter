@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Zap, RefreshCw, Copy, Check, Star, Phone, Mail, Globe,
-  MapPin, ExternalLink, CheckCircle, AlertCircle, Clock,
-  MessageCircle, Send, ShieldCheck, Shield, Award,
-  Link2, Bot,
-} from "lucide-react";
+  IconBolt, IconRefresh, IconCopy, IconCheck, IconStar, IconPhone, IconMail, IconWorld,
+  IconMapPin, IconExternalLink, IconCircleCheck, IconAlertCircle, IconClock,
+  IconMessageCircle, IconSend, IconShieldCheck, IconShield, IconAward,
+  IconLink, IconRobot,
+} from "@tabler/icons-react";
 import { toast } from "sonner";
 import StageSelector from "@/components/leads/StageSelector";
 import { LeadFeedbackPanel } from "@/components/leads/LeadFeedbackPanel";
@@ -158,7 +158,6 @@ function IntelPanel({
 
   const isDone = enrichStatus === "done";
 
-  // Deduplicate phones
   const allPhones = [
     ...(phonesFound ?? []),
     ...(phone && !(phonesFound ?? []).includes(phone) ? [phone] : []),
@@ -205,9 +204,11 @@ function IntelPanel({
           <div className="flex items-center gap-2 mb-1">
             <div className="flex items-center gap-0.5">
               {[1, 2, 3, 4, 5].map((i) => (
-                <Star
+                <IconStar
                   key={i}
-                  className={`h-3 w-3 ${i <= Math.round(googleRating) ? "text-yellow-400 fill-yellow-400" : "text-stone-300"}`}
+                  size={12}
+                  fill={i <= Math.round(googleRating) ? "currentColor" : "none"}
+                  className={i <= Math.round(googleRating) ? "text-yellow-400" : "text-stone-300"}
                 />
               ))}
             </div>
@@ -219,14 +220,14 @@ function IntelPanel({
           <p className="text-xs capitalize mb-1" style={{ color: "var(--text-2)" }}>{vertical}</p>
           {address && (
             <p className="text-[11px] flex items-start gap-1" style={{ color: "var(--text-3)" }}>
-              <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
+              <IconMapPin size={12} className="shrink-0 mt-0.5" />
               {address}
             </p>
           )}
           {mapsUrl && (
             <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-[11px] text-blue-500 hover:text-blue-600 mt-1.5">
-              Open in Google Maps <ExternalLink className="h-2.5 w-2.5" />
+              Open in Google Maps <IconExternalLink size={10} />
             </a>
           )}
         </div>
@@ -238,13 +239,13 @@ function IntelPanel({
           <Divider />
           <SectionLabel>Website</SectionLabel>
           <div className="flex items-center gap-1.5">
-            {hasSsl === true  && <ShieldCheck className="h-3.5 w-3.5 text-green-500 shrink-0" />}
-            {hasSsl === false && <Shield className="h-3.5 w-3.5 text-red-400 shrink-0" />}
-            {hasSsl == null   && <Globe className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--text-3)" }} />}
+            {hasSsl === true  && <IconShieldCheck size={14} className="text-green-500 shrink-0" />}
+            {hasSsl === false && <IconShield size={14} className="text-red-400 shrink-0" />}
+            {hasSsl == null   && <IconWorld size={14} className="shrink-0" style={{ color: "var(--text-3)" }} />}
             <a href={website} target="_blank" rel="noopener noreferrer"
               className="text-xs text-blue-500 hover:text-blue-600 truncate flex items-center gap-1 min-w-0">
               {hostname(website)}
-              <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />
+              <IconExternalLink size={10} className="shrink-0 opacity-60" />
             </a>
           </div>
         </>
@@ -258,13 +259,13 @@ function IntelPanel({
           <div className="space-y-1.5">
             {allPhones.map((p, i) => (
               <div key={i} className="flex items-center gap-1.5">
-                <Phone className="h-3 w-3 shrink-0" style={{ color: "var(--text-3)" }} />
+                <IconPhone size={12} className="shrink-0" style={{ color: "var(--text-3)" }} />
                 <a href={`tel:${p}`} className="text-xs hover:underline" style={{ color: "var(--text-1)" }}>{p}</a>
               </div>
             ))}
             {whatsappNum && (
               <div className="flex items-center gap-1.5">
-                <MessageCircle className="h-3 w-3 shrink-0 text-green-500" />
+                <IconMessageCircle size={12} className="shrink-0 text-green-500" />
                 <a
                   href={`https://wa.me/${whatsappNum.replace(/\D/g, "")}`}
                   target="_blank" rel="noopener noreferrer"
@@ -276,7 +277,7 @@ function IntelPanel({
             )}
             {allEmails.map((e, i) => (
               <div key={i} className="flex items-center gap-1.5">
-                <Mail className="h-3 w-3 shrink-0" style={{ color: "var(--text-3)" }} />
+                <IconMail size={12} className="shrink-0" style={{ color: "var(--text-3)" }} />
                 <a href={`mailto:${e}`} className="text-xs truncate hover:underline" style={{ color: "var(--text-1)" }}>{e}</a>
               </div>
             ))}
@@ -299,7 +300,7 @@ function IntelPanel({
                 className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors hover:opacity-80"
                 style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-2)" }}
               >
-                <Link2 className="h-2.5 w-2.5" />
+                <IconLink size={10} />
                 {label}
               </a>
             ))}
@@ -360,7 +361,7 @@ function IntelPanel({
               {certifications.map((c) => (
                 <span key={c} className="inline-flex items-center gap-1 text-[11px]"
                   style={{ color: "var(--text-2)" }}>
-                  <Award className="h-2.5 w-2.5 text-amber-500" />
+                  <IconAward size={10} className="text-amber-500" />
                   {c}
                 </span>
               ))}
@@ -473,7 +474,7 @@ function IntelPanel({
             className="rounded-lg p-4 text-center"
             style={{ background: "var(--bg-elevated)", border: "1px dashed var(--border)" }}
           >
-            <Bot className="h-7 w-7 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
+            <IconRobot size={28} className="mx-auto mb-2" style={{ color: "var(--text-3)" }} />
             <p className="text-xs font-medium mb-1" style={{ color: "var(--text-1)" }}>
               Enrich for full intel
             </p>
@@ -481,7 +482,7 @@ function IntelPanel({
               Website crawl reveals tech stack, emails, social profiles, staff signals & more
             </p>
             <Button size="sm" variant="outline" onClick={onEnrich} loading={enriching} className="w-full">
-              <RefreshCw className="h-3.5 w-3.5" /> Enrich Now
+              <IconRefresh size={14} /> Enrich Now
             </Button>
           </div>
         </>
@@ -542,7 +543,7 @@ function SequenceDay({ day, label, wa, emailSubject, email }: {
         </p>
         {content && (
           <button onClick={copy} className="absolute top-2.5 right-2.5 transition-colors" style={{ color: "var(--text-3)" }}>
-            {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? <IconCheck size={14} className="text-green-500" /> : <IconCopy size={14} />}
           </button>
         )}
       </div>
@@ -572,7 +573,7 @@ function ReferralCopyButton() {
       onClick={copy}
       className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors bg-amber-500 hover:bg-amber-400 text-black"
     >
-      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
       {copied ? "Copied!" : "Copy referral link"}
     </button>
   );
@@ -639,12 +640,8 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
   const website     = lead.website                    as string | null;
   const address     = lead.address                    as string | null;
   const mapsUrl     = lead.google_maps_url            as string | null;
-  const techStack   = liveLead.tech_stack                 as string[] | null;
-  const hasBooking  = liveLead.has_booking_system         as boolean | null;
-  const hasChat     = liveLead.has_live_chat              as boolean | null;
   const enrichStatus= (liveLead.enrichment_status         as string) ?? "pending";
 
-  // Gaps for the call guide (gap:* signals from enrichment)
   const callGuideGaps = useMemo(() => {
     const vSig = liveLead.vertical_signals as string[] | null;
     const pSig = liveLead.pain_signals     as string[] | null;
@@ -785,7 +782,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
           certifications:          (e.certifications as string[])?.length > 0 ? e.certifications : null,
         }));
         toast.success("Lead enriched");
-        router.refresh(); // bust Next.js router cache so enrichment persists on re-navigation
+        router.refresh();
       } else {
         setLiveLead((prev) => ({ ...prev, enrichment_status: "failed" }));
         toast.error((json as { error?: string }).error ?? "Enrichment failed");
@@ -888,7 +885,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
               {googleRating != null && (
                 <span className="flex items-center gap-1">
                   <span>·</span>
-                  <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                  <IconStar size={12} fill="currentColor" className="text-yellow-400" />
                   {googleRating} ({reviewCount?.toLocaleString()})
                 </span>
               )}
@@ -906,7 +903,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
             <CardContent className="space-y-3">
               {phone && (
                 <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 shrink-0" style={{ color: "var(--text-3)" }} />
+                  <IconPhone size={16} className="shrink-0" style={{ color: "var(--text-3)" }} />
                   <a href={`tel:${phone}`} className="text-sm hover:underline" style={{ color: "var(--text-2)" }}>
                     {phone}
                   </a>
@@ -914,7 +911,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
               )}
               {(emailsFound?.length || email) && (
                 <div className="flex items-start gap-2">
-                  <Mail className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "var(--text-3)" }} />
+                  <IconMail size={16} className="shrink-0 mt-0.5" style={{ color: "var(--text-3)" }} />
                   <div className="min-w-0">
                     {email && <p className="text-sm truncate" style={{ color: "var(--text-2)" }}>{email}</p>}
                     {emailsFound?.filter((e) => e !== email).map((e) => (
@@ -925,26 +922,26 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
               )}
               {website && (
                 <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 shrink-0" style={{ color: "var(--text-3)" }} />
+                  <IconWorld size={16} className="shrink-0" style={{ color: "var(--text-3)" }} />
                   <a
                     href={website} target="_blank" rel="noopener noreferrer"
                     className="text-sm truncate flex items-center gap-1 hover:underline" style={{ color: "var(--text-2)" }}
                   >
                     {(() => { try { return new URL(website).hostname; } catch { return website; } })()}
-                    <ExternalLink className="h-3 w-3 opacity-50 shrink-0" />
+                    <IconExternalLink size={12} className="opacity-50 shrink-0" />
                   </a>
                 </div>
               )}
               {address && (
                 <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "var(--text-3)" }} />
+                  <IconMapPin size={16} className="shrink-0 mt-0.5" style={{ color: "var(--text-3)" }} />
                   <span className="text-sm" style={{ color: "var(--text-2)" }}>{address}</span>
                 </div>
               )}
               {mapsUrl && (
                 <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600">
-                  View on Maps <ExternalLink className="h-3 w-3" />
+                  View on Maps <IconExternalLink size={12} />
                 </a>
               )}
             </CardContent>
@@ -965,7 +962,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
             <CardContent>
               {scoring && !activeReasoning && (
                 <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-3)" }}>
-                  <Zap className="h-3.5 w-3.5 text-yellow-400 animate-pulse" /> Analysing…
+                  <IconBolt size={14} className="text-yellow-400 animate-pulse" /> Analysing…
                 </div>
               )}
               {activeReasoning && (
@@ -986,7 +983,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
               )}
               {!scoring && displayScore == null && !activeReasoning && (
                 <div className="text-center py-4">
-                  <Zap className="h-6 w-6 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
+                  <IconBolt size={24} className="mx-auto mb-2" style={{ color: "var(--text-3)" }} />
                   <p className="text-xs" style={{ color: "var(--text-3)" }}>Not scored yet</p>
                 </div>
               )}
@@ -999,18 +996,18 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
               <div className="flex items-center justify-between">
                 <CardTitle>{enrichStatus === "done" ? "Call Guide" : "Enrichment"}</CardTitle>
                 {enriching
-                  ? <RefreshCw className="h-4 w-4 animate-spin" style={{ color: "var(--text-3)" }} />
+                  ? <IconRefresh size={16} className="animate-spin" style={{ color: "var(--text-3)" }} />
                   : enrichStatus === "done"
-                    ? <CheckCircle className="h-4 w-4 text-green-500" />
+                    ? <IconCircleCheck size={16} className="text-green-500" />
                     : enrichStatus === "failed"
-                      ? <AlertCircle className="h-4 w-4 text-red-400" />
-                      : <Clock className="h-4 w-4" style={{ color: "var(--text-3)" }} />}
+                      ? <IconAlertCircle size={16} className="text-red-400" />
+                      : <IconClock size={16} style={{ color: "var(--text-3)" }} />}
               </div>
             </CardHeader>
             <CardContent>
               {enriching ? (
                 <div className="flex items-center gap-2 py-2 text-xs" style={{ color: "var(--text-3)" }}>
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Crawling website…
+                  <IconRefresh size={14} className="animate-spin" /> Crawling website…
                 </div>
               ) : enrichStatus === "done" ? (
                 <CallGuide
@@ -1020,7 +1017,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
                 />
               ) : enrichStatus === "failed" ? (
                 <div className="text-center py-4 space-y-2">
-                  <AlertCircle className="h-5 w-5 mx-auto text-red-400" />
+                  <IconAlertCircle size={20} className="mx-auto text-red-400" />
                   <p className="text-xs text-red-500">Enrichment failed</p>
                   <Button variant="ghost" size="sm" onClick={doEnrich} className="text-xs">
                     Retry
@@ -1049,10 +1046,10 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
               <CardTitle>Outreach</CardTitle>
               <div className="flex items-center gap-1.5">
                 <Button variant="outline" size="sm" onClick={doEnrich} loading={enriching}>
-                  <RefreshCw className="h-3.5 w-3.5" /> Enrich
+                  <IconRefresh size={14} /> Enrich
                 </Button>
                 <Button variant="outline" size="sm" onClick={doScore} loading={scoring}>
-                  <Zap className="h-3.5 w-3.5" /> Score
+                  <IconBolt size={14} /> Score
                 </Button>
                 <Button
                   size="sm"
@@ -1060,7 +1057,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
                   loading={generating}
                   className="bg-amber-500 hover:bg-amber-400 text-black font-semibold"
                 >
-                  <Zap className="h-3.5 w-3.5" />
+                  <IconBolt size={14} />
                   {hasOpeners ? "Regenerate" : "Generate"}
                 </Button>
               </div>
@@ -1072,8 +1069,8 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
             {(hasOpeners || isStreaming) && (
               <div className="flex gap-1 mb-4 p-1 rounded-lg w-fit" style={{ background: "var(--bg-elevated)" }}>
                 {([
-                  { id: "whatsapp" as Channel, icon: <MessageCircle className="h-3.5 w-3.5" />, label: "WhatsApp", sent: sentWa,   active: "bg-green-600" },
-                  { id: "email"    as Channel, icon: <Mail          className="h-3.5 w-3.5" />, label: "Email",    sent: sentEmail, active: "bg-blue-600"  },
+                  { id: "whatsapp" as Channel, icon: <IconMessageCircle size={14} />, label: "WhatsApp", sent: sentWa,   active: "bg-green-600" },
+                  { id: "email"    as Channel, icon: <IconMail           size={14} />, label: "Email",    sent: sentEmail, active: "bg-blue-600"  },
                 ] as { id: Channel; icon: React.ReactNode; label: string; sent: boolean; active: string }[]).map(({ id, icon, label, sent, active }) => (
                   <button
                     key={id}
@@ -1084,7 +1081,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
                     style={channel !== id ? { color: "var(--text-3)" } : {}}
                   >
                     {icon} {label}
-                    {sent && <Check className="h-3 w-3" />}
+                    {sent && <IconCheck size={12} />}
                   </button>
                 ))}
               </div>
@@ -1138,8 +1135,8 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
                   style={{ color: "var(--text-3)" }}
                 >
                   {copied
-                    ? <Check className="h-3.5 w-3.5 text-green-500" />
-                    : <Copy className="h-3.5 w-3.5" />}
+                    ? <IconCheck size={14} className="text-green-500" />
+                    : <IconCopy size={14} />}
                 </button>
               </div>
             ) : null}
@@ -1147,7 +1144,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
             {/* Generating placeholder */}
             {!hasOpeners && !isStreaming && (
               <div className="text-center py-8" style={{ color: "var(--text-3)" }}>
-                <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-40 animate-pulse" />
+                <IconMessageCircle size={32} className="mx-auto mb-2 opacity-40 animate-pulse" />
                 <p className="text-sm">
                   {generating ? "Writing personalised messages…" : "Generating messages for this business…"}
                 </p>
@@ -1165,7 +1162,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
                     channel === "whatsapp" ? "bg-green-600 hover:bg-green-500" : "bg-blue-600 hover:bg-blue-500"
                   } text-white`}
                 >
-                  <Send className="h-3.5 w-3.5" />
+                  <IconSend size={14} />
                   {channel === "whatsapp" ? "Open in WhatsApp" : "Open in Mail"}
                 </Button>
                 {channel === "whatsapp" && !phone && (
@@ -1221,13 +1218,13 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
                     onClick={doSequence}
                     loading={generatingSeq}
                   >
-                    <Zap className="h-3.5 w-3.5" />
+                    <IconBolt size={14} />
                     {generatingSeq ? "Generating…" : "Generate Day 3 & 7"}
                   </Button>
                 )}
                 {sequence && (
                   <Button size="sm" variant="outline" onClick={doSequence} loading={generatingSeq}>
-                    <RefreshCw className="h-3.5 w-3.5" /> Regenerate
+                    <IconRefresh size={14} /> Regenerate
                   </Button>
                 )}
               </div>
@@ -1240,7 +1237,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
               )}
               {generatingSeq && (
                 <div className="flex items-center gap-2 text-xs py-1" style={{ color: "var(--text-3)" }}>
-                  <Zap className="h-3.5 w-3.5 animate-pulse text-amber-500" /> Writing follow-ups…
+                  <IconBolt size={14} className="animate-pulse text-amber-500" /> Writing follow-ups…
                 </div>
               )}
               {sequence && (
@@ -1263,7 +1260,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
             className="rounded-xl border px-4 py-4 flex items-start gap-3"
             style={{ background: "var(--brand-dim)", borderColor: "var(--brand-glow)" }}
           >
-            <Zap className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+            <IconBolt size={16} className="text-amber-500 shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold mb-0.5" style={{ color: "var(--text-1)" }}>
                 First message sent. Know someone else building pipeline?

@@ -63,12 +63,12 @@ export const CITIES = [
 ];
 
 export const STAGES = [
-  { value: "new",        label: "New",        color: "bg-zinc-500" },
-  { value: "contacted",  label: "Contacted",  color: "bg-blue-500" },
-  { value: "replied",    label: "Replied",    color: "bg-yellow-500" },
-  { value: "qualified",  label: "Qualified",  color: "bg-purple-500" },
-  { value: "won",        label: "Won",        color: "bg-green-500" },
-  { value: "lost",       label: "Lost",       color: "bg-red-500" },
+  { value: "new",        label: "New",        color: "bg-secondary" },
+  { value: "contacted",  label: "Contacted",  color: "bg-info"      },
+  { value: "replied",    label: "Replied",    color: "bg-warning"   },
+  { value: "qualified",  label: "Qualified",  color: "bg-purple"    },
+  { value: "won",        label: "Won",        color: "bg-success"   },
+  { value: "lost",       label: "Lost",       color: "bg-danger"    },
 ];
 
 export const PLANS = {
@@ -77,17 +77,3 @@ export const PLANS = {
   pro:     { label: "Pro",     credits: 1000, price: 79 },
   agency:  { label: "Agency",  credits: 5000, price: 199 },
 };
-
-export function scoreColor(score: number | null) {
-  if (!score) return "text-zinc-400";
-  if (score >= 70) return "text-green-400";
-  if (score >= 40) return "text-yellow-400";
-  return "text-red-400";
-}
-
-export function scoreBg(score: number | null) {
-  if (!score) return "bg-zinc-800";
-  if (score >= 70) return "bg-green-900/40 border-green-700";
-  if (score >= 40) return "bg-yellow-900/40 border-yellow-700";
-  return "bg-red-900/40 border-red-700";
-}
