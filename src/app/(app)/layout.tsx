@@ -1,5 +1,4 @@
-import { TablerSidebar } from "@/components/layout/TablerSidebar";
-import { TablerHeader } from "@/components/layout/TablerHeader";
+import { TablerNavbar } from "@/components/layout/TablerNavbar";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { getUser, resolveOrgId } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
@@ -16,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     const db = createSupabaseServiceClient();
     const { data: org } = await db
       .from("hunter_orgs")
-      .select("onboarding_complete, account_type, subscribed_plan")
+      .select("onboarding_complete, subscribed_plan")
       .eq("id", orgId)
       .maybeSingle();
 
@@ -28,15 +27,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="page">
-      <TablerSidebar email={email} isAdmin={isAdmin} />
+    <>
+      <TablerNavbar email={email} isAdmin={isAdmin} plan={plan} />
       <div className="page-wrapper">
-        <TablerHeader email={email} plan={plan} />
         <div className="page-body">
           {children}
         </div>
       </div>
       <InstallPrompt />
-    </div>
+    </>
   );
 }

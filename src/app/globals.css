@@ -2,10 +2,10 @@
 @import "@tabler/core/dist/css/tabler.min.css";
 
 :root {
-  --background:   #F8F7F4;
+  --background:   #f4f6fa;
   --bg-surface:   #FFFFFF;
-  --bg-elevated:  #F2F0EB;
-  --border:       #E5E1D8;
+  --bg-elevated:  #f0f2f7;
+  --border:       #e6e7e9;
   --text-1:       #0C0C0C;
   --text-2:       #555555;
   --text-3:       #9CA3AF;
