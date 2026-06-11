@@ -28,7 +28,7 @@ Run `supabase/migrations/001_hunter_schema.sql` in the Supabase SQL editor:
 Fill in `.env.local`:
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://gjxadcttrtoqtzddxyzs.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=   ← Project Settings → API → anon key
 SUPABASE_SERVICE_ROLE_KEY=       ← Project Settings → API → service_role secret
 
